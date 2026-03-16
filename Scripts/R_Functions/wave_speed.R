@@ -34,5 +34,10 @@ wave_speed <- function(solocs.all){
     # connect average wave speed to output data table
     solocs.all <- solocs.all[avg.dist.diff, on=.NATURAL]
 
+    edge.interactions <- unique(solocs.all[x==0.25 | y==0.25 | x==99.75 | y==99.75, .(v,l,r,time)])[,edge := 0]
+    solocs.all <- edge.interactions[solocs.all, on=.NATURAL]
+    solocs.all <- solocs.all[is.na(edge),]
+
+
     return(solocs.all)
 }

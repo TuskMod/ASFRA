@@ -63,39 +63,48 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     colnames(summ.vals.r) <- c('var','land','rep',names(out.list[c(1, 2, 4:9, length(out.list))]))
 
     # Put new results in output objects OR add new results to existing output objects
-    if(r==1 & l==1 & v==1){
-        tm.mat <- tm.mat.r
-        summ.vals <- summ.vals.r
-        if ("incidence" %in% out.opts) incidence <- incidence.r
-        if ("alldetections" %in% out.opts) {
-            detections <- matrix(NA, ncol=7, nrow=0)
-            colnames(detections) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
-            allzone <- matrix(NA, ncol=5, nrow=0)
-            colnames(allzone) <- c('var', 'land', 'rep', 'timestep', 'loc')
-        }
+#     if(r==1 & l==1 & v==1){
+#         tm.mat <- tm.mat.r
+#         summ.vals <- summ.vals.r
+#         if ("incidence" %in% out.opts) incidence <- incidence.r
+#         if ("alldetections" %in% out.opts) {
+#             detections <- matrix(NA, ncol=7, nrow=0)
+#             colnames(detections) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
+#             allzone <- matrix(NA, ncol=5, nrow=0)
+#             colnames(allzone) <- c('var', 'land', 'rep', 'timestep', 'loc')
+#         }
 
-    } else {
-        tm.mat <- rbind(tm.mat, tm.mat.r)
-        tm.mat <- tm.mat[!is.na(tm.mat[,1]),, drop=FALSE]
-        summ.vals <- rbind(summ.vals, summ.vals.r)
-        summ.vals <- summ.vals[!is.na(summ.vals[,1]),, drop=FALSE]
-        if ("incidence" %in% out.opts) {
-            incidence <- rbind(incidence, incidence.r)
-            incidence <- incidence[!is.na(incidence[,1]),, drop=FALSE]
-        }
-        if (end.tm > detectday & "alldetections" %in% out.opts) {
-            detections <- rbind(detections, detections.r)
-            detections <- detections[!is.na(detections[,1]),, drop=FALSE]
-            if (is.null(nrow(allzone))) {
-                # if it hasn't been established yet
-                allzone <- allzone.r
-            } else {
-                allzone <- rbind(allzone, allzone.r)
-                allzone <- allzone[!is.na(allzone[,1]),, drop=FALSE]
-            }
-            colnames(allzone) <- c('var', 'land', 'rep', 'timestep', 'loc')
-        }
-    }
+#     } else {
+#         tm.mat <- rbind(tm.mat, tm.mat.r)
+#         tm.mat <- tm.mat[!is.na(tm.mat[,1]),, drop=FALSE]
+#         summ.vals <- rbind(summ.vals, summ.vals.r)
+#         summ.vals <- summ.vals[!is.na(summ.vals[,1]),, drop=FALSE]
+#         if ("incidence" %in% out.opts) {
+#             incidence <- rbind(incidence, incidence.r)
+#             incidence <- incidence[!is.na(incidence[,1]),, drop=FALSE]
+#         }
+#         if (end.tm > detectday & "alldetections" %in% out.opts) {
+#             detections <- rbind(detections, detections.r)
+#             detections <- detections[!is.na(detections[,1]),, drop=FALSE]
+#             if (is.null(nrow(allzone))) {
+#                 # if it hasn't been established yet
+#                 allzone <- allzone.r
+#             } else {
+#                 allzone <- rbind(allzone, allzone.r)
+#                 allzone <- allzone[!is.na(allzone[,1]),, drop=FALSE]
+#             }
+#             colnames(allzone) <- c('var', 'land', 'rep', 'timestep', 'loc')
+#         }
+#     }
 
-    return(list(tm.mat, summ.vals, incidence, detections, allzone, solocs.all))
+    fwrite(tm.mat.r, paste0('./Output/tm.mat/tm.mat_r',r,'_l',l,'_v',v,'.csv'))
+    fwrite(summ.vals.r, paste0('./Output/summ.vals/summ.vals_r',r,'_l',l,'_v',v,'.csv'))
+    fwrite(incidence.r, paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.csv'))
+#     if (!is.list(detections)) browser()
+#     fwrite(detections, paste0('./Output/detections/detections_r',r,'_l',l,'_v',v,'.csv'))
+#     fwrite(allzone, paste0('./Output/allzone/allzone_r',r,'_l',l,'_v',v,'.csv'))
+    fwrite(solocs.all, paste0('./Output/solocs.all/solocs.all_r',r,'_l',l,'_v',v,'.csv'))
+
+#     return(list(tm.mat, summ.vals, incidence, detections, allzone, solocs.all))
+    return(NULL)
 }

@@ -18,6 +18,17 @@
       #a nested list of grid parameters
 RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_functions, reps, mv.parms){
 
+
+## check if there are already outputs for a given combination; these should be skipped
+
+    dirlist <- list.dirs()
+    if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
+    if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
+    if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
+#     if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
+#     if ('./Output/allzone' %in% dirlist == FALSE){dir.create('./Output/allzone')}
+    if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
+
     names(variables)[names(variables) == "density"] <- "dens"
 
     # Filter variables (parameters with >1 value) out of parameters
@@ -29,15 +40,51 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
     list2env(parameters, .GlobalEnv)
 
     # looping table for mapply
-    lvtable <- expand.grid(vars = seq(nrow(variables)), land = 1:length(land_grid_list), rep = seq(reps))
+    lvtable <- CJ(vars = seq(nrow(variables)), land = 1:4, rep = seq(reps))
 #     lvtable <- expand.grid(vars = seq(nrow(variables)), land = seq(length(land_grid_list)), rep = seq(reps))
+
+#     lvtable[,':='(tm.mat = 0, summ.vals=0, incidence=0, solocs.all=0)]
+
+    tm.mat.in <- list.files('./Output/tm.mat')
+    summ.vals.in <- list.files('./Output/summ.vals')
+    incidence.in <- list.files('./Output/incidence')
+    solocs.all.in <- list.files('./Output/solocs.all')
+    if (out.repl != TRUE & length(c(tm.mat.in, summ.vals.in, incidence.in, solocs.all.in)) != 0){
+
+        splt.check <- function(nlst, nm){
+            instr <- as.data.table(tstrsplit(nlst, '_', keep=2:4))
+            instr <- instr[,lapply(.SD, function(x) unlist(regmatches(x, gregexpr('[0-9]', x))))]
+            setnames(instr, c('r','l','v'))
+            instr[,tmp := 1]
+            setnames(instr, 'tmp', nm)
+            return(instr)
+        }
+        tm.tab <- unique(as.data.table(rbindlist(lapply(tm.mat.in, splt.check, nm = 'tm.mat'))))
+        summ.tab <- unique(as.data.table(rbindlist(lapply(summ.vals.in, splt.check, nm = 'summ.vals'))))
+        incid.tab <- unique(as.data.table(rbindlist(lapply(incidence.in, splt.check, nm = 'incidence'))))
+        solocs.tab <- unique(as.data.table(rbindlist(lapply(solocs.all.in, splt.check, nm = 'solocs.all'))))
+    browser()
+        bndtab <- merge(tm.tab, summ.tab, by=c('v','l','r'), all=TRUE)
+        bndtab <- merge(bndtab, incid.tab, by=c('v','l','r'), all=TRUE)
+        bndtab <- merge(bndtab, solocs.tab, by=c('v','l','r'), all=TRUE)
+        bndtab[is.na(bndtab)] <- 0
+        bndtab[,names(.SD) := lapply(.SD, as.numeric)]
+
+        lvtable2 <- merge(lvtable, bndtab, by.x=c('vars', 'land', 'rep'), by.y=c('v', 'l', 'r'), all=TRUE)
+        lvtable2 <- lvtable2[is.na(tm.mat) | is.na(summ.vals) | is.na(incidence) | is.na(solocs.all),]
+        lvtable2 <- lvtable2[,.(vars, land, rep)]
+        print(nrow(lvtable2))
+    } else {
+        lvtable2 <- lvtable
+    }
+
 
     # movement parameters from NND landscape selection
     setDT(mv.parms)
 
-
     # loops over combinations of variables, lands, and reps
-    rep.list <- mapply(function(v.val, l.val, r.val){
+#     rep.list <- mapply(function(v.val, l.val, r.val){
+    mapply(function(v.val, l.val, r.val){
 
         # add in vars
         vars <- variables[v.val,]
@@ -66,20 +113,25 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
         outputs <- Initialize_Outputs(parameters)
         # Run simulation
         out.list <- SimulateOneRun(outputs, pop, centroids, grid, parameters, cpp_functions, K, v.val, l.val, r.val)
-        # Handle outputs
-        rep.out <- rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts)
-        return(rep.out)
+        # Handle outputs, including writing storage files
+        rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts)
+#         rep.out <- rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts)
+#         return(rep.out)
+        gc()
+        return(NULL)
     },
-    v.val=lvtable[,1], l.val=lvtable[,2], r.val = lvtable[,3])
+    v.val=lvtable2[,vars], l.val=lvtable2[,land], r.val = lvtable2[,rep])
 
-    tm.mat <- rbindlist(rep.list[1,])
-    summ.vals <- rbindlist(lapply(rep.list[2,], as.data.table))
-    incidence <- rbindlist(rep.list[3,which(lapply(rep.list[3,], ncol) > 1)])
-    detections <- rbindlist(lapply(rep.list[4,][!is.na(rep.list[4,])], as.data.table))
-    allzone <- rbindlist(lapply(rep.list[5,][!is.na(rep.list[5,])], as.data.table))
-    solocs.all <- rbindlist(rep.list[6,])
-
-    return(list('tm.mat' = tm.mat, 'summ.vals' = summ.vals, 'incidence' = incidence, 'detections' = detections, 'allzone' = allzone, 'solocs.all' = solocs.all))#, 'wv.speed' = wv.speed))
+#     tm.mat <- rbindlist(rep.list[1,])
+#     summ.vals <- rbindlist(lapply(rep.list[2,], as.data.table))
+#     incidence <- rbindlist(rep.list[3,which(lapply(rep.list[3,], ncol) > 1)])
+#     detections <- rbindlist(lapply(rep.list[4,][!is.na(rep.list[4,])], as.data.table))
+#     allzone <- rbindlist(lapply(rep.list[5,][!is.na(rep.list[5,])], as.data.table))
+#     solocs.all <- rbindlist(rep.list[6,])
+#
+#     return(list('tm.mat' = tm.mat, 'summ.vals' = summ.vals, 'incidence' = incidence, 'detections' = detections, 'allzone' = allzone, 'solocs.all' = solocs.all))#, 'wv.speed' = wv.speed))
+    gc()
+    return(lvtable)
 }
 
 

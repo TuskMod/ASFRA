@@ -23,7 +23,7 @@ To temporarily remove a parameter, just remove the ~ and they will be ignored
 * nrep, number of replicates
 * thyme, total number of time steps. is spelled 'thyme' bc 'time' is a function in stats namespace 
 
-~ nrep = 25
+~ nrep = 2
 ~ thyme = 78
 
 ############################
@@ -274,7 +274,8 @@ B2_B1_factor is the conversion between B1 and B2 parameters, generally 0.5 (B2 =
 ~ incub__DR = 11
 ~ Pir__DR = 0.4
 
-
+Determines if the outputs should be overwritten, or accepted as they stand
+~ out.repl = 1
 
 
 

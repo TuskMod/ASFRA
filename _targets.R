@@ -136,7 +136,7 @@ list(
     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS('./Landscape_Setup/NND_Lands/4_Output/ldsel.rds') } else { return(NA)}),
 
     ## Run Model ---------------
-    tar_target(out.list,
+    tar_force(out.list,
         RunSimulationReplicates(land_grid_list = land_grid_list,
                                 parameters = parameters,
                                 variables = variables,
@@ -144,6 +144,7 @@ list(
                                 reps = parameters$nrep,
                                 mv.parms = mv.params
         )
+        ,force=TRUE
 #         , cue = tar_cue(seed = FALSE) # allows existing simulation outputs to stand despite having stochastic elements, so long as inputs are the same
     ),
       ## Copy paste everything in the {} including the {} to run simulations using targets outputs without running targets so you can read the error messages and outputs! :)
