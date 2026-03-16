@@ -27,7 +27,7 @@ wave_speed <- function(solocs.all){
 
     # get speed of average distance
     avg.dist.diff <- unique(solocs.all[,.(v, l, r, time, avg)])
-    avg.dist.diff[, avg.dist.diff := avg - shift(avg, 1), by=.(v, l, r)]
+    avg.dist.diff[, avg.dist.diff := avg - data.table::shift(avg, 1), by=.(v, l, r)]
     # na values in shifted average distances at time 1 are from not having time 0 data to shift from, so 0 makes sense
     avg.dist.diff[is.na(avg.dist.diff) & time == 1, avg.dist.diff := 0]
 

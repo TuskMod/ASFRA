@@ -1,13 +1,13 @@
 ## plotting wavespeed metrics
 
-edge.ints <- function(wv.speed, tm.mat)
-
 wave.plot <- function(wv.speed, tm.mat, land_grid_list, variables, edge.interactions){
 #     edge.interactions <- unique(wv.speed[x==0.25 | y==0.25 | x==99.75 | y==99.75, .(v,l,r,time)])[,edge := 0]
     tm.mat.edge <- edge.interactions[tm.mat, on=.(v=var, l=land, r=rep, time=timestep)]
     setnames(tm.mat.edge, c('v','l','r','time'), c('var','land','rep','timestep'))
-    tm.mat.edge[is.na(edge), seq.test := 1:.N, by=.(var,land,rep)]
-    tm.mat.edge <- tm.mat.edge[timestep == seq.test,][,seq.test := NULL]
+    if(any(tm.mat.edge[,is.na(edge)])) {
+        tm.mat.edge[is.na(edge), seq.test := 1:.N, by=.(var,land,rep)]
+        tm.mat.edge <- tm.mat.edge[timestep == seq.test,][,seq.test := NULL]
+    }
 
     #     tm.mat.edge[,EIC := E+I+C]
     #     tm.mat.edge[,dEIC := EIC-data.table::shift(EIC,1), by=.(var,land,rep)]

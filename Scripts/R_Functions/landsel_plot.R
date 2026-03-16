@@ -2,7 +2,8 @@
 
 sel.lands <- function(ldsel.nnd){
     library(sf)
-    browser()
+    library(raster)
+    library(terra)
     contus <- st_read('./Input/contus_shp/') # for windows must be directory, might be something else for linux?
     #     contus <- st_read('./Input/contus_shp/usamapplot_best.shp')
     #     selpts <- land_grid_list$
@@ -25,7 +26,7 @@ sel.lands <- function(ldsel.nnd){
         return(data.table(tif, x, y))
     }))
 
-    rast.crs <- crs(raster(tile.list[1]))
+    rast.crs <- crs(raster(tile.one))
     contus.transform <- st_transform(contus[1], rast.crs)
     #     bounds <- raster::extent(raster(tile.one))
     bounds <- st_bbox(contus.transform)

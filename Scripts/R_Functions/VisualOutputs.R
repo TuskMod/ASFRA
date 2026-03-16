@@ -29,7 +29,7 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 #         tm.mat <- as.data.table(out.list["tm.mat"])
         filenm <- paste0('tm.mat_r', r,'_l',l, '_v',v,'.csv')
         if (filenm %in% list.files(paste0(core.dir, 'tm.mat/'))){
-            print(filenm)
+#             print(filenm)
             filenm <- paste0(paste0(core.dir, 'tm.mat/', filenm))
             tm.mat <- fread(filenm)
             setnames(tm.mat, unlist(lapply(strsplit(names(tm.mat), 'tm.mat.'), function(x) unlist(x)[2])))
@@ -43,7 +43,7 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 #         summ.vals <- as.data.table(out.list["summ.vals"])
         filenm <- paste0('summ.vals_r', r,'_l',l, '_v',v,'.csv')
         if (filenm %in% list.files(paste0(core.dir, 'summ.vals/'))){
-            print(filenm)
+#             print(filenm)
             filenm <- paste0(paste0(core.dir, 'summ.vals/', filenm))
             summ.vals <- fread(filenm)
             setnames(summ.vals, unlist(lapply(strsplit(names(summ.vals), 'summ.vals.'), function(x) unlist(x)[2])))
@@ -57,7 +57,7 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 #         incidence <- as.data.table(out.list["incidence"])
         filenm <- paste0('incidence_r', r,'_l',l, '_v',v,'.csv')
         if (filenm %in% list.files(paste0(core.dir, 'incidence/'))){
-            print(filenm)
+#             print(filenm)
             filenm <- paste0(paste0(core.dir, 'incidence/', filenm))
             incidence <- fread(filenm)
             setnames(incidence, unlist(lapply(strsplit(names(incidence), 'incidence.'), function(x) unlist(x)[2])))
@@ -87,7 +87,7 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 #         solocs.all <- as.data.table(out.list['solocs.all'])
         filenm <- paste0('solocs.all_r', r,'_l',l, '_v',v,'.csv')
         if (filenm %in% list.files(paste0(core.dir, 'solocs.all/'))){
-            print(filenm)
+#             print(filenm)
             filenm <- paste0(paste0(core.dir, 'solocs.all/', filenm))
             solocs.all <- fread(filenm)
             setnames(solocs.all, unlist(lapply(strsplit(names(solocs.all), 'solocs.all.'), function(x) unlist(x)[2])))
@@ -104,6 +104,8 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 
 
     print('Calculating wavespeed metrics...')
+    edge.interactions <- unique(solocs.all[x==0.25 | y==0.25 | x==99.75 | y==99.75, .(v,l,r,time)])[,edge := 0]
+
     wv.speed <- wave_speed(solocs.all)
 
     print('Reading in selected land attributes...')
@@ -373,6 +375,8 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 #         # moves gifs to the proper folder
 # #         lapply(list.files(pattern='*.gif'), function(x) file.rename(x, paste0('./Output/figures/',x)))
 #     }
+
+#     spatial.gif(parameters, detections, incidence, land_grid_list)
 
 
 
