@@ -4,6 +4,7 @@ maxinc.heat <- function(tm.mat.edge, unq.parms, ldsel.nnd){
     max.incidence <- tm.mat.edge[, max(incidenceEI, na.rm=TRUE), by=.(var, land)][unq.parms, on='var'][ldsel.nnd, on='land']
     setnames(max.incidence, 'V1','max.inc')
     max.incidence[, max.inc.norm := max.inc/max(max.inc, na.rm=TRUE)]
+    browser()
     png('./Output/figures/land_parcombos_maxincd.png', width=1000, height=800)
     par(mfrow=c(length(unique(unq.parms[,density])), nrow(unq.parms)/length(unique(unq.parms[,density]))))
     lapply(seq(nrow(unq.parms)), function(y){

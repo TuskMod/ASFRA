@@ -108,7 +108,8 @@ Make_Grid <- function(object, grid.opt="homogeneous", sample=0, sample.design=NU
             grid[, 8] <- round(values(ras), 2)
             #assign to centroids
             centroids <- cbind(centroids, grid[, 8])
-            grid.list <- list("cells"=cells, "grid"=grid, "centroids"=centroids)
+            name <- names(object)
+            grid.list <- list("cells"=cells, "grid"=grid, "centroids"=centroids, "names"=name)
         } else if("heterogeneous" %in% grid.opt){
             #simulates a spatially random neutral landscape model with values drawn from a uniform distribution
             #values rescaled to range from 0-1

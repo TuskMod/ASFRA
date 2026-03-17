@@ -39,9 +39,11 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
     #Pull needed parms from parameters for all reps
     list2env(parameters, .GlobalEnv)
 
+    setDT(mv.parms)
     # looping table for mapply
-    lvtable <- CJ(vars = seq(nrow(variables)), land = 1:4, rep = seq(reps))
-#     lvtable <- expand.grid(vars = seq(nrow(variables)), land = seq(length(land_grid_list)), rep = seq(reps))
+#     lvtable <- CJ(vars = seq(nrow(variables)), land = 1:4, rep = seq(reps))
+#     lvtable <- CJ(vars = seq(nrow(variables)), land = seq(length(land_grid_list)), rep = seq(reps))
+    lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
 
 #     lvtable[,':='(tm.mat = 0, summ.vals=0, incidence=0, solocs.all=0)]
 
@@ -63,7 +65,6 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
         summ.tab <- unique(as.data.table(rbindlist(lapply(summ.vals.in, splt.check, nm = 'summ.vals'))))
         incid.tab <- unique(as.data.table(rbindlist(lapply(incidence.in, splt.check, nm = 'incidence'))))
         solocs.tab <- unique(as.data.table(rbindlist(lapply(solocs.all.in, splt.check, nm = 'solocs.all'))))
-    browser()
         bndtab <- merge(tm.tab, summ.tab, by=c('v','l','r'), all=TRUE)
         bndtab <- merge(bndtab, incid.tab, by=c('v','l','r'), all=TRUE)
         bndtab <- merge(bndtab, solocs.tab, by=c('v','l','r'), all=TRUE)
@@ -84,6 +85,8 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
 
     # loops over combinations of variables, lands, and reps
 #     rep.list <- mapply(function(v.val, l.val, r.val){
+    lgl.index <- unlist(lapply(land_grid_list, function(x) x[4]))
+
     mapply(function(v.val, l.val, r.val){
 
         # add in vars
@@ -98,12 +101,15 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
         parameters$K <- K
 
         # movement parameters
-        parameters$shape <- as.numeric(mv.parms[l.val, gamma.shape])
-        parameters$rate <- as.numeric(mv.parms[l.val, gamma.rate])
+        lgl.entry <- which(lgl.index == l.val)
+        parameters$shape <- as.numeric(mv.parms[lgl.entry, gamma.shape])
+        parameters$rate <- as.numeric(mv.parms[lgl.entry, gamma.rate])
 
         #loop through landscapes
-        centroids <- land_grid_list[[l.val]]$centroids
-        grid <- land_grid_list[[l.val]]$grid
+        centroids <- land_grid_list[[lgl.entry]]$centroids
+        grid <- land_grid_list[[lgl.entry]]$grid
+        lname <- land_grid_list[[lgl.entry]]$names
+        print(paste('l.val == lname:', l.val==lname))
 
         # create sounders in starting locations according to N0 and ss parameters
         pop <- InitializeSounders(centroids, grid, c(N0, ss), pop_init_grid_opts)

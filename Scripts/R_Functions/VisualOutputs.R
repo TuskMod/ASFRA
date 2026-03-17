@@ -97,7 +97,7 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 
         }
     }, v= lvtable[,vars], l= lvtable[,land], r=lvtable[,rep])
-#     browser()
+    browser()
 #     lapply(1:ncol(solocs.all), mapp.to.dt, dt=solocs.all)
     solocs.all <- rbindlist(mclapply(1:ncol(solocs.all), mapp.to.dt, dt=solocs.all))
 #     solocs.all <- rbindlist(solocs.all)
@@ -124,7 +124,7 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters, lands_
 #         grid.centers <- cbind(grid.key[,.(cell, ctX, ctY, rasval)], land=i)
 #         return(grid.centers)
 #     }))
-#     browser()
+    browser()
 
     ## get some plots of temporal data
     # time-based matrix outputs
