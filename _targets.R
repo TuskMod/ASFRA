@@ -67,7 +67,8 @@ list(
 #     tar_target(lands_path, file.path("Input","lands"), format="file"),
 
     ## Get names of land tiles in order so we can associate lands with their data previously calculated
-    tar_target(lands_names, data.table(land = seq(1, length(list.files(lands_path))), file = list.files(lands_path))),
+#     tar_target(lands_names, sort(as.numeric(unlist(lapply(list.files(tar_read(lands_path)), function(x) tstrsplit(x, '[_.]', keep=2)))))),
+#     tar_target(lands_names, data.table(land = seq(1, length(list.files(lands_path))), file = list.files(lands_path))),
 
     ## Read and format input data -----
     tar_terra_sprc(plands_sprc, ReadLands(lands_path)),

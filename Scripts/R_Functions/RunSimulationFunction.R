@@ -55,7 +55,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
 
         splt.check <- function(nlst, nm){
             instr <- as.data.table(tstrsplit(nlst, '_', keep=2:4))
-            instr <- instr[,lapply(.SD, function(x) unlist(regmatches(x, gregexpr('[0-9]', x))))]
+            instr <- instr[,lapply(.SD, function(x) unlist(regmatches(x, gregexpr('(\\d+)', x))))]
             setnames(instr, c('r','l','v'))
             instr[,tmp := 1]
             setnames(instr, 'tmp', nm)
@@ -78,7 +78,6 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
     } else {
         lvtable2 <- lvtable
     }
-
 
     # movement parameters from NND landscape selection
     setDT(mv.parms)
