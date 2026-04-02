@@ -4,7 +4,7 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, cpp_functi
     require(dplyr)
     for(i in 1:length(cpp_functions)){
         print(paste0("sourcing ",cpp_functions[[i]]))
-        Rcpp::sourceCpp(cpp_functions[[i]])
+        Rcpp::sourceCpp(cpp_functions[[i]], cacheDir='./cppcache')
     }
 
 ######## Release parameters to function environment ########
@@ -49,7 +49,7 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, cpp_functi
         }
 
 ######## Movement ########
-        pop <- FastMovement(pop, centroids, shape, rate, inc, mv_pref)
+        pop <- FastMovement(pop, centroids, alpha, theta, inc, mv_pref)
 
 ######## State Changes ########
         #births, natural deaths, disease state changes (exposure, infection, recovery, death), carcass decay

@@ -1,7 +1,7 @@
 ## plotting wavespeed metrics
 
-wave.plot <- function(wv.speed, tm.mat, land_grid_list, variables, edge.interactions){
-#     edge.interactions <- unique(wv.speed[x==0.25 | y==0.25 | x==99.75 | y==99.75, .(v,l,r,time)])[,edge := 0]
+wave.plot <- function(wv.speed, tm.mat, land_grid_list, variables){#}, edge.interactions){
+    edge.interactions <- unique(wv.speed[x==0.25 | y==0.25 | x==99.75 | y==99.75, .(v,l,r,time)])[,edge := 0]
     tm.mat.edge <- edge.interactions[tm.mat, on=.(v=var, l=land, r=rep, time=timestep)]
     setnames(tm.mat.edge, c('v','l','r','time'), c('var','land','rep','timestep'))
     if(any(tm.mat.edge[,is.na(edge)])) {
