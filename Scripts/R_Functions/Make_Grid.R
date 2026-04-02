@@ -41,7 +41,8 @@
 
 Make_Grid <- function(object, grid.opt="homogeneous", sample=0, sample.design=NULL){
     require(terra)
-    require(NLMR)
+#     require(NLMR)
+    ## breaking NLMR random habitat generation to make landscape tile version run on conda environment via cran install
 
     if(grid.opt=="homogenous"){
         grid.opt <- "homogeneous"
@@ -113,7 +114,8 @@ Make_Grid <- function(object, grid.opt="homogeneous", sample=0, sample.design=NU
         } else if("heterogeneous" %in% grid.opt){
             #simulates a spatially random neutral landscape model with values drawn from a uniform distribution
             #values rescaled to range from 0-1
-            r <- NLMR::nlm_random(len, len, inc, rescale=TRUE)
+#             r <- NLMR::nlm_random(len, len, inc, rescale=TRUE)
+            r <- runif(len^2)
             grid[, 8] <- round(values(r), 2)
             centroids <- cbind(centroids, grid[, 8])
             grid.list <- list("cells"=cells, "grid"=grid, "centroids"=centroids, "r"=r)

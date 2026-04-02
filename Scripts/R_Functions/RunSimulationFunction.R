@@ -21,6 +21,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
 
 ## check if there are already outputs for a given combination; these should be skipped
 
+    library(data.table)
     dirlist <- list.dirs()
     if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
     if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
@@ -84,7 +85,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
 
     # loops over combinations of variables, lands, and reps
 #     rep.list <- mapply(function(v.val, l.val, r.val){
-    lgl.index <- unlist(lapply(land_grid_list, function(x) x[4]))
+    lgl.index <- unlist(lapply(land_grid_list[[1]], function(x) x[4]))
 
     mapply(function(v.val, l.val, r.val){
 
@@ -101,13 +102,13 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, cpp_f
 
         # movement parameters
         lgl.entry <- which(lgl.index == l.val)
-        parameters$shape <- as.numeric(mv.parms[lgl.entry, gamma.shape])
-        parameters$rate <- as.numeric(mv.parms[lgl.entry, gamma.rate])
+        parameters$alpha <- as.numeric(mv.parms[lgl.entry, 1/sigdisp])
+        parameters$theta <- as.numeric(mv.parms[lgl.entry, disp])/parameters$rate
 
         #loop through landscapes
-        centroids <- land_grid_list[[lgl.entry]]$centroids
-        grid <- land_grid_list[[lgl.entry]]$grid
-        lname <- land_grid_list[[lgl.entry]]$names
+        centroids <- land_grid_list[[1]][[lgl.entry]]$centroids
+        grid <- land_grid_list[[1]][[lgl.entry]]$grid
+        lname <- land_grid_list[[1]][[lgl.entry]]$names
         print(paste('l.val == lname:', l.val==lname))
 
         # create sounders in starting locations according to N0 and ss parameters

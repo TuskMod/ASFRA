@@ -19,6 +19,7 @@ areaOfinfection <- function(pop, centroids, inc){
         boundary <- xy[ch, , drop=FALSE]
         #get area within boundary
         A <- abs(pracma::polyarea(boundary[, 1, drop=FALSE], boundary[, 2, drop=FALSE]))
+        library(pdist)
         maxdist <- max(pdist(xy))
         #number of unique infected cells, area of infection,  max distance between infected cells
         out <- c(length(infectcells), A, maxdist)

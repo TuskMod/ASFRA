@@ -1,8 +1,8 @@
 #GetSurfaceParms(parameters00,plands_sprc[1])
-GetSurfaceParms<-function(parameters, land){
+GetSurfaceParms<-function(parameters, inc, km_len){
     if (parameters$grid.opts == 'ras'){
-        inc=res(land)[1]/1000 #get resolution in km
-        km_len=dim(land)[1]*inc
+#         inc=res(land)[1]/1000 #get resolution in km
+#         km_len=dim(land)[1]*inc
         area=km_len^2
 
         #add to parameters list
@@ -24,6 +24,7 @@ GetSurfaceParms<-function(parameters, land){
         names(parameters)[length(parameters)] <- "km_len"
         parameters <- append(parameters, area)
         names(parameters)[length(parameters)] <- "area"
+        parameters$inc <- inc
     }
 
 	return(parameters)

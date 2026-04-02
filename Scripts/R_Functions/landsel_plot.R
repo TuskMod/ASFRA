@@ -39,8 +39,8 @@ sel.lands <- function(ldsel.nnd){
     png('./Output/figures/tile_map.png', width=1600, height=1200)
     plot(pot.pts[,.(x,y)], col=NA, pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n')
     polys(contus.transform, col=0, lwd=2, alpha=1, fill=NA)
-    points(pot.pts[,.(x,y)], col=1, pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n')
-    points(selpts, pch=16, cex=1.3, col=2)
+    points(selpts, pch=16, cex=2.3, col=2)
+    points(pot.pts[,.(x,y)], col='gray', pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n')
     #     points(pot.pts[,.(x,y)], col=1, pch=1, cex=1.3)
     dev.off()
 }

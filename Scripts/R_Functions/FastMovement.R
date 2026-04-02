@@ -1,4 +1,4 @@
-FastMovement <- function(pop, centroids, shape, rate, inc, mv_pref, RSF_mat=NULL, RSF_mat0=NULL){
+FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NULL, RSF_mat0=NULL){
 
     ncells <- nrow(centroids)
     #run checks to make sure objects input correctly
@@ -11,7 +11,7 @@ FastMovement <- function(pop, centroids, shape, rate, inc, mv_pref, RSF_mat=NULL
     }
 
     #get distances from gamma distribution
-    pop[,4] <- rgamma(nrow(pop), shape=shape, rate=rate)
+    pop[,4] <- rgamma(nrow(pop), shape=alpha, scale=theta)
 
     # if nobody is alive, movement distance should be 0 (generates error if not)
     pop[,4][pop[,1]==0] <- 0
