@@ -1,11 +1,7 @@
 ##The purpose of this script is to run a single rep of the ASF control optimization model
 
-SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, cpp_functions, K, v, l, r){
+SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r){
     require(dplyr)
-    for(i in 1:length(cpp_functions)){
-        print(paste0("sourcing ",cpp_functions[[i]]))
-        Rcpp::sourceCpp(cpp_functions[[i]], cacheDir='./cppcache')
-    }
 
 ######## Release parameters to function environment ########
     list2env(parameters, .GlobalEnv)

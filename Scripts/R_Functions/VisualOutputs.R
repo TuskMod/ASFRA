@@ -271,10 +271,10 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters){
         bp <- barplot(prcc.table$est, names.arg=prcc.table$var, ylim=c(-1,1), main=title, ylab='Effect size')
         abline(h=0, col='gray')
         bp <- barplot(prcc.table$est, names.arg=prcc.table$var, ylim=c(-1,1), main=title, add=TRUE, col=color)
-        segments(bp, prcc.table[,'lower'], bp, prcc.table[,'upper'], lend=0)
-        ew <- (bp[2,1]-bp[1,1])/4
-        segments(bp-ew, prcc.table[,'lower'], bp+ew, prcc.table[,'lower'], lend=0)
-        segments(bp-ew, prcc.table[,'upper'], bp+ew, prcc.table[,'upper'], lend=0)
+#         segments(bp, prcc.table[,'lower'], bp, prcc.table[,'upper'], lend=0)
+#         ew <- (bp[2,1]-bp[1,1])/4
+#         segments(bp-ew, prcc.table[,'lower'], bp+ew, prcc.table[,'lower'], lend=0)
+#         segments(bp-ew, prcc.table[,'upper'], bp+ew, prcc.table[,'upper'], lend=0)
         text(bp, y=-0.9, paste0('p=',round(prcc.table$p.value, 2)))
     }
     png('./Output/figures/prccplot.png', width=1000, height=1000)
@@ -287,9 +287,9 @@ VisualOutputs <- function(lvtable, variables, land_grid_list, parameters){
     dev.off()
     ## create map image of selected lands
 
-    print('Generating national map of selected lands...')
-    sel.lands(ldsel.nnd)
-    browser()
+#     print('Generating national map of selected lands...')
+#     sel.lands(ldsel.nnd)
+#     browser()
 
     ## landscape attributes
     # land_grid_list

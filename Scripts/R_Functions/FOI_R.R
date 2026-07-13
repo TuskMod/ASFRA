@@ -57,6 +57,7 @@ FOI_R <- function(pop, centroids, cells, B1, B2, F1, F2_int, F2_B, F2i_int, F2i_
     }
 
     if(length(id)>1){
+
         B <- Fast_FOI_function((id - 1), centroids[, 1, drop=FALSE], centroids[, 2, drop=FALSE],
                             cells, F2_int, F2_B, F2i_int, F2i_B, I[id, , drop=FALSE], C[id, , drop=FALSE], B1, B2)
         Pse <-  1 - exp( - W[, 1] - W[, 2] - t(colSums(B)))

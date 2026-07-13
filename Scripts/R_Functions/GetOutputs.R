@@ -82,9 +82,10 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
             # get locations
             locs.i <- as.data.table(centroids[matrix(loc.list[[i]], ncol=7)[,1], , drop=FALSE])
             # add timestep and state variable values to locs.i
-            locs.i <- cbind(i, locs.i, loc.list[[i]][, 2:7])
+            locs.i <- cbind(i, locs.i[,3], loc.list[[i]])
+#             locs.i <- cbind(i, locs.i, loc.list[[i]][, 2:7])
             # set names for output
-            colnames(locs.i) <- c("time", "x", "y", "unknown", 'S', 'E', 'I', 'R', 'C', 'Z')
+            colnames(locs.i) <- c("time", "pref", "cell", 'S', 'E', 'I', 'R', 'C', 'Z')
             return(locs.i)
         }))
     }

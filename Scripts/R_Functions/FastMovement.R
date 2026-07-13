@@ -10,8 +10,8 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
         stop("mv_pref set to RSF-availability movement (3), but RSF matrices not supplied")
     }
 
-    #get distances from gamma distribution
-    pop[,4] <- rgamma(nrow(pop), shape=alpha, scale=theta)
+    #get distances from gamma distribution (km)
+    pop[,4] <- rgamma(nrow(pop), shape=alpha, scale=theta)/1000
 
     # if nobody is alive, movement distance should be 0 (generates error if not)
     pop[,4][pop[,1]==0] <- 0
@@ -41,7 +41,7 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
         pop[,2] <- centroids[pop[,3],3]
     }
 
-    #if stop function here.. if no cells to move to
+    #if stop function here.. if no cells to move to (i.e. if your movement units are in meters)
     if(any(pop[,3] == nrow(centroids) + 1000)) {
         stop("No cells to move to! This shouldn't happen")
     }
@@ -57,3 +57,6 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
 
     return(pop)
 }
+
+
+# home/eric.sodja/optirad/cppcache/sourceCpp-x86_64-conda-linux-gnu-1.1.1/sourcecpp_3549503f5b2157/sourceCpp_7.so
