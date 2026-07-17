@@ -49,7 +49,7 @@ lapply(list.files(file.path("Scripts","R_Functions"), full.names = TRUE, recursi
 ## if statement here doesn't play well with cluster option settings
 options(
 #     clustermq.scheduler="slurm",
-        #clustermq.template = './asfra_tmpl.tmpl', # handles the attributes of the workers, things in defaults below are defaults (if resoures changes template files)
+#         clustermq.template = './asfra_tmpl.tmpl', # handles the attributes of the workers, things in defaults below are defaults (if resoures changes template files)
         clustermq.defaults = list(#conda="asfra_run",
                                     log_file = './log/o%j.out',
                                     error='./log/e%j.err',
@@ -80,7 +80,8 @@ tar_option_set(packages = c("Rcpp",
                             "pdist",
                             "MuMIn",
                             "lme4",
-                            "glmmTMB"),
+                            "glmmTMB",
+                            "glmnet"),
                seed = 12345 ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
                 ,error = 'stop' # for troubleshooting
 #                ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
@@ -340,19 +341,21 @@ list(
     , tar_target(tiledat_edge, './Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv', format='file')
     , tar_target(oos.tile.dat, oos.tiles(tiledat, rslt, variables))
     , tar_target(oos.tile.dat.edge, oos.tiles(tiledat_edge, rslt, variables))
-    , tar_target(temp.target, print(ridge_lasso))
-    , tar_target(preds.out, oos.preds(ridge_lasso[[2]], oos.tile.dat),
-                 pattern=map(ridge_lasso[[2]]),
+    , tar_target(model.defs, return(ridge_lasso[[2]]))
+    , tar_target(model.coefs, return(t(ridge_lasso[[1]])))
+    , tar_target(lambda.mins, as.numeric(model.coefs[1:6,28]))
+    , tar_target(preds.out, oos.preds(model.defs, lambda.mins, oos.tile.dat),
+                 pattern=map(model.defs, lambda.mins),#, model.coefs[1:6,28]),
                  iteration='list')
-    , tar_target(preds.out.edge, oos.preds(ridge_lasso[[2]], oos.tile.dat.edge),
-                 pattern=map(ridge_lasso[[2]]),
+    , tar_target(preds.out.edge, oos.preds(model.defs, lambda.mins, oos.tile.dat.edge),
+                 pattern=map(model.defs, lambda.mins),
                  iteration='list')
     , tar_target(preds.compiled, preds.compile(preds.out, preds.out.edge, oos.tile.dat, oos.tile.dat.edge))
-
-    ## Plotting function(s) for outputs.
-    , tar_target(map, maps.plot(preds.compiled, rlst, rslt1, tmtab3, variables))
-    , tar_target(hmap, heatmap(ridge_lasso[[2]], oos.tile.dat, oos.tile.dat.edge),
-                 pattern=map(ridge_lasso[[2]]),
+#
+#     ## Plotting function(s) for outputs.
+#     , tar_target(map, maps.plot(preds.compiled, rlst, rslt1, tmtab3, variables))
+    , tar_target(hmap, heatmap(model.defs, oos.tile.dat, oos.tile.dat.edge, lambda.mins),#, preds.compiled),
+                 pattern=map(model.defs, lambda.mins),
                  iteration='list')
     ## move some of these further up (landscape selection map could go to NND_Lands pipeline)
 #     ,tar_target(plot_outputs, VisualOutputs(out.list, variables, land_grid_list, parameters))
