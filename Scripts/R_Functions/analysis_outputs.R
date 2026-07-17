@@ -574,7 +574,6 @@
     }
 
 oos.tiles <- function(tiledat, rslt, variables){
-    browser()
     # the rest of the tiles' data for predictions
     tiledat <- fread(tiledat)
 #     tiledat <- fread('./Landscape_Setup/NND_Lands/all_tile_attribs.csv')
@@ -598,17 +597,22 @@ oos.tiles <- function(tiledat, rslt, variables){
 }
 
 
-oos.preds <- function(predmods, tiledat){
-    browser()
-    if (paste(formula(predmods[[1]])[2]) == 'exc') {
+oos.preds <- function(predmods, lambda.mins, tiledat){
+    resp.var <- str_trim(unlist(tstrsplit(unlist(tstrsplit(paste(predmods[[1]]$call[3]), ',', keep=2)), ']', keep=1)))
+    if (resp.var == 'exc') {
         tiledat <- tiledat[CJ(l=unique(tiledat[,l]), tm=1:78), on=.(l), allow.cartesian=TRUE]
     }
-    pred <- predict(predmods[[1]], tiledat,
-                    allow.new.levels=TRUE,  # allows new land tile values
-                    type='response')        # gives response converted to probabilities, not 'link' values
+    tiledat.trim <- tiledat[,.(contact, variant, density, nnd_med, nnd_range, nnd_mean, nnd_sd, moranI, gearyC, tc, mast, rgd, rds, dayl, prcp, tmin, tmax, drt, contag, aggindex, entropy, simpindx, nnd_cv, mvmt.mean, mvmt.cv)]
+    pred <- predict(predmods[[1]],
+                    newx=model.matrix(~., tiledat.trim)[,-1],
+                    s=lambda.mins)#exact=TRUE)
+    coefs.vals <- coef(predmods[[1]], s=lambda.mins)
+    coefs.used <- rownames(coefs.vals)[which(coefs.vals != 0)]
     # add some kind of identifier to the output for the response variable, maybe the model too
-    pred.table <- cbind(tiledat, paste(formula(predmods[[1]])[2]), paste(formula(predmods[[1]])[3]), pred)
-    setnames(pred.table, c('V2','V3'), c('resp.variable','preds'))
+    dimnames(pred) <- NULL
+    pred.table <- cbind(tiledat, resp.variable=resp.var, coefs.used=paste(coefs.used, collapse=' '), lambda=lambda.mins, pred)
+    setnames(pred.table, 'V1', 'pred')
+#     setnames(pred.table, c('V2','V3'), c('resp.variable','preds'))
 #     if (paste(formula(predmods[[1]])[2]) == 'exc') {
 #         pred.table <- pred.table[pred >= 0.5, .SD[1], by=.(l, var)]
 #     }
@@ -616,76 +620,57 @@ oos.preds <- function(predmods, tiledat){
 }
 
 preds.compile <- function(preds, preds_edge, tiledat, tiledat_edge){
-    browser()
     preds <- rbindlist(preds, fill=TRUE, use.names=TRUE)
     preds_edge <- rbindlist(preds_edge, fill=TRUE, use.names=TRUE)
     setnames(preds_edge, 'l', 'index')
     # dcast to wide-ish format
-    preds.out <- dcast(preds[is.na(tm) | tm == 52,], l + var ~ resp.variable, value.var=c('pred'), fun.aggregate = mean)
-    preds.out.edge <- dcast(preds_edge[is.na(tm) | tm == 52,], index + var ~ resp.variable, value.var=c('pred'), fun.aggregate = mean)
+#     preds.out <- dcast(preds[is.na(tm) | tm == 52,], l + var ~ resp.variable, value.var=c('pred'), fun.aggregate = mean)
+    preds.out <- dcast(preds, l + var ~ resp.variable, value.var=c('pred'), fun.aggregate = mean)
+    preds.out.edge <- dcast(preds_edge, index + var ~ resp.variable, value.var=c('pred'), fun.aggregate = mean)
+#     preds.out.edge <- dcast(preds_edge[is.na(tm) | tm == 52,], index + var ~ resp.variable, value.var=c('pred'), fun.aggregate = mean)
     preds.out <- preds.out[tiledat, on=.(l, var)]
+#     coef.table <- unique(preds[,.(resp.variable, coefs.used)])
     preds.out[,edg := 0]
     preds.out.edge <- preds.out.edge[tiledat_edge, on=.(index=l, var)]
     preds.out.edge[,edg := 1]
     preds.out <- rbind(preds.out, preds.out.edge, fill=TRUE)
     return(preds.out)
+#     return(list(preds.out, coef.table))
 }
 
 
 
-# leftover <- function(nope){
-    # compare the predictions vs. the training data
-#     tiledat[,is.pred := 1]
-#     rslt.avg <- copy(rslt)
-#     rslt.avg[,is.pred := 0]
-#     rslt1.avg <- copy(rslt1)
-#     rslt1.avg[,is.pred := 0]
-#
-#     rslt.avg[,est:=unclass(est)-1]
-#     setnames(tiledat, paste0(c('est','edge.tm','inf.area','max.dist','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'), '.pdct'), c('est','edge.tm','inf.area','max.dist','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'))
-#     setnames(tiledat, 'var','v')
-#     rslt.est <- unique(rslt.avg[,-'r'][,names(.SD) := lapply(.SD, mean), by=.(v,l), .SDcols= c('est', 'edge.tm', 'max.dist','inf.area', 'inf.spd', 'sounder.weeks', 'prop.infd', 'max.inc','tm.esc', 'nnd_med', 'nnd_range', 'gamma.shape', 'gamma.scale', 'moranI', 'tc', 'mast', 'rgd', 'rds', 'dayl', 'prcp', 'drt', ,'contag','aggindex','entropy','simpindx','is.pred')])
-#     tiledat.est <- rbind(rslt.est, tiledat, fill=TRUE)
-#     rslt1.avg[,est:=unclass(est)-1]
-#     rslt1.avg <- unique(rslt1.avg[,-'r'][,names(.SD) := lapply(.SD, mean), by=.(v,l), .SDcols= c('est', 'edge.tm', 'max.dist','inf.area', 'inf.spd', 'sounder.weeks', 'prop.infd', 'max.inc','tm.esc', 'nnd_med', 'nnd_range', 'gamma.shape', 'gamma.scale', 'moranI', 'tc', 'mast', 'rgd', 'rds', 'dayl', 'prcp', 'drt', ,'contag','aggindex','entropy','simpindx','is.pred')])
-#     tiledat <- rbind(rslt1.avg, tiledat, fill=TRUE)
-#     tiledat[edge.tm  < 0, edge.tm := 78][inf.area < 0, inf.area := 0][sounder.weeks < 0, sounder.weeks := 0][max.inc < 0, max.inc := 0]
-#     tiledat.est[edge.tm  < 0, edge.tm := 78][inf.area < 0, inf.area := 0][sounder.weeks < 0, sounder.weeks := 0][max.inc < 0, max.inc := 0]
-
-    # not a great plot, but shows how some of the estimated values fit in with the simualted ones
-#     plot(compare[,4:11], col=unclass(as.factor(compare[,is.pred*v]))+1*compare[,is.pred], pch=compare[,is.pred])
 
 maps.plot <- function(preds.table, rslt, rslt1, tmtab3, variables){
-    ## eventually: plot probabilities by tile on national map (See landsel_plot.R)
-    ### ___this stuff takes a long time, skip if you don't need a new map or have already run it ___ ###
-    ## should probably make this a target if possible
-#     pred.lands(pred.var = 'est', atype = 'glmer', resp.vec = est.glmer.pdct, tiledat = tiledat)
-    browser()
+    # national maps of response variables
+    # not looped by targets
     library(sf)
     library(raster)
     library(terra)
 
+    # grab the selected lands shapefile if it exists (not the first run of this function)
     sel.files <- list.files('./Landscape_Setup/NND_Lands/4_Output/sel_plands', full.names=TRUE)
     if (file.exists('./Input/lands_bound/sel_bounds.shp')){
         selpts.box <- st_read('./Input/lands_bound/sel_bounds.shp')
 #         same.tiles <- all(selpts.box$l %in% unique(rslt[,l]))
     } else {
-        ## this for when the simulation runs matches the selected tiles (after cluster run)
-#         same.tiles <- FALSE
-#     }
-#     if(same.tiles == FALSE){
+        # creates the polygons outlining the borders of the landscape tiles
+        # this is slow, so only runs if necessary
         selpts.box <- bind(lapply(sel.files, function(tif){
             box <- rasterToPolygons(reclassify(raster(tif), matrix(c(0,1,1), ncol=3)), dissolve=TRUE)[1]
             return(box)
         }))
+        # get the names of the selected files
         name <- tstrsplit(sel.files, '_')
         name <- name[length(name)]
         name <- unlist(tstrsplit(unlist(name), '\\.', keep=1))
         name <- as.numeric(name)
         selpts.box <- SpatialPolygonsDataFrame(selpts.box, data=data.table(l=name))
+        # create the output shapefile
         raster::shapefile(x=selpts.box, file='./Input/lands_bound/sel_bounds.shp')
     }
 
+    # same as above, but for all tiles
     if (file.exists('./Input/lands_bound/all_bounds.shp')){
         pot.pts.box <- st_read('./Input/lands_bound/all_bounds.shp')
     } else {
@@ -706,14 +691,11 @@ maps.plot <- function(preds.table, rslt, rslt1, tmtab3, variables){
         raster::shapefile(x=pot.pts.box, file='./Input/lands_bound/all_bounds.shp')
     }
 
+    # same as above but for edge (non-candidate) tiles
     if (file.exists('./Input/lands_bound/edge_bounds.shp')){
         edgepts.box <- st_read('./Input/lands_bound/edge_bounds.shp')
 #         same.tiles <- all(selpts.box$l %in% unique(rslt[,l]) == FALSE)
     } else {
-        ## this for when the simulation runs matches the selected tiles (after cluster run)
-#         same.tiles <- FALSE
-#     }
-#     if(same.tiles == FALSE){
         edge.files <- list.files('./Landscape_Setup/Pipeline_SSF_Weekly/4_Output/edge_plands', full.names=TRUE)
         edgepts.box <- bind(lapply(edge.files, function(tif){
             box <- rasterToPolygons(reclassify(raster(tif), matrix(c(0,1,1), ncol=3)), dissolve=TRUE)[1]
@@ -726,83 +708,63 @@ maps.plot <- function(preds.table, rslt, rslt1, tmtab3, variables){
         raster::shapefile(x=edgepts.box, file='./Input/lands_bound/edge_bounds.shp')
     }
 
+    # get the contiguous us state border shapefile
     contus <- st_read('./Input/contus_shp/') # for windows must be directory, might be something else for linux?
+    # grab the geographic data from a landscape tile to make sure everything matches
     tile.one <- list.files('./Landscape_Setup/NND_Lands/4_Output/sel_plands', full.names=TRUE)[1]
     rast.crs <- crs(raster(tile.one))
     contus.transform <- st_transform(contus[1], rast.crs)
 
+    # create bounding box of contiguous US
     bounds <- st_bbox(contus.transform)
     xrng <- bounds[c(1,3)]
     yrng <- bounds[c(2,4)]
 
-    map.scale = 100
-    ysz <- round(log(yrng[2] - yrng[1]) * map.scale)
-    xsz <- round(log(xrng[2] - xrng[1]) * map.scale)
-
-    ###___ skip to here ___###
-
-
-    # 1 tile for each variable type
-#     lapply(c('est','edge.tm','max.dist','inf.area','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'), function(pred.var){
-#     lapply(c('inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'), function(pred.var){
+    # loop through response variables
     lapply(c('est','inf.spd','sounder.weeks','prop.infd','max.inc','exc'), function(pred.var){
-#         max.val <- max(tiledat[, ..pred.var])
+        # get the values predicted by the models to set the ranges necessary for the map colors
         pred.var.vals <- values(vect(merge(pot.pts.box, preds.table[,.SD,.SDcols=c('l','var',pred.var)], by='l')))
         pred.var.vals$edge <- 0
         pred.var.vals.edge <- values(vect(merge(edgepts.box, preds.table[,.SD,.SDcols=c('l','var',pred.var)], by='l')))
         pred.var.vals.edge$edge <- 1
         pred.var.vals.all <- rbind(pred.var.vals, pred.var.vals.edge)
-
         max.val <- max(pred.var.vals.all[, 3])
         min.val <- min(pred.var.vals.all[, 3])
+        # scaled response variables from 0 to 1
         pixels <- (pred.var.vals.all[,3]-min.val)/(max.val-min.val)
-        print(range(pixels))
         pred.var.vals.all$pixels <- pixels
+        # define color gradient
         color.grads <- colorRampPalette(c('blue','purple','red','orange','yellow'))
-#         color.grads <- colorRampPalette(c('purple','blue','darkgreen','yellow','orange','red'))
+        # match colors to response variable
         rank <- as.factor( as.numeric( cut(pixels, 150)))
         pred.var.vals.all$rank <- as.numeric(as.character(rank))
         pred.var.vals <- pred.var.vals.all[pred.var.vals.all$edge == 0,]
         pred.var.vals.edge <- pred.var.vals.all[pred.var.vals.all$edge == 1,]
         setDT(variables)
         variables[,v:=1:.N]
+        # plot
         png(paste0('./Output/figures/lm_tile_map_', pred.var, '.png'), width=2000, height=1000)
-#         par(mfrow=c(2,8))
-#         layout.show()
         par(oma=c(0.2,0.2,3,0.2))
         layout(matrix(c(seq(1,8),rep(9,4)), nrow=3, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,1,0.3))
         lapply(c(3,1,4,2,7,5,8,6), function(x){
             variable.line <- unlist(variables[v==x, 1:3])
             #     connect tiledat and prediction data to specific tiles
-#             pot.pts.box.sub <- vect(merge(pot.pts.box, preds.table[var==x, .SD, .SDcols=c('l', pred.var)], by='l'))
             selpts.box.sub <- vect(merge(selpts.box, preds.table[var==x, .SD, .SDcols=c('l', pred.var)], by='l'))
-#             edgepts.box.sub <- vect(merge(edgepts.box, preds.table[var==x, .SD, .SDcols=c('l', pred.var)], by='l'))
-            #         plot(selpts.box.sub, col=NA, pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n')
+            # escape time needs its own form, mostly just flipping the colors because lower = worse case
             if (pred.var %in% c('tm.esc')) {
                 terra::plot(vect(merge(pot.pts.box, pred.var.vals[pred.var.vals$var == x,], by='l')), col=rev(color.grads(150))[pred.var.vals[pred.var.vals$var == x,'rank']], pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n', border=NA)
                 terra::plot(vect(merge(edgepts.box, pred.var.vals.edge[pred.var.vals.edge$var==x,], by='l')), col=rev(color.grads(150))[pred.var.vals.edge[pred.var.vals.edge$var == x,'rank']], pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n', border=NA, add=TRUE)
 #                 mtext(paste(pred.var, 'vars', x), 3, 0, cex=2)
                 mtext(paste('contact', variable.line[1], '| variant', variable.line[2], '| density', variable.line[3]), 3, -1.5, cex=1.5)
-    #             plot(pot.pts.box.sub, col=NA, border='gray', add=TRUE)#, fill=rgb())
-    #             plot(pot.pts.box.sub[2], border=NA, add=TRUE), col=rgb(unlist(pot.pts.box.sub[,2])/max.val,0,0))
-#                 terra::plot(selpts.box.sub[,2], col=NA, border='yellow', fill=NA, lwd=2, alpha=0.7, add=TRUE)
-#                 terra::plot(edgepts.box.sub[,2], col=rgb(1-(values(edgepts.box.sub)[,2]-min.val)/(max.val-min.val),0,0), border='yellow', fill=NA, lwd=2, alpha=0.7, add=TRUE)
-    #             terra::plot(selpts.box.sub, col='blue', border='yellow', lwd=2,add=TRUE)
                 plot(contus.transform, col=NA, lwd=1.5, alpha=0, fill=NA, border='darkgrey', add=TRUE)
-
             } else {
-#                 if(pred.var == 'inf.spd') browser()
                 terra::plot(vect(merge(pot.pts.box, pred.var.vals[pred.var.vals$var == x,], by='l')), col=color.grads(150)[pred.var.vals[pred.var.vals$var == x,'rank']], pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n', border=NA)
                 terra::plot(vect(merge(edgepts.box, pred.var.vals.edge[pred.var.vals.edge$var == x,], by='l')), col=color.grads(150)[pred.var.vals.edge[pred.var.vals.edge$var == x, 'rank']], pch=1, cex=1.3, xlim=xrng, ylim=yrng, ann=FALSE, asp=1, xaxt='n', yaxt='n', bty='n', border=NA, add=TRUE)
                 mtext(paste('contact', variable.line[1], '| variant', variable.line[2], '| density', variable.line[3]), 3, -1.5, cex=1.5)
-    #             plot(pot.pts.box.sub, col=NA, border='gray', add=TRUE)#, fill=rgb())
-    #             plot(pot.pts.box.sub[2], border=NA, add=TRUE), col=rgb(unlist(pot.pts.box.sub[,2])/max.val,0,0))
-#                 terra::plot(selpts.box.sub[,2], col=NA, border='yellow', fill=NA, lwd=2, alpha=0.7, add=TRUE)
-#                 terra::plot(edgepts.box.sub[,2], col=rgb((values(edgepts.box.sub)[,2]-min.val)/(max.val-min.val),0,0), border='yellow', fill=NA, lwd=2, alpha=0.7, add=TRUE)
-    #             terra::plot(selpts.box.sub, col='blue', border='yellow', lwd=2,add=TRUE)
                 plot(contus.transform, col=NA, lwd=1.5, alpha=0, fill=NA, border='darkgrey', add=TRUE)
             }
         })
+        # add a legend
         mtext(resp.translate(pred.var), 3, 0, cex=2, outer=TRUE)
         legendimg <- as.raster(matrix(color.grads(150), nrow=1))
         plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(pred.var), cex.main=1.5)
@@ -814,97 +776,126 @@ maps.plot <- function(preds.table, rslt, rslt1, tmtab3, variables){
 }
 
 
-    # use the 2 most important landscape attributes, vary them for the axes, and for each combination of contact, variant, and density make a colored heatmap of response value predictions
-    # mark points where actual landscapes were
-    # use averages of other landscape values for model inputs
-    ## establishment
-    # none of the landscape values are "significant", but the biggest effect size is from gamma.shape and moranI
+## heatmaps
+    heatmap <- function(mod, oos.tile.dat, oos.tile.dat.edge, lambda.mins){
+        # looped by targets inputs on mod and lambda.mins
+        # use the 2 most important landscape attributes, vary them for the axes, and for each combination of contact, variant, and density make a colored heatmap of response value predictions
+        # mark points where actual landscapes were
+        # use averages of other landscape values for model inputs
 
-    ## heatmaps
-
-    heatmap <- function(mod, oos.tile.dat, oos.tile.dat.edge){
-        browser()
-        coefs <- coefficients(mod[[1]])[[1]]$l[1,]
-        coefs <- coefs[which(names(coefs) %in% c('(Intercept)', 'contactLo','density5','variantPol','contactLo:density5','contactLo:variantPol')==FALSE)]
-        if (length(coefs) >=2){
+        # pull in model coefficients
+        coefs <- coef(mod[[1]], s=lambda.mins)
+        # keep only the landscape-associated values
+        coefs <- coefs[(rownames(coefs) %in% c('(Intercept)', 'contactLo', 'density5', 'variantPol')==FALSE), 1]
+        if (length(coefs[coefs!=0]) >=2){
+            # grab the two coefficients with the greatest effect sizes for the plot axes
+            ## make sure these leave negative coefficients as negative
             coefs <- sort(abs(unlist(coefs)), decreasing=TRUE)[1:2]
+            # grab coefficient names
             cnames <- names(coefs)
             cf1nm <- cnames[1]
             cf2nm <- cnames[2]
+            # get the tile data for the non-simulated landscapes
+            tiledats <- rbind(oos.tile.dat, oos.tile.dat.edge, fill=TRUE, use.names=TRUE)
+            # get ranges of coefficients for each
+            coef1.range <- range(tiledats[,..cf1nm])
+            coef2.range <- range(tiledats[,..cf2nm])
+            # create a table with all combinations of the active coefficients and the non-landscape variables
+            ht.table <- CJ(
+                cf1 = seq(coef1.range[1], coef1.range[2], length.out=25)
+                , cf2 = seq(coef2.range[1], coef2.range[2], length.out=25)
+                , density = c(1.5,5)
+                , contact = c('Hi','Lo')
+                , variant = c('DR','Pol'))
+            # keep the landscape variables from the tile data and average them
+            landval.avgs <- apply(oos.tile.dat[,c(3:6,12:29)], 2, mean)
+            # filter out landscape variables that are included in the plot axes
+            landval.avgs <- landval.avgs[names(landval.avgs) %in% names(coefs) == FALSE]
+            # get the name of the response variable
+            resp.var <- str_trim(unlist(tstrsplit(unlist(tstrsplit(paste(mod[[1]]$call[3]), ',', keep=2)), ']', keep=1)))
+            setnames(ht.table, c('cf1','cf2'), c(cnames[1], cnames[2]))
+            # connect coefficient combination with average landscape variables
+            ht.table <- cbind(ht.table, as.data.table(t(landval.avgs)))
+            browser()
+            # set population/epidemiology variables as factors
+            ht.table[,names(.SD) := lapply(.SD, as.factor), .SDcols=c('density','contact','variant')]
+            # predict the response for each variable value combination
+            ht.table[,pred := predict(mod[[1]], newx=model.matrix(~., ht.table)[,-1], s=lambda.mins)]#, type='response', allow.new.levels=TRUE)]
+            # make table of variaable combinations to feed into mapply function below (to generate 8 heatmaps)
+            quick.vars <- unique(ht.table[,.(density, contact, variant)])
+            # define color ramp
+            color.grads <- colorRampPalette(c('blue','purple','red','orange','yellow'))
+            # match the color gradient with response variable values
+            ht.table[,rank := as.factor( as.numeric( cut(pred, 150)))]
+            ht.table[,colr := color.grads(150)[as.numeric(as.character(rank))]]
+            # plot
+            png(paste0('./Output/figures/heat_test_', cf1nm, '_', cf2nm,'_', resp.var, '.png'), width=1700, height=1050)
+            par(mfrow=c(2,4), oma=c(1,1,4,1))
+            layout(matrix(c(1:9,9,9,9), nrow=3, ncol=4, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,1,0.3))
+            mapply(function(dens, cont, varnt){
+                rows <- ht.table[,which(density == dens & contact == cont & variant == varnt)]
+    #             sub.rank <- rank[rows]
+                ht.sub <- ht.table[rows, ]
+                plot(unlist(ht.sub[,1]), unlist(ht.sub[,2]), col=ht.sub[,colr], pch=15, cex=4,ann=FALSE, pty='s')
+                mtext(paste('density:', dens,'| contact:', cont, '| variant:', varnt), 3, 1.2, cex=1.4)
+                mtext(exp.translate(cf1nm), 1, 2)
+                mtext(exp.translate(cf2nm), 2, 2)
+                tile.pts <- tiledats[variant == varnt & contact == cont & density == dens,.SD, .SDcols=c(cf1nm, cf2nm)]
+                points(tile.pts)
+            }, dens=quick.vars[,density], cont=quick.vars[,contact], var=quick.vars[,variant])
+            mtext(resp.translate(resp.var), 3, 2, outer=TRUE, cex=2)
+            # create gradient legend object
+            legendimg <- as.raster(matrix(color.grads(150), nrow=1))
+            plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(resp.var), cex.main=1.5)
+            min.val2 <- floor(log10(abs(min(ht.table[,pred]))))
+            mtext(round(seq(range(ht.table[,pred])[1], range(ht.table[,pred])[2], length.out=5), -min.val2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
+            rasterImage(legendimg, 0, 0, 1, 1)
+            dev.off()
         } else {
+            # if there aren't two or more landscape attributes that are kept by the lasso regression, no heatmap is possible
             print('this isn\'t going to work')
         }
-        tiledats <- rbind(oos.tile.dat, oos.tile.dat.edge, fill=TRUE, use.names=TRUE)
-        coef1.range <- range(tiledats[,..cf1nm])
-        coef2.range <- range(tiledats[,..cf2nm])
-        ht.table <- CJ(
-              cf1 = seq(coef1.range[1], coef1.range[2], length.out=25)
-            , cf2 = seq(coef2.range[1], coef2.range[2], length.out=25)
-            , density = c(1.5,5)
-            , contact = c('Hi','Lo')
-            , variant = c('DR','Pol'))
-        landval.avgs <- apply(oos.tile.dat[,6:18], 2, mean)
-        landval.avgs <- landval.avgs[names(landval.avgs) %in% names(coefs) == FALSE]
-        resp.var <- paste(formula(mod[[1]])[2])
-        landval.avgs <- c(landval.avgs, tm = 52)
-        setnames(ht.table, c('cf1','cf2'), c(cnames[1], cnames[2]))
-        ht.table <- cbind(ht.table, as.data.table(t(landval.avgs)))
-        ht.table[,pred := predict(mod[[1]], re.form=NA, newdata=ht.table, type='response', allow.new.levels=TRUE)]
-#         pixels <- (ht.table[,pred]-min(ht.table[,pred]))/(max(ht.table[,pred])-min(ht.table[,pred]))
-        quick.vars <- unique(ht.table[,.(density, contact, variant)])
-        color.grads <- colorRampPalette(c('blue','purple','red','orange','yellow'))
-#         color.grads <- colorRampPalette(c('purple','blue','darkgreen','yellow','orange','red'))
-        ht.table[,rank := as.factor( as.numeric( cut(pred, 150)))]
-        ht.table[,colr := color.grads(150)[as.numeric(as.character(rank))]]
-        png(paste0('./Output/figures/heat_test_', cf1nm, '_', cf2nm,'_', resp.var, '.png'), width=1700, height=1050)
-        par(mfrow=c(2,4), oma=c(1,1,4,1))
-        layout(matrix(c(1:9,9,9,9), nrow=3, ncol=4, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,1,0.3))
-        mapply(function(dens, cont, varnt){
-            rows <- ht.table[,which(density == dens & contact == cont & variant == varnt)]
-#             sub.rank <- rank[rows]
-            ht.sub <- ht.table[rows, ]
-            plot(unlist(ht.sub[,1]), unlist(ht.sub[,2]), col=ht.sub[,colr], pch=15, cex=4,ann=FALSE, pty='s')
-            mtext(paste('density:', dens,'| contact:', cont, '| variant:', varnt), 3, 1.2, cex=1.4)
-            mtext(exp.translate(cf1nm), 1, 2)
-            mtext(exp.translate(cf2nm), 2, 2)
-            tile.pts <- tiledats[variant == varnt & contact == cont & density == dens,.SD, .SDcols=c(cf1nm, cf2nm)]
-            points(tile.pts)
-        }, dens=quick.vars[,density], cont=quick.vars[,contact], var=quick.vars[,variant])
-        mtext(resp.translate(resp.var), 3, 2, outer=TRUE, cex=2)
-        legendimg <- as.raster(matrix(color.grads(150), nrow=1))
-        plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(resp.var), cex.main=1.5)
-        min.val2 <- floor(log10(abs(min(ht.table[,pred]))))
-        mtext(round(seq(range(ht.table[,pred])[1], range(ht.table[,pred])[2], length.out=5), -min.val2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
-        rasterImage(legendimg, 0, 0, 1, 1)
-        dev.off()
-
-
+    return(NA)
     }
 
 
 
 resp.translate <- function(rv){
+    # translates response variable codes into text for labeling figures
+    print(rv)
     if(rv == 'est') rv.out <- 'Epidemic Establishment Proportion'
     if(rv == 'inf.spd') rv.out <- 'Epidemic Wave Max Speed (km/wk)'
     if(rv == 'sounder.weeks') rv.out <- 'Epidemic Intensity (Sounder-Weeks)'
     if(rv == 'prop.infd') rv.out <- 'Proportion of Cells Infected'
     if(rv == 'max.inc') rv.out <- 'Maximum Incidence'
     if(rv == 'exc') rv.out <- 'Proportion of Epidemics Escaped by 52 Weeks'
+    if(rv == 'tm.esc') rv.out <- 'Proportion of Epidemics Escaped by 52 Weeks'
     return(rv.out)
 }
 
 exp.translate <- function(exp.var){
+    # translates explanatory variable codes into text for labeling figures
     if(exp.var == 'nnd_med') ev.out <- 'Median Nearest Neighbor Distance'
+    if(exp.var == 'nnd_range') ev.out <- 'Range Nearest Neighbor Distance'
     if(exp.var == 'nnd_mean') ev.out <- 'Mean Nearest Neighbor Distance'
     if(exp.var == 'nnd_cv') ev.out <- 'Nearest Neighbor Coefficient of Variation'
+    if(exp.var == 'nnd_sd') ev.out <- 'Nearest Neighbor Standard Deviation'
     if(exp.var == 'mvmt.mean') ev.out <- 'Mean Sounder Movement'
     if(exp.var == 'mvmt.cv') ev.out <- 'Sounder Movement Coefficient of Variation'
-    if(exp.var == 'moranI') ev.out <- 'Landscape Preference Autocorrelation'
-    if(exp.var == 'rgd') ev.out <- 'Landscape Ruggedness'
+    if(exp.var == 'moranI') ev.out <- 'Landscape Preference Autocorrelation (Moran\'s I)'
+    if(exp.var == 'gearyC') ev.out <- 'Landscape Preference Autocorrelation (Geary\'s C)'
     if(exp.var == 'tc') ev.out <- 'Tree Cover'
     if(exp.var == 'mast') ev.out <- 'No. Masting Species'
+    if(exp.var == 'rgd') ev.out <- 'Landscape Ruggedness'
     if(exp.var == 'rds') ev.out <- 'Roads Index'
+    if(exp.var == 'dayl') ev.out <- 'Daylight'
+    if(exp.var == 'prcp') ev.out <- 'Precip'
     if(exp.var == 'tmax') ev.out <- 'Mean Annual Maximum Daily Temperature'
+    if(exp.var == 'tmin') ev.out <- 'Mean Annual Minimum Daily Temperature'
     if(exp.var == 'simpindx') ev.out <- 'Landscape Cover Simpson Diversity Index'
+    if(exp.var == 'drt') ev.out <- 'Drought'
+    if(exp.var == 'contag') ev.out <- 'Contagion'
+    if(exp.var == 'aggindex') ev.out <- 'aggregaiton index'
+    if(exp.var == 'entropy') ev.out <- 'entropy'
     return(ev.out)
 }
