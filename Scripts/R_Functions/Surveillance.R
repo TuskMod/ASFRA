@@ -1,110 +1,212 @@
-Surveillance <- function(pop, i, sample.design, grid.list, inc, POSlive, POSdead, POSlive_locs, POSdead_locs, pigs_sampled_timestep) {
+## VR: Madison's Surviellance function! 
+
+Surveillance <- function(pop, i, sample.design, grid.list, inc,
+                         sensitivity, specificity, CarcassDet) {
+  # print("Surveillance function.")
   
-  # Check if the current fiscal week exists in sample.design
-  rows_to_sample <- sample.design[sample.design$fiscal_week == i, ]
+  # Check for current week in sample.design
+  # rows_to_sample <- sample.design[sample.design$fiscal_week == i, ]
+  fiscal_week_current <- ((i - 1) %% 52) + 1
+  rows_to_sample <- sample.design[sample.design$fiscal_week == fiscal_week_current, ]
   
+  
+  # Initialize outputs
+  live_infectious_sampled <- 0
+  live_recovered_sampled <-0
+  dead_infected_sampled <- 0 #POSdead
+  live_infected_sampled_locs <- character(0)
+  dead_infected_sampled_locs <- character(0)
+  pigs_sampled <- 0
+  cells_sampled <- character(0)
+  infectious_on_property <- 0 # currently just I
+  recovered_on_property <- 0
+  living_on_property <- 0
+  infectiousC_on_property <- 0
+  dead_on_property <- 0
+  true_infected_sampled_cells <- 0 # currently just I
+  true_recovered_sampled_cells <- 0
+  sampled_cells_this_week <- character(0)
+  total_living_pigs_sampled_cells <- 0
+  true_infected_dead_sampled_cells <- 0
+  total_dead_pigs_sampled_cells <- 0
+  
+  
+  # If no sampling is planned for this week, return zeroes for all below variables
   if (nrow(rows_to_sample) == 0) {
-    POSlive[[i]] <- 0
-    POSdead[[i]] <- 0
-    POSlive_locs[[i]] <- 0
-    POSdead_locs[[i]] <- 0
-    pigs_sampled_timestep[[i]] <- 0
-    #print("No surveillance this week. Carry on, pigs.")
-    #print(paste0("# of pigs sampled this timestep: ", pigs_sampled_timestep[[i]]))
-    return(list(pop, POSlive, POSdead, POSlive_locs, POSdead_locs, pigs_sampled_timestep))
+    surv_summary <- data.frame(
+      timestep = i,
+      live_infectious_sampled = live_infectious_sampled,
+      live_recovered_sampled = live_recovered_sampled,
+      dead_infected_sampled = dead_infected_sampled,
+      live_infected_sampled_locs = NA,
+      dead_infected_sampled_locs = NA,
+      pigs_sampled = pigs_sampled,
+      cells_sampled = NA,
+      infectious_on_property = infectious_on_property,
+      recovered_on_property = recovered_on_property,
+      living_on_property = living_on_property,
+      infectiousC_on_property = infectiousC_on_property,
+      dead_on_property = dead_on_property,
+      true_infected_sampled_cells = true_infected_sampled_cells,
+      true_recovered_sampled_cells = true_recovered_sampled_cells,
+      total_living_pigs_sampled_cells = total_living_pigs_sampled_cells,
+      true_infected_dead_sampled_cells = true_infected_dead_sampled_cells,
+      total_dead_pigs_sampled_cells = total_dead_pigs_sampled_cells
+    )
+    return(list(pop = pop, surveillance_data = surv_summary))
   }
   
-  #print("Conducting surveillance...")
-  
-  # Initialize
-  pigs_sampled <- 0  # Track pigs sampled so far
-  infected_pigs_found <- FALSE  # Flag to track if any infected pigs are found
-  
-  # Loop through the rows in sample.design for the fiscal week to identify sampling locations
+  # Loop through locations for this timestep
   for (row_index in 1:nrow(rows_to_sample)) {
-    sampling_cells <- rows_to_sample$sampling_loc[[row_index]]  # Cells to sample for this location
-    current_quantity <- rows_to_sample$Quantity[row_index]  # Quantity to sample for this location
-    cells_with_pigs <- character(0)  # Reset cells for this location
+    sampling_cells <- rows_to_sample$sampling_loc[[row_index]]  # cells that could be sampled
+    current_quantity <- rows_to_sample$quantity[row_index]  # how many need to be sampled
+    cells_with_pigs <- character(0)
     
-    # Loop through the cells specified for this location
+    # Check which cells have pigs
     for (sampling_cell in sampling_cells) {
-      matching_rows <- which(pop[, 3] == sampling_cell)  # Find matching rows in pop
+      matching_rows <- which(pop[, 3] == sampling_cell)
       if (length(matching_rows) > 0) {
-        cells_with_pigs <- unique(c(cells_with_pigs, sampling_cell))  # Add unique cells with pigs to the list
+        cells_with_pigs <- unique(c(cells_with_pigs, sampling_cell))
       }
     }
     
-    # Check if there are enough pigs available for sampling at this location
+    rows_in_sampling_cells <- which(pop[, 3] %in% cells_with_pigs)
+    # Track true number of I's in all cells that could be sampled
+    infectious_on_property <- infectious_on_property + sum(pop[rows_in_sampling_cells, 10] > 0)
+    # Track true number of R's in all cells that could be sampled
+    recovered_on_property <- recovered_on_property + sum(pop[rows_in_sampling_cells, 11] > 0)
+    # Track total living population in all cells that could be sampled
+    living_on_property <- living_on_property + sum(rowSums(pop[rows_in_sampling_cells, 8:11, drop = FALSE]) > 0)
+    # Track true number of C's in all cells that could be sampled
+    infectiousC_on_property <- infectiousC_on_property + sum(pop[rows_in_sampling_cells, 12] > 0)
+    # Track total dead population in all cells that could be sampled
+    dead_on_property <- dead_on_property + sum(rowSums(pop[rows_in_sampling_cells, 12:13, drop = FALSE]) > 0)
+    
+    
     pigs_available_to_sample <- sum(pop[, 3] %in% cells_with_pigs)
+    if (pigs_available_to_sample == 0) next
     
-    if (pigs_available_to_sample == 0) {
-      # print(paste("No pigs available to sample at location. Skipping location."))
-      next  # Skip this iteration and move to the next location
-    } else {
-      # print(paste("Available pigs to sample at location:", pigs_available_to_sample))
-    }
+    ## --- Carcass Surveillance ---
+    # doesn't count towards quantity needing to be sampled based on county
+    carcass_rows <- which(pop[, 3] %in% cells_with_pigs)
+    carcasses_C <- carcass_rows[which(pop[carcass_rows, 12] > 0)]  # infectious carcasses in area
+    carcasses_Z <- carcass_rows[which(pop[carcass_rows, 13] > 0)]  # non-infectious carcasses in area
+    total_carcasses <- length(carcasses_C) + length(carcasses_Z)  # total available to find
     
-    # Sample pigs until the required quantity is met
-    while (pigs_sampled < current_quantity && length(cells_with_pigs) > 0) {
-      selected_cell <- sample(cells_with_pigs, 1)  # Randomly select a cell
-      matching_rows <- which(pop[, 3] == selected_cell)  # Find rows for this cell
-      
-      pigs_found_in_cell <- FALSE  # Flag to check if pigs are found in the selected cell
-      
-      # Iterate over the rows in the selected cell
-      for (row in matching_rows) {
-        # Infectious pigs (columns 9 and 10)
-        if (any(pop[row, c(9, 10)] > 0)) {
-          pigs_sampled <- pigs_sampled + 1
-          pop <- pop[-row, ]  # Remove infected pig
-          POSlive[[i]] <- 1
-          POSlive_locs[[i]] <- selected_cell
-          pigs_found_in_cell <- TRUE
-          infected_pigs_found <- TRUE  # Mark that an infected pig was found
-        }
-        # Non-infectious pigs (columns 8 and 11)
-        else if (any(pop[row, c(8, 11)] > 0)) {
-          pigs_sampled <- pigs_sampled + 1
-          pop <- pop[-row, ]  # Remove non-infected pig
-          pigs_found_in_cell <- TRUE
+    n_carcasses_to_sample <- floor(CarcassDet * total_carcasses)  # round down
+    all_carcasses <- c(carcasses_C, carcasses_Z)
+    
+    # Sampling carcasses if any are available
+    if (n_carcasses_to_sample > 0 && length(all_carcasses) > 0) {
+      sampled_carcasses <- sample(all_carcasses, min(n_carcasses_to_sample, length(all_carcasses)))
+      for (row in sampled_carcasses) {
+        cell <- pop[row, 3]
+        
+        if (pop[row, 12] > 0) {
+          if (rbinom(1, 1, sensitivity) == 1) {
+            dead_infected_sampled <- dead_infected_sampled + 1
+            dead_infected_sampled_locs <- unique(c(dead_infected_sampled_locs, cell))
+          }
+        } else if (pop[row, 13] > 0) {
+          if (rbinom(1, 1, 1 - specificity) == 1) {
+            dead_infected_sampled <- dead_infected_sampled + 1
+            dead_infected_sampled_locs <- unique(c(dead_infected_sampled_locs, cell))
+          }
         }
         
-        # If we reach the required quantity, break out of the loop
+        # Instead of removing the row here, we just track it
+        cells_sampled <- unique(c(cells_sampled, cell))
+      }
+    }
+    
+    ## --- Live Pig Surveillance ---
+    # counts toward quantity needing sampled
+    while (pigs_sampled < current_quantity && length(cells_with_pigs) > 0) {
+      selected_cell <- sample(cells_with_pigs, 1)
+      matching_rows <- which(pop[, 3] == selected_cell)
+      pigs_found <- FALSE
+      
+      for (row in matching_rows) {
+        # Infectious (I)
+        if (pop[row, 10] > 0) {
+          pigs_sampled <- pigs_sampled + 1
+          if (rbinom(1, 1, sensitivity) == 1) {
+            live_infectious_sampled <- live_infectious_sampled + 1
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
+          }
+          pigs_found <- TRUE
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
+          
+          # Recovered (R)
+        } else if (pop[row, 11] > 0) {
+          pigs_sampled <- pigs_sampled + 1
+          if (rbinom(1, 1, sensitivity) == 1) {
+            live_recovered_sampled <- live_recovered_sampled + 1
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
+          }
+          pigs_found <- TRUE
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
+          
+          # Susceptible or Exposed (S or E)
+        } else if (any(pop[row, c(8, 9)] > 0)) {
+          pigs_sampled <- pigs_sampled + 1
+          if (rbinom(1, 1, 1 - specificity) == 1) {
+            false_positives <- false_positives + 1  # Optional: Track separately
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
+          }
+          pigs_found <- TRUE
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
+        }
+        
         if (pigs_sampled >= current_quantity) break
       }
       
-      # If no pigs were found in the selected cell, remove it from the list
-      if (!pigs_found_in_cell) {
+      if (!pigs_found) {
         cells_with_pigs <- setdiff(cells_with_pigs, selected_cell)
-        # print(paste("No pigs in cell", selected_cell, "- removing from pool."))
       }
-
-      # If we haven't reached the required quantity, continue sampling
-      # if (pigs_sampled < current_quantity) {
-      #   print(paste("Still need more pigs. Pigs sampled so far:", pigs_sampled))
-      # }
     }
-    
-    # Final message if the sampling doesn't reach the required quantity for this location
-    # if (pigs_sampled < current_quantity) {
-    #   print(paste("Not enough pigs found to meet sampling requirement at location", row_index))
-    # } else {
-    #   print(paste("Surveillance complete for location", row_index))
-    # }
   }
   
-  # Add the final message to indicate if any infected pigs were found
-  # if (infected_pigs_found) {
-  #   print("At least one infected pig was found during surveillance (columns 9 or 10 > 0).")
-  # } else {
-  #   print("No infected pigs were found during surveillance.")
-  # }
+  # Count how many I or R pigs are in the cells that were actually sampled
+  if (length(sampled_cells_this_week) > 0) {
+    # Use the sampled cells list to calculate the number of infected pigs (I + R) in the sampled cells
+    rows_in_sampled_cells <- which(pop[, 3] %in% sampled_cells_this_week)
+    true_infected_sampled_cells <- sum(rowSums(pop[rows_in_sampled_cells, 10, drop = FALSE]) > 0)
+    true_recovered_sampled_cells <- sum(rowSums(pop[rows_in_sampled_cells, 11, drop = FALSE]) > 0)
+    total_living_pigs_sampled_cells <- sum(rowSums(pop[rows_in_sampled_cells, 8:11, drop = FALSE]) > 0)
+    true_infected_dead_sampled_cells <- sum(rowSums(pop[rows_in_sampled_cells, 12, drop = FALSE]) > 0)
+    total_dead_pigs_sampled_cells <- sum(rowSums(pop[rows_in_sampled_cells, c(12, 13), drop = FALSE]) > 0)
+    
+  } else {
+    true_infected_sampled_cells <- 0
+    total_living_pigs_sampled_cells <- 0
+    true_infected_dead_sampled_cells <- 0
+    true_recovered_sampled_cells <- 0
+    total_dead_pigs_sampled_cells <- 0
+  }
   
-  # Save the total number of pigs sampled for this fiscal week
-  pigs_sampled_timestep[[i]] <- pigs_sampled
-  #print(paste0("# of pigs sampled this timestep: ", pigs_sampled_timestep[[i]]))
-  # print(paste0("Length of variable that POSlive is: ", length(POSlive)))
-  # print(paste0("Length of variable that pigs_sampled_timestep is: ", length(pigs_sampled_timestep)))
+  ## Build tidy output for this timestep
+  surv_summary <- data.frame(
+    timestep = i,
+    # live_infected_sampled = live_infected_sampled, #POSlive
+    live_infectious_sampled = live_infectious_sampled,
+    live_recovered_sampled = live_recovered_sampled,
+    dead_infected_sampled = dead_infected_sampled, #POSdead
+    live_infected_sampled_locs = if (length(live_infected_sampled_locs) == 0) NA else paste(live_infected_sampled_locs, collapse = ","),
+    dead_infected_sampled_locs = ifelse(length(dead_infected_sampled_locs) == 0, NA, paste(dead_infected_sampled_locs, collapse = ",")),
+    pigs_sampled = pigs_sampled,
+    cells_sampled = ifelse(length(cells_sampled) == 0, NA, paste(unique(cells_sampled), collapse = ",")),
+    infectious_on_property = infectious_on_property,
+    recovered_on_property = recovered_on_property,
+    living_on_property = living_on_property,
+    infectiousC_on_property = infectiousC_on_property,
+    dead_on_property = dead_on_property,
+    true_infected_sampled_cells = true_infected_sampled_cells,
+    true_recovered_sampled_cells = true_recovered_sampled_cells,
+    total_living_pigs_sampled_cells = total_living_pigs_sampled_cells,
+    true_infected_dead_sampled_cells = true_infected_dead_sampled_cells,
+    total_dead_pigs_sampled_cells = total_dead_pigs_sampled_cells
+  )
   
-  return(list(pop, POSlive, POSdead, POSlive_locs, POSdead_locs, pigs_sampled_timestep))
+  return(list(pop = pop, surveillance_data = surv_summary))
 }

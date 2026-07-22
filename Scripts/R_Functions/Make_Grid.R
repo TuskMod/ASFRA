@@ -39,7 +39,7 @@
 #optional: grid.opt, 
 #Make_Grid(object)
 
-Make_Grid <- function(object, grid.opt="homogeneous", sample=0, sample.design=NULL){
+  Make_Grid <- function(object, county_shapefile, grid.opt="homogeneous", sample=0, sample.design=NULL){
     require(terra)
 #     require(NLMR)
     ## breaking NLMR random habitat generation to make landscape tile version run on conda environment via cran install

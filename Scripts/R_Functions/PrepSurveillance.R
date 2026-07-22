@@ -31,16 +31,6 @@ PrepSurveillance<-function(sampling){
   # Read sampling file
   sample.design <- read.csv("sampling_scheme.csv")
 
-#     ### for testing with minimal data
-#   sample.design2 <- data.frame(FiscalYearCollection = runif(min(sample.design$FiscalYearCollection),max(sample.design$FiscalYearCollection), 250),
-#                                Lat = runif(min(sample.design$Lat), max(sample.design$Lat), 250),
-#                                Lon = runif(min(sample.design$Lon), max(sample.design$Lon), 250),
-#                                Quantity = rpois(250, 5),
-#                                Acres = rpois(250, 500)
-#                                )
-#   sample.design = rbind(sample.design, sample.design2)
-
-
   # Aggregate by week and store weeks to be sampled in variable
   # Convert "collection_date" to Date format
   names(sample.design)[1] <- "dates"  # Rename the first column to 'dates'
@@ -62,10 +52,56 @@ PrepSurveillance<-function(sampling){
   names(sample.design)[2] <- "latitude"
   names(sample.design)[3] <- "longitude"
   
-#   sample_coords <- st_as_sf(sample.design, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.design, convert to sf object
-#   sample_sf_transformed <- st_transform(sample_coords, crs = 26917) # transform coordinates to meter based CRS
-#   sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
-#   sample_coords_transformed <- sample_coords_transformed / scale_factor
+  sample_coords <- st_as_sf(sample.design, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.design, convert to sf object
+  sample_sf_transformed <- st_transform(sample_coords, crs = 26917) # transform coordinates to meter based CRS
+  sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
+  sample_coords_transformed <- sample_coords_transformed / scale_factor
+  
+  
+  # Add column to sample.design so the cell # where sampling occurs can be updated
+  #sample.design$sampling_loc <- 0L
+  sample.design$sampling_loc <- vector("list", nrow(sample.design))
+  
+  
+  # Loop over each sampling point and check proximity to grid centroids
+  for (i in 1:nrow(sample_coords_transformed)) {
+    # Extract the x and y coordinates of the current sample point
+    sample_x <- sample_coords_transformed[i, 1]
+    sample_y <- sample_coords_transformed[i, 2]
+    
+    # Get the acreage for the current sample point (assuming you have an 'acres' column in the dataframe)
+    names(sample.design)[5] <- "acres"  # Rename the first column to 'dates'
+    acres <- sample.design$acres[i]
+    
+    # Convert acres to square kilometers
+    area_km2 <- acres * 0.00404686
+    
+    # Resolution of a grid cell in km2 calculation
+    numerator = inc * 1000 * inc * 1000
+    denominator = 1000000
+    grid_cell_area = numerator/denominator
+    
+    # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
+    num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
+    
+    # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
+    # square root [(xf-xi)^2 + (yf-yi)^2]
+    distances <- sqrt((grid[, 6] - sample_x)^2 + (grid[, 7] - sample_y)^2)
+    
+    # Check if the minimum distance is within the threshold
+    # Using threshold of 10 meters
+    if (min(distances) <= 10) {
+      # Get indices of the closest `num_cells_to_sample` grid cells
+      sorted_indices <- order(distances)
+      sampled_cell_indices <- sorted_indices[1:num_cells_to_sample]
+      
+      # Store the sampled grid cell indices
+      sample.design$sampling_loc[[i]] <- sampled_cell_indices
+    } else {
+      # If no nearby grid cell found, store NA or empty list
+      sample.design$sampling_loc[[i]] <- NA  # or list() if you prefer
+    }
+  }
       
   return(sample.design)
 }

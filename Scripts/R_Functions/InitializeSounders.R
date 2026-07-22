@@ -97,6 +97,15 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
         pop[,11] <- 0 #number of R status in sounder
         pop[,12] <- 0 #number of C status in sounder
         pop[,13] <- 0 #number of Z status in sounder
+        ####################
+        #pop_col_names = c("SounderSize","Landscape",
+        #                  "CurCell","MoveDistance",
+        #                  "LocX","LocY",
+        #                  "PrevCell","S",
+        #                  "E","I",
+        #                  "R","C",
+        #                  "Z")
+        #colnames(pop) <- pop_col_names
 
         #for homogeneous grid, pref col is just uniform 0
         if(pop_init_grid_opts == "homogeneous"){pop[,2] <- 0}
@@ -125,15 +134,15 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
                 for(r in 1:length(RSF0.r)){
                     cellsq <- 1:cells
                     cellsq <- cellsq[-pop[,3]]
-                    if(all(centroids[cellsq,3]==RSF0lc)){
+                    if(all(centroids[cellsq,3]==RSF0_lc)){
                         stop("No suitable habitat available")
                     }
-                    cellsq <- cellsq[-which(centroids[cellsq,3]==RSF0lc)]
+                    cellsq <- cellsq[-which(centroids[cellsq,3]==RSF0_lc)]
                     new.cell <- sample(cellsq,1)
                     pop[RSF0.r[r],3] <- new.cell
                     pop[RSF0.r[r],5] <- centroids[new.cell,1] #x
                     pop[RSF0.r[r],6] <- centroids[new.cell,2] #y
-                    pop[RSF0.r[r],2] <- centroids[new.cell,3] #lc
+                    pop[RSF0.r[r],2] <- centroids[new.cell,3] #lc (land cover)
                 }
             }
         }

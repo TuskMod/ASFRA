@@ -11,7 +11,9 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	id <- which(centroids[, 1] >= midpoint[1] & centroids[, 2] >= midpoint[2])[1] #location on grid closest to midpoint
 
     # generate a sounder of one infected individual at num_inf_0 points (usually 1)
-    infected <- InitializeSounders(centroids, grid, c(id, num_inf_0), pop_init_type="init_single", pop_init_grid_opts="homogeneous")
+	  # manually set to be 1, since it is a sounder of size one
+	  # VR: changed to heteregenous here
+    infected <- InitializeSounders(centroids, grid, c(id, num_inf_0), pop_init_type="init_single", pop_init_grid_opts="heterogeneous")
     # (manually change state values so S=0 and I = 1)
     infected[, 8] <- 0
     infected[, 10] <- 1

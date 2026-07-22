@@ -3,6 +3,7 @@
 RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.parms, lvtable2){
 
     # movement parameters from NND landscape selection
+    # convert to datatable
     setDT(mv.parms)
 
     # loops over combinations of variables, lands, and reps

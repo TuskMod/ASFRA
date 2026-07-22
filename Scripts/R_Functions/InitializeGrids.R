@@ -5,7 +5,7 @@ InitializeGrids <- function(path, parameters0){
     len <- parameters0$len
     inc <- parameters0$inc
     km_len <- len*inc
-
+    print(path)
 
     # previously in ReadLands.R
     # finds land tiles from path object and collects into sprc object
@@ -54,7 +54,7 @@ InitializeGrids <- function(path, parameters0){
 }
 
     # modified to include ReadLands.R in this targets step
-    # not sure if this works for homogenous, random, or individual land tiles anymore, but skips the need for geotargets so it can operate in a conda environment (hopefully)
+    # not sure if this works for homogeneous, random, or individual land tiles anymore, but skips the need for geotargets so it can operate in a conda environment (hopefully)
 InitializeGrids_sub <- function(object, grid.opts){
     if(class(object)=="SpatRaster"){ # using one raster
         tar.grid.list <- vector(mode="list", length=1)
