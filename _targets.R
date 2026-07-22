@@ -99,7 +99,6 @@ list(
     tar_target(parameters_txt, file.path("Parameters.txt"), format="file"),#, cue=tar_cue(mode='always')),
 #
 #     ### Input landscapes directory: -----------
-# #     tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "plandstest"), format="file"),
     tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
 #
 #     ### Read and format parameters file: -----------
@@ -110,15 +109,15 @@ list(
 #
 #     ## Input cpp scripts as files to enable tracking -----
 #     # this target is a dead end, just returns "TRUE" if complete; precompiles c++ scripts for later use so it only does it once
-#     tar_target(cpp.compile, {
-# #         Rcpp::sourceCpp(file.path("Scripts", "cpp_Functions", "Movement_Fast_Generalized.cpp"), cacheDir = './cppcache_mv', rebuild=TRUE)
-# #         Rcpp::sourceCpp(file.path("Scripts", "cpp_Functions", "Fast_FOI_Matrix.cpp"), cacheDir = './cppcache_ffoi', rebuild=TRUE)
-#         Rcpp::sourceCpp("./Scripts/cpp_Functions/Movement_Fast_Generalized.cpp", cacheDir = './cppcache_mv', rebuild=TRUE)
-#         Rcpp::sourceCpp("./Scripts/cpp_Functions/Fast_FOI_Matrix.cpp", cacheDir = './cppcache_ffoi', rebuild=TRUE)
-#         TRUE}
+     tar_target(cpp.compile, {
+         Rcpp::sourceCpp(file.path("Scripts", "cpp_Functions", "Movement_Fast_Generalized.cpp"), cacheDir = './cppcache_mv', rebuild=TRUE)
+         Rcpp::sourceCpp(file.path("Scripts", "cpp_Functions", "Fast_FOI_Matrix.cpp"), cacheDir = './cppcache_ffoi', rebuild=TRUE)
+         Rcpp::sourceCpp("./Scripts/cpp_Functions/Movement_Fast_Generalized.cpp", cacheDir = './cppcache_mv', rebuild=TRUE)
+         Rcpp::sourceCpp("./Scripts/cpp_Functions/Fast_FOI_Matrix.cpp", cacheDir = './cppcache_ffoi', rebuild=TRUE)
+         TRUE}
 #     # set cue to "always" so this target always runs, in case cpp scripts were changed or cache was cleared/corrupted
-# #     ,cue=tar_cue(mode='always')
-#     ),
+     ,cue=tar_cue(mode='always')
+     ),
 #
 #   ## Initialize surface -----
 #     ### Initialize grid(s): ---------------
@@ -129,21 +128,21 @@ list(
     tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]])),
 #
 #     ### Get landscape-specific movement parameters
-# #     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel_test.rds')) } else { return(NA)}),
     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)}),
 #
-#     ### Build table of all desired landscape and parameter combinations
-#     tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)),
+#    ### Build table of all desired landscape and parameter combinations
+     ### Each row is an input to the model containing replicate ID, and different parameter values
+     tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)),
 #
 #     ### Check for existing outputs and make a table of only what remains to be done
-#     tar_target(lvtable2, {lvnew <- check.existing(lvtable, parameters$out.repl)
-#                           if (nrow(lvnew) == 0){
-#                               return(data.table(vars=0, land=0, rep=0))
-#                           } else {
-#                               return(lvnew)
-#                           }}
-#                           , cue = tar_cue(mode='always')),
-#
+     tar_target(lvtable2, {lvnew <- check.existing(lvtable, parameters$out.repl)
+                           if (nrow(lvnew) == 0){
+                               return(data.table(vars=0, land=0, rep=0))
+                           } else {
+                               return(lvnew)
+                           }}
+                           , cue = tar_cue(mode='always')),
+
 #     ## Run Model ---------------
 #         # as currently configured, looks for existing output files and skips those that already exist
 #         # (Becase seed is set, outputs should be the same for a given landscape, variable set, and replicate)
@@ -151,36 +150,32 @@ list(
 #         # so using tar_cue(mode = 'always') really just forces it to check for existing previous runs if parameter out.repl = 0
 #         # if out.repl = 1 (i.e. "replace outputs") it will run everything again (i.e. if something changes in the model, set out.repl to 1 to get all new results)
 #         # out.repl = 1 does NOT delete existing files, so shorter or incomplete re-runs will not leave only the legitimate outputs
-#     tar_target(out.list, RunSimulationReplicates(land_grid_list = land_grid_list[[1]],
-#                                                 parameters = parameters,
-#                                                 variables = variables,
-#                                                 mv.parms = mv.params,
-#                                                 lvtable2 = lvtable2)
-#         , pattern = map(lvtable2) # tells targets to branch nodes by lines in lvtable2, which is the list of land, variable, and replicate combinations
-#         , iteration = 'vector'
-#         , cue = tar_cue(mode = 'always')
-#     )
+     tar_target(out.list, RunSimulationReplicates(land_grid_list = land_grid_list[[1]],
+                                                 parameters = parameters,
+                                                 variables = variables,
+                                                 mv.parms = mv.params,
+                                                 lvtable2 = lvtable2)
+         , pattern = map(lvtable2) # tells targets to branch nodes by lines in lvtable2, which is the list of land, variable, and replicate combinations
+         , iteration = 'vector'
+         , cue = tar_cue(mode = 'always')
+     )
 #
-#     , tar_target(centroid.matrix, extract.centroids(land_grid_list))
+     , tar_target(centroid.matrix, extract.centroids(land_grid_list))
 #
-#     , tar_target(tm.out.files, {print(out.list); return(list.files('./Output/tm.mat/'))})#, cue = tar_cue(mode = 'always'))
+     , tar_target(tm.out.files, {print(out.list); return(list.files('./Output/tm.mat/'))})#, cue = tar_cue(mode = 'always'))
 #
-#     , tar_target(result.outputs, data.looper(tm.out.files, centroid.matrix)
-#                , pattern = map(tm.out.files),
-#                , iteration = 'list')
+     , tar_target(result.outputs, data.looper(tm.out.files, centroid.matrix)
+                , pattern = map(tm.out.files),
+                , iteration = 'list')
 #
-# #     , tar_target(land_sel_map, sel.lands(land_grid_list))
 #
-# #     , tar_target(analysis, analysis.output(result.outputs, variables, mv.params))
 
     ## put together result table
-    tar_target(rslt, make_rslt(result.outputs, variables, mv.params))
+    , tar_target(rslt, make_rslt(result.outputs, variables, mv.params))
     ## get results where establishment took place
     , tar_target(rslt1, rslt[est == 1,])
     ## get survival analysis table set up
     , tar_target(tmtab3, tm.tab.3(rslt1, variables, mv.params))
-
-    , tar_target(ridge_lasso, ridge.lasso(rslt, rslt1, tmtab3, variables, mv.params))
 
 #     ## establishemnt response
 #     # create list of all possible models
@@ -337,26 +332,26 @@ list(
 #     , tar_target(predmods.list, get.pred.mods(lolo.rmse, all.mods, rslt, rslt1, tmtab3))
 
     # generate out of sample predictions for the rest of the country
-    , tar_target(tiledat, './Landscape_Setup/NND_Lands/all_tile_attribs.csv', format='file')
-    , tar_target(tiledat_edge, './Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv', format='file')
-    , tar_target(oos.tile.dat, oos.tiles(tiledat, rslt, variables))
-    , tar_target(oos.tile.dat.edge, oos.tiles(tiledat_edge, rslt, variables))
-    , tar_target(model.defs, return(ridge_lasso[[2]]))
-    , tar_target(model.coefs, return(t(ridge_lasso[[1]])))
-    , tar_target(lambda.mins, as.numeric(model.coefs[1:6,28]))
-    , tar_target(preds.out, oos.preds(model.defs, lambda.mins, oos.tile.dat),
-                 pattern=map(model.defs, lambda.mins),#, model.coefs[1:6,28]),
-                 iteration='list')
-    , tar_target(preds.out.edge, oos.preds(model.defs, lambda.mins, oos.tile.dat.edge),
-                 pattern=map(model.defs, lambda.mins),
-                 iteration='list')
-    , tar_target(preds.compiled, preds.compile(preds.out, preds.out.edge, oos.tile.dat, oos.tile.dat.edge))
+#    , tar_target(tiledat, './Landscape_Setup/NND_Lands/all_tile_attribs.csv', format='file')
+#    , tar_target(tiledat_edge, './Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv', format='file')
+#    , tar_target(oos.tile.dat, oos.tiles(tiledat, rslt, variables))
+#    , tar_target(oos.tile.dat.edge, oos.tiles(tiledat_edge, rslt, variables))
+#    , tar_target(model.defs, return(ridge_lasso[[2]]))
+#    , tar_target(model.coefs, return(t(ridge_lasso[[1]])))
+#    , tar_target(lambda.mins, as.numeric(model.coefs[1:6,28]))
+#    , tar_target(preds.out, oos.preds(model.defs, lambda.mins, oos.tile.dat),
+#                 pattern=map(model.defs, lambda.mins),#, model.coefs[1:6,28]),
+#                 iteration='list')
+#    , tar_target(preds.out.edge, oos.preds(model.defs, lambda.mins, oos.tile.dat.edge),
+#                 pattern=map(model.defs, lambda.mins),
+#                 iteration='list')
+#    , tar_target(preds.compiled, preds.compile(preds.out, preds.out.edge, oos.tile.dat, oos.tile.dat.edge))
 #
 #     ## Plotting function(s) for outputs.
 #     , tar_target(map, maps.plot(preds.compiled, rlst, rslt1, tmtab3, variables))
-    , tar_target(hmap, heatmap(model.defs, oos.tile.dat, oos.tile.dat.edge, lambda.mins),#, preds.compiled),
-                 pattern=map(model.defs, lambda.mins),
-                 iteration='list')
+#    , tar_target(hmap, heatmap(model.defs, oos.tile.dat, oos.tile.dat.edge, lambda.mins),#, preds.compiled),
+#                 pattern=map(model.defs, lambda.mins),
+#                 iteration='list')
     ## move some of these further up (landscape selection map could go to NND_Lands pipeline)
 #     ,tar_target(plot_outputs, VisualOutputs(out.list, variables, land_grid_list, parameters))
       ## Copy paste everything in the {} including the {} to run simulations using targets outputs without running targets so you can read the error messages and outputs! :)
