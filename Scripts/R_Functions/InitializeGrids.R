@@ -10,6 +10,22 @@ InitializeGrids <- function(path, parameters0){
     # previously in ReadLands.R
     # finds land tiles from path object and collects into sprc object
     # organizes lands by name (i.e. id number of the original tiles)
+    if(grid.opts == 'one_ras'){
+      
+      nm <- unlist(tstrsplit(path, '/', keep=5))
+      nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
+      plands_list <- vector(mode="list", length=length(fs))
+      for(fi in 1:length(fs)){
+        plands_list[[fi]] <- terra::rast(fs[fi])
+        names(plands_list[[fi]]) <- nm[fi]
+      }
+      # stick lands into a sprc object
+      plands_sprc <- terra::sprc(plands_list)
+      names(plands_sprc) <- lapply(plands_list, names)
+      
+      
+    }
+    
     if (grid.opts == 'ras'){
         fs <- list.files(path, full.names=TRUE)
         nm <- unlist(tstrsplit(fs, '/', keep=5))
@@ -43,7 +59,7 @@ InitializeGrids <- function(path, parameters0){
         } else if (grid.opts == 'heterogeneous'){
             # random pig distribution with random landscape
             land_grid_list <- InitializeGrids_sub(c(len, inc), grid.opts)
-        } else if (grid.opts == 'ras'){
+        } else if (grid.opts == 'ras' || grid_opts == "indv_ras"){
             # random pig distribution with raster landscape
             inc <- terra::res(plands_sprc[1])[1]/1000
             km_len <- dim(plands_sprc[1])[1]*inc

@@ -109,7 +109,8 @@ For now, sounder size (ss) and probability of infection given contact (B1) will 
 		density 3, ss=4, B1=0.004
 		density 5, ss=6, B1=0.002
 
-B2 automatically calculated as B1*0.5
+B2 (carcass-based transmission) automatically calculated as B1*0.5
+
 
 density = 1.5
 
@@ -134,7 +135,8 @@ These two parameters only need to be set if manually creating heterogeneous or h
 Gets rewritten to heterogeneous if you put in a raster or enter raster here
 grid.opts = "homogeneous"
 grid.opts = "heterogeneous"
-~ grid.opts = "ras"
+grid.opts = "ras"
+~ grid.opts = "one_ras"
 pop_init_grid_opts = "homogeneous"
 ~ pop_init_grid_opts = "heterogeneous"
 doesn't work, defaults to heterogeneous
@@ -216,7 +218,10 @@ mc_time = mean(c_time); %mean daily conception probability
 %c_time = repmat(mean(c_time),1,365*5);
 
 
-THE OTHER THING about using the carrying capacity in this way is it bases the birth rate on density across the entire simulation space, which would be fine right up until you start culling -- then you are reducing the total number of pigs but keeping carrying capacity the same, so even areas several kilometers away from the culling zone will have increased reproduction, magically, because pigs were killed somewhere else. This could create an artefact of having high density rebounds outside the control zone, and therefore increasing spread globally potentially pushing the infection to spread farther.
+THE OTHER THING about using the carrying capacity in this way is it bases the birth rate on density across the entire simulation space, which would be fine right up until you start culling --
+then you are reducing the total number of pigs but keeping carrying capacity the same, so even areas several kilometers away from the culling zone will have increased reproduction, magically,
+because pigs were killed somewhere else. This could create an artefact of having high density rebounds outside the control zone, and therefore increasing spread globally potentially pushing the
+infection to spread farther.
 
 
 #########################
@@ -261,6 +266,7 @@ B2_B1_factor is the conversion between B1 and B2 parameters, generally 0.5 (B2 =
 ~ B1__Lo = c(0.009, 0.002)
 
 ~ B2_B1_factor = 0.5
+# density != ss 
 ~ density = c(1.5, 5)
 ~ ss = c(2, 6)
 

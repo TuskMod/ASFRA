@@ -6,6 +6,8 @@
 # collection date, longitude, latitude, quantity and acreage of sample effort
   # Currently, only option is to have landscape prediction for county of interest
   # i.e. grid.opt="ras"
+# Creates a sample design matrix, indicating which grid cells to sample 
+# during specific weeks 
 
 #######################
 ######## Function #####
@@ -26,11 +28,15 @@
   #col7-week #
 
 
-PrepSurveillance<-function(sampling){
+PrepSurveillance<-function(inc){
 
   # Read sampling file
-  sample.design <- read.csv("sampling_scheme.csv")
-
+  # sampling file should be in the tile of interest 
+  county_shapefile <- st_read("../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp")
+  sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv") # maybe make this more generic so user doesn't have to put in path?
+  # need to ensure surveillance county is in tile that is being looked at 
+   working_crs <- 3087
+  min_sample_thresh = 10
   # Aggregate by week and store weeks to be sampled in variable
   # Convert "collection_date" to Date format
   names(sample.design)[1] <- "dates"  # Rename the first column to 'dates'
@@ -77,9 +83,11 @@ PrepSurveillance<-function(sampling){
     area_km2 <- acres * 0.00404686
     
     # Resolution of a grid cell in km2 calculation
-    numerator = inc * 1000 * inc * 1000
-    denominator = 1000000
-    grid_cell_area = numerator/denominator
+    # VR: need to check this conversion more? is this correct??
+    #numerator = inc * 1000 * inc * 1000
+    #denominator = 1000000
+    #grid_cell_area = numerator/denominator
+    grid_cell_area = inc * inc
     
     # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
     num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
@@ -90,7 +98,7 @@ PrepSurveillance<-function(sampling){
     
     # Check if the minimum distance is within the threshold
     # Using threshold of 10 meters
-    if (min(distances) <= 10) {
+    if (min(distances) <= min_sample_thresh) {
       # Get indices of the closest `num_cells_to_sample` grid cells
       sorted_indices <- order(distances)
       sampled_cell_indices <- sorted_indices[1:num_cells_to_sample]
@@ -105,3 +113,52 @@ PrepSurveillance<-function(sampling){
       
   return(sample.design)
 }
+
+#######################
+####### Purpose #######
+#######################
+
+# Identifies which land raster tiles correspond to the 
+# location data in the surveillance sample.design
+
+#######################
+######## Function #####
+#######################
+
+# Inputs:
+# tile_path: file location to all landscape tiles
+# sample.design: surveillance dataframe
+# inc - grid cell resolution (not sure if this will be true with new MakeGrid implementation)
+
+#Outputs:
+# list containing filepaths to load in
+
+FindSurveillanceTiles <- function(tile_paths,sample.design){
+  fs <- list.files(tile_path, full.names=TRUE)
+  nm <- unlist(tstrsplit(fs, '/', keep=5))
+  nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
+  plands_list <- vector(mode="list", length=length(fs))
+  plands_names <- vector(mode="list")
+  for(fi in 1:length(fs)){
+    curr_tile <- terra::rast(fs[fi])
+    current_extent <- curr_tile.extent
+    rast_xmin <- current_extent[[1]]
+    rast_xmax <- current_extent[[2]]
+    rast_ymin <- current_extent[[3]]
+    rast_ymax <- current_extent[[4]]
+    
+    ## is sample within xmin and xmax?
+    if((samp_xmin > rast_xmin) & (samp_ymin > rast_ymin)){
+      right_plands.append(fs[[fi]])
+    }
+    
+    plands_names.append(nm[[fi]])
+  }
+  # stick lands into a sprc object
+  plands_sprc <- terra::sprc(plands_list)
+  names(plands_sprc) <- lapply(plands_list, names)
+  
+  return(plands_names)
+}
+  
+  

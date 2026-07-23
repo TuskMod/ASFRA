@@ -1,12 +1,15 @@
-## VR: Madison's Surviellance function! 
+## VR: Madison's Surveillance function! 
+# takes in a yearly sample design, and returns 
+# results of initial surveillance - and pop data
 
 Surveillance <- function(pop, i, sample.design, grid.list, inc,
-                         sensitivity, specificity, CarcassDet) {
+                         sensitivity=1, specificity=1, CarcassDet) {
   # print("Surveillance function.")
   
   # Check for current week in sample.design
   # rows_to_sample <- sample.design[sample.design$fiscal_week == i, ]
   fiscal_week_current <- ((i - 1) %% 52) + 1
+  # so here, rows_to_sample comes from real data
   rows_to_sample <- sample.design[sample.design$fiscal_week == fiscal_week_current, ]
   
   
@@ -210,3 +213,4 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
   
   return(list(pop = pop, surveillance_data = surv_summary))
 }
+
