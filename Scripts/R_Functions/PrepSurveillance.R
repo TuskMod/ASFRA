@@ -28,7 +28,7 @@
   #col7-week #
 
 
-PrepSurveillance<-function(inc){
+LoadSurveillanceDesign<-function(inc){
 
   # Read sampling file
   # sampling file should be in the tile of interest 
@@ -61,14 +61,14 @@ PrepSurveillance<-function(inc){
   sample_coords <- st_as_sf(sample.design, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.design, convert to sf object
   sample_sf_transformed <- st_transform(sample_coords, crs = 26917) # transform coordinates to meter based CRS
   sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
-  sample_coords_transformed <- sample_coords_transformed / scale_factor
+  sample_coords_transformed <- sample_coords_transformed / 1000 # convert to km
   
   
   # Add column to sample.design so the cell # where sampling occurs can be updated
   #sample.design$sampling_loc <- 0L
   sample.design$sampling_loc <- vector("list", nrow(sample.design))
   
-  
+  return(sample.design)
   # Loop over each sampling point and check proximity to grid centroids
   for (i in 1:nrow(sample_coords_transformed)) {
     # Extract the x and y coordinates of the current sample point
@@ -111,6 +111,62 @@ PrepSurveillance<-function(inc){
     }
   }
       
+  
+}
+
+MatchGridtoCell <- function(sample.design,inc,grid){
+  sample_coords <- st_as_sf(sample.design, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.design, convert to sf object
+  sample_sf_transformed <- st_transform(sample_coords, crs = 26917) # transform coordinates to meter based CRS
+  sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
+  sample_coords_transformed <- sample_coords_transformed / 1000 # convert to km
+  
+  
+  # Add column to sample.design so the cell # where sampling occurs can be updated
+  #sample.design$sampling_loc <- 0L
+  sample.design$sampling_loc <- vector("list", nrow(sample.design))
+  
+  # Loop over each sampling point and check proximity to grid centroids
+  for (i in 1:nrow(sample_coords_transformed)) {
+    # Extract the x and y coordinates of the current sample point
+    sample_x <- sample_coords_transformed[i, 1]
+    sample_y <- sample_coords_transformed[i, 2]
+    
+    # Get the acreage for the current sample point (assuming you have an 'acres' column in the dataframe)
+    names(sample.design)[5] <- "acres"  # Rename the first column to 'dates'
+    acres <- sample.design$acres[i]
+    
+    # Convert acres to square kilometers
+    area_km2 <- acres * 0.00404686
+    
+    # Resolution of a grid cell in km2 calculation
+    # VR: need to check this conversion more? is this correct??
+    #numerator = inc * 1000 * inc * 1000
+    #denominator = 1000000
+    #grid_cell_area = numerator/denominator
+    grid_cell_area = inc * inc
+    
+    # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
+    num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
+    
+    # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
+    # square root [(xf-xi)^2 + (yf-yi)^2]
+    distances <- sqrt((grid[, 6] - sample_x)^2 + (grid[, 7] - sample_y)^2)
+    
+    # Check if the minimum distance is within the threshold
+    # Using threshold of 10 meters
+    if (min(distances) <= min_sample_thresh) {
+      # Get indices of the closest `num_cells_to_sample` grid cells
+      sorted_indices <- order(distances)
+      sampled_cell_indices <- sorted_indices[1:num_cells_to_sample]
+      
+      # Store the sampled grid cell indices
+      sample.design$sampling_loc[[i]] <- sampled_cell_indices
+    } else {
+      # If no nearby grid cell found, store NA or empty list
+      sample.design$sampling_loc[[i]] <- NA  # or list() if you prefer
+    }
+  }
+  
   return(sample.design)
 }
 
@@ -133,22 +189,24 @@ PrepSurveillance<-function(inc){
 #Outputs:
 # list containing filepaths to load in
 
-FindSurveillanceTiles <- function(tile_paths,sample.design){
+FindSurveillanceTiles <- function(tile_path,sample.design){
   fs <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(fs, '/', keep=5))
   nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
   plands_list <- vector(mode="list", length=length(fs))
   plands_names <- vector(mode="list")
+  samp_xmin = sample.design
   for(fi in 1:length(fs)){
     curr_tile <- terra::rast(fs[fi])
-    current_extent <- curr_tile.extent
-    rast_xmin <- current_extent[[1]]
-    rast_xmax <- current_extent[[2]]
-    rast_ymin <- current_extent[[3]]
-    rast_ymax <- current_extent[[4]]
+    current_extent <- ext(curr_tile)
+    rast_xmin <- xmin(current_extent)
+    rast_xmax <- xmax(current_extent)
+    rast_ymin <- ymin(current_extent)
+    rast_ymax <- ymax(current_extent)
     
     ## is sample within xmin and xmax?
-    if((samp_xmin > rast_xmin) & (samp_ymin > rast_ymin)){
+    # need to grab a counties x and y coordinates!!
+    if((r_xmin > rast_xmin) & (samp_ymin > rast_ymin)){
       right_plands.append(fs[[fi]])
     }
     

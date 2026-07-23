@@ -5,7 +5,7 @@ InitializeGrids <- function(path, parameters0){
     len <- parameters0$len
     inc <- parameters0$inc
     km_len <- len*inc
-    print(path)
+    
 
     # previously in ReadLands.R
     # finds land tiles from path object and collects into sprc object

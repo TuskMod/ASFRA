@@ -97,16 +97,22 @@ list(
 #     ## Input raw data files -----
 #     ### Input parameters file: -----------
     tar_target(parameters_txt, file.path("Parameters.txt"), format="file"),#, cue=tar_cue(mode='always')),
+  
+
+    #     ### Read and format parameters file: -----------
+    tar_target(parameters0, FormatSetParameters(parameters_txt)),
+    #
+    #     ### Pull variables out of parameters list (parameters with multiple values = variables, for flexibility)
+    tar_target(variables, SetVarParms(parameters0)),
+  
+    tar_target(sample.prep,PrepSurveillance(variables$inc)),
+    tar_target(lands_path, FindSurveillanceTiles((file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands")),sample.prep)),
+#
 #
 #     ### Input landscapes directory: -----------
-    tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
+#+    tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
 #
-#     ### Read and format parameters file: -----------
-    tar_target(parameters0, FormatSetParameters(parameters_txt)),
-#
-#     ### Pull variables out of parameters list (parameters with multiple values = variables, for flexibility)
-    tar_target(variables, SetVarParms(parameters0)),
-#
+
 #     ## Input cpp scripts as files to enable tracking -----
 #     # this target is a dead end, just returns "TRUE" if complete; precompiles c++ scripts for later use so it only does it once
      tar_target(cpp.compile, {
@@ -127,6 +133,10 @@ list(
 #     ### Get surface parameters from raster and add to parameters list: ---------------
     tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]])),
 #
+
+#   Now, add proper tiles to sample.design
+    tar_target(sample.design,FindSurveillanceTiles(lands_path,sample.prep)),
+
 #     ### Get landscape-specific movement parameters
     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)}),
 #
