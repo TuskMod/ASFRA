@@ -106,7 +106,10 @@
     if(!("homogeneous" %in% grid.opt & sample != 1)){
         if(class(object)=="SpatRaster"){
             #need to get values from ras
-            grid[, 8] <- round(values(ras), 2)
+            # VR there are four columns in this raster for the values
+            # so - lets take the average of those vlaues
+            average_cell_value = rowMeans(values(ras))
+            grid[, 8] <- round(average_cell_value, 2)
             #assign to centroids
             centroids <- cbind(centroids, grid[, 8])
             name <- names(object)

@@ -27,12 +27,11 @@
   #col6-FY start date
   #col7-week #
 
-
 LoadSurveillanceDesign<-function(inc){
 
   # Read sampling file
   # sampling file should be in the tile of interest 
-  county_shapefile <- st_read("../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp")
+  county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
   sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv") # maybe make this more generic so user doesn't have to put in path?
   # need to ensure surveillance county is in tile that is being looked at 
    working_crs <- 3087
@@ -41,6 +40,7 @@ LoadSurveillanceDesign<-function(inc){
   # Convert "collection_date" to Date format
   names(sample.design)[1] <- "dates"  # Rename the first column to 'dates'
   sample.design$dates <- as.Date(sample.design$dates, format = "%m/%d/%Y") # change to standard date format
+  sample.design$shp_file <- county_shapefile
   
   # Apply mutate on the entire dataframe, not just on a vector
   sample.design <- sample.design %>%
@@ -114,8 +114,8 @@ LoadSurveillanceDesign<-function(inc){
   
 }
 
-MatchGridtoCell <- function(sample.design,inc,grid){
-  sample_coords <- st_as_sf(sample.design, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.design, convert to sf object
+MatchGridstoCell <- function(sample.prep,inc,grid){
+  sample_coords <- st_as_sf(sample.prep, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.prep, convert to sf object
   sample_sf_transformed <- st_transform(sample_coords, crs = 26917) # transform coordinates to meter based CRS
   sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
   sample_coords_transformed <- sample_coords_transformed / 1000 # convert to km
@@ -123,8 +123,8 @@ MatchGridtoCell <- function(sample.design,inc,grid){
   
   # Add column to sample.design so the cell # where sampling occurs can be updated
   #sample.design$sampling_loc <- 0L
-  sample.design$sampling_loc <- vector("list", nrow(sample.design))
-  
+  sample.prep$sampling_loc <- vector("list", nrow(sample.prep))
+  min_sample_thresh = 10
   # Loop over each sampling point and check proximity to grid centroids
   for (i in 1:nrow(sample_coords_transformed)) {
     # Extract the x and y coordinates of the current sample point
@@ -132,8 +132,8 @@ MatchGridtoCell <- function(sample.design,inc,grid){
     sample_y <- sample_coords_transformed[i, 2]
     
     # Get the acreage for the current sample point (assuming you have an 'acres' column in the dataframe)
-    names(sample.design)[5] <- "acres"  # Rename the first column to 'dates'
-    acres <- sample.design$acres[i]
+    names(sample.prep)[5] <- "acres"  # Rename the first column to 'dates'
+    acres <- sample.prep$acres[i]
     
     # Convert acres to square kilometers
     area_km2 <- acres * 0.00404686
@@ -160,14 +160,14 @@ MatchGridtoCell <- function(sample.design,inc,grid){
       sampled_cell_indices <- sorted_indices[1:num_cells_to_sample]
       
       # Store the sampled grid cell indices
-      sample.design$sampling_loc[[i]] <- sampled_cell_indices
+      sample.prep$sampling_loc[[i]] <- sampled_cell_indices
     } else {
       # If no nearby grid cell found, store NA or empty list
-      sample.design$sampling_loc[[i]] <- NA  # or list() if you prefer
+      sample.prep$sampling_loc[[i]] <- NA  # or list() if you prefer
     }
   }
   
-  return(sample.design)
+  return(sample.prep)
 }
 
 #######################
@@ -193,30 +193,46 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
   fs <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(fs, '/', keep=5))
   nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
-  plands_list <- vector(mode="list", length=length(fs))
-  plands_names <- vector(mode="list")
-  samp_xmin = sample.design
+  
+  county_shapefile <- sample.design$shp_file[[1]]
+  # need surveillance area - so there's some bounding box 
+  # associated with the area , an extent 
+  right_plands <- vector(mode="list")
+  plands_names <- c()
+  counter = 1
+  sample_bbox <- st_bbox(st_read(county_shapefile))
+  sample_xmin <- sample_bbox["xmin"][[1]]
+  sample_xmax <- sample_bbox["xmax"][[1]]
+  sample_ymin <- sample_bbox["ymin"][[1]]
+  sample_ymax <- sample_bbox["ymax"][[1]]
   for(fi in 1:length(fs)){
     curr_tile <- terra::rast(fs[fi])
+    curr_tile <- project(curr_tile,"NAD83")
     current_extent <- ext(curr_tile)
-    rast_xmin <- xmin(current_extent)
-    rast_xmax <- xmax(current_extent)
-    rast_ymin <- ymin(current_extent)
-    rast_ymax <- ymax(current_extent)
+    rast_xmin <- xmin(current_extent)[[1]]
+    rast_xmax <- xmax(current_extent)[[1]]
+    rast_ymin <- ymin(current_extent)[[1]]
+    rast_ymax <- ymax(current_extent)[[1]]
     
     ## is sample within xmin and xmax?
     # need to grab a counties x and y coordinates!!
-    if((r_xmin > rast_xmin) & (samp_ymin > rast_ymin)){
-      right_plands.append(fs[[fi]])
+    
+    if(sample_xmin >= rast_xmin){ 
+       if (sample_ymin >= rast_ymin){
+         right_plands[[counter]]<-terra::rast(fs[fi])
+         #names(right_plands[[counter]]) <- nm[fi]
+         counter <- counter + 1
+       }
+     
     }
     
-    plands_names.append(nm[[fi]])
   }
   # stick lands into a sprc object
-  plands_sprc <- terra::sprc(plands_list)
-  names(plands_sprc) <- lapply(plands_list, names)
+  print(right_plands)
+  plands_sprc <- terra::sprc(right_plands)
+#  names(plands_sprc) <- lapply(right_plands, names)
   
-  return(plands_names)
+  return(plands_sprc)
 }
   
   

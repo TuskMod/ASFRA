@@ -1,4 +1,4 @@
-InitializeGrids <- function(path, parameters0){
+InitializeGrids <- function(path, indv_ras_data,parameters0){
     # pulls user-supplied landscape attributes (if no raster present, these are used)
     pop_init_grid_opts <- parameters0$pop_init_grid_opts
     grid.opts <- parameters0$grid.opts
@@ -10,21 +10,6 @@ InitializeGrids <- function(path, parameters0){
     # previously in ReadLands.R
     # finds land tiles from path object and collects into sprc object
     # organizes lands by name (i.e. id number of the original tiles)
-    if(grid.opts == 'one_ras'){
-      
-      nm <- unlist(tstrsplit(path, '/', keep=5))
-      nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
-      plands_list <- vector(mode="list", length=length(fs))
-      for(fi in 1:length(fs)){
-        plands_list[[fi]] <- terra::rast(fs[fi])
-        names(plands_list[[fi]]) <- nm[fi]
-      }
-      # stick lands into a sprc object
-      plands_sprc <- terra::sprc(plands_list)
-      names(plands_sprc) <- lapply(plands_list, names)
-      
-      
-    }
     
     if (grid.opts == 'ras'){
         fs <- list.files(path, full.names=TRUE)
@@ -46,10 +31,10 @@ InitializeGrids <- function(path, parameters0){
         if(grid.opts != 'ras'){ # if grid.opts is homogeneous or heterogeneous
             # make a grid either uniform or random with even initial pig locations
             land_grid_list <- InitializeGrids_sub(c(len, inc), grid.opts)
-        } else if (grid.opts == 'ras'){ # if there is an input raster
-            inc <- terra::res(plands_sprc[1])[1]/1000
-            km_len <- dim(plands_sprc[1])[1]*inc
-            land_grid_list <- InitializeGrids_sub(plands_sprc, grid.opts)
+        } else if (grid.opts == 'indvras'){ # if there is an input raster
+            inc <- terra::res(indv_ras_data)[1]/1000
+            km_len <- dim(indv_ras_data)[1]*inc
+            land_grid_list <- InitializeGrids_sub(indv_ras_data, grid.opts)
         }
     } else if (pop_init_grid_opts == 'heterogeneous'){ # i.e. initial sounders are distributed according to landscape preferences
         # make a grid with uneven pig initial locations...
@@ -59,11 +44,16 @@ InitializeGrids <- function(path, parameters0){
         } else if (grid.opts == 'heterogeneous'){
             # random pig distribution with random landscape
             land_grid_list <- InitializeGrids_sub(c(len, inc), grid.opts)
-        } else if (grid.opts == 'ras' || grid_opts == "indv_ras"){
+        } else if (grid.opts == 'ras'){
             # random pig distribution with raster landscape
             inc <- terra::res(plands_sprc[1])[1]/1000
             km_len <- dim(plands_sprc[1])[1]*inc
             land_grid_list <- InitializeGrids_sub(plands_sprc, grid.opts)
+        } else if (grid.opts == "indvras"){
+          # random pig distribution with raster landscape
+          inc <- terra::res(indv_ras_data[1])[1]/1000
+          km_len <- dim(indv_ras_data[1])[1]*inc
+          land_grid_list <- InitializeGrids_sub(indv_ras_data[1], grid.opts)
         }
     }
     return(list(land_grid_list, inc, km_len))
@@ -80,6 +70,7 @@ InitializeGrids_sub <- function(object, grid.opts){
     if(class(object)=="SpatRasterCollection"){ # using 2+ rasters
         tar.grid.list <- vector(mode="list", length=length(object))
         for(g in 1:length(object)){
+            class(g)
             ras <- object[g]
             grid.list <- Make_Grid(ras, grid.opts)
             tar.grid.list[[g]] <- grid.list
