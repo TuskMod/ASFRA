@@ -105,12 +105,15 @@ list(
     #     ### Pull variables out of parameters list (parameters with multiple values = variables, for flexibility)
     tar_target(variables, SetVarParms(parameters0)),
   
-    tar_target(sample.prep,PrepSurveillance(variables$inc)),
-    tar_target(lands_path, FindSurveillanceTiles((file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands")),sample.prep)),
-#
-#
+    tar_target(sample.prep,LoadSurveillanceDesign(variables$inc)),
+    tar_target(all_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "indiv_plands")),format="file"),
+
+    # note how filepath is differnet from analysis! 
+    # we are going through all 430 tiles, seeing which fit surveillance scheme
+    tar_target(lands_data, FindSurveillanceTiles(all_lands,sample.prep)),
+
 #     ### Input landscapes directory: -----------
-#+    tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
+#    tar_target(all_lands, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
 #
 
 #     ## Input cpp scripts as files to enable tracking -----
@@ -128,17 +131,17 @@ list(
 #   ## Initialize surface -----
 #     ### Initialize grid(s): ---------------
 #     # gives a list with (1) a list of all the landscape values (very large), (2) 'inc' resolution in km, (3) 'km_len' length of landscape side in km
-    tar_target(land_grid_list, InitializeGrids(lands_path, parameters0)),
+    tar_target(land_grid_list, InitializeGrids(all_lands,lands_data,  parameters0)),
 #
 #     ### Get surface parameters from raster and add to parameters list: ---------------
     tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]])),
 #
 
-#   Now, add proper tiles to sample.design
-    tar_target(sample.design,FindSurveillanceTiles(lands_path,sample.prep)),
+#   Now, add proper cells to sample.design
+    tar_target(sample.design,MatchGridstoCell(sample.prep,parameters$inc,land_grid_list)),
 
 #     ### Get landscape-specific movement parameters
-    tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)}),
+    tar_target(mv.params, if(parameters$grid.opts=='ras' || parameters$grid.opts=="indvras"){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)}),
 #
 #    ### Build table of all desired landscape and parameter combinations
      ### Each row is an input to the model containing replicate ID, and different parameter values

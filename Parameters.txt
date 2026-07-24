@@ -128,15 +128,16 @@ These two parameters only need to be set if manually creating heterogeneous or h
 
 * grid.opts, character, grid option for input type and whether to incorporate land class if creating grid from scratch. If using a raster input, you can ignore this input. If inputting a raster to the InitializeGrids function, this value defaults to 'ras'. If making a grid by inputting len/inc, default is homogeneous.
 	ras- use input raster to create grid
+	indvras- use one raster based on surveillance scheme to create grid
 	homogeneous- creates grid with 7 columns, no land class variables
-    heterogeneous- creates a neutral random landscape model with land class values draw from uniform distribution and rescaled from 0 to 1. Note, if pop_init_grid_opts='heterogeneous', grid.opts MUST be something other than 'homogeneous' or InitializeSounders will throw an error.
+  heterogeneous- creates a neutral random landscape model with land class values draw from uniform distribution and rescaled from 0 to 1. Note, if pop_init_grid_opts='heterogeneous', grid.opts MUST be something other than 'homogeneous' or InitializeSounders will throw an error.
 * pop_init_grid_opts = how to initialize sounders on the grid-- do it with biased preference according to lscape vals or just randomly (if you use homogenous or ras, it is random; heterogeneous is according to landscape)
 
 Gets rewritten to heterogeneous if you put in a raster or enter raster here
 grid.opts = "homogeneous"
 grid.opts = "heterogeneous"
 grid.opts = "ras"
-~ grid.opts = "one_ras"
+~ grid.opts = "indvras"
 pop_init_grid_opts = "homogeneous"
 ~ pop_init_grid_opts = "heterogeneous"
 doesn't work, defaults to heterogeneous
