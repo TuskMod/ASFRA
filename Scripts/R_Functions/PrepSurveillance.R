@@ -69,49 +69,7 @@ LoadSurveillanceDesign<-function(inc){
   sample.design$sampling_loc <- vector("list", nrow(sample.design))
   
   return(sample.design)
-  # Loop over each sampling point and check proximity to grid centroids
-  for (i in 1:nrow(sample_coords_transformed)) {
-    # Extract the x and y coordinates of the current sample point
-    sample_x <- sample_coords_transformed[i, 1]
-    sample_y <- sample_coords_transformed[i, 2]
-    
-    # Get the acreage for the current sample point (assuming you have an 'acres' column in the dataframe)
-    names(sample.design)[5] <- "acres"  # Rename the first column to 'dates'
-    acres <- sample.design$acres[i]
-    
-    # Convert acres to square kilometers
-    area_km2 <- acres * 0.00404686
-    
-    # Resolution of a grid cell in km2 calculation
-    # VR: need to check this conversion more? is this correct??
-    #numerator = inc * 1000 * inc * 1000
-    #denominator = 1000000
-    #grid_cell_area = numerator/denominator
-    grid_cell_area = inc * inc
-    
-    # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
-    num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
-    
-    # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
-    # square root [(xf-xi)^2 + (yf-yi)^2]
-    distances <- sqrt((grid[, 6] - sample_x)^2 + (grid[, 7] - sample_y)^2)
-    
-    # Check if the minimum distance is within the threshold
-    # Using threshold of 10 meters
-    if (min(distances) <= min_sample_thresh) {
-      # Get indices of the closest `num_cells_to_sample` grid cells
-      sorted_indices <- order(distances)
-      sampled_cell_indices <- sorted_indices[1:num_cells_to_sample]
-      
-      # Store the sampled grid cell indices
-      sample.design$sampling_loc[[i]] <- sampled_cell_indices
-    } else {
-      # If no nearby grid cell found, store NA or empty list
-      sample.design$sampling_loc[[i]] <- NA  # or list() if you prefer
-    }
-  }
-      
-  
+
 }
 
 MatchGridstoCell <- function(sample.prep,inc,grid){
@@ -150,7 +108,7 @@ MatchGridstoCell <- function(sample.prep,inc,grid){
     
     # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
     # square root [(xf-xi)^2 + (yf-yi)^2]
-    distances <- sqrt((grid[, 6] - sample_x)^2 + (grid[, 7] - sample_y)^2)
+    distances <- sqrt((grid[[1]]$centroids[, 6] - sample_x)^2 + (grid[[1]]$centroids[, 7] - sample_y)^2)
     
     # Check if the minimum distance is within the threshold
     # Using threshold of 10 meters
@@ -220,6 +178,7 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     if(sample_xmin >= rast_xmin){ 
        if (sample_ymin >= rast_ymin){
          right_plands[[counter]]<-terra::rast(fs[fi])
+         plands_names[[counter]]<-fs[fi]
          #names(right_plands[[counter]]) <- nm[fi]
          counter <- counter + 1
        }
@@ -228,11 +187,10 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     
   }
   # stick lands into a sprc object
-  print(right_plands)
-  plands_sprc <- terra::sprc(right_plands)
+#  plands_sprc <- terra::sprc(right_plands)
 #  names(plands_sprc) <- lapply(right_plands, names)
   
-  return(plands_sprc)
+  return(plands_names)
 }
   
   

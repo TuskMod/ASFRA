@@ -111,7 +111,7 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r
 # for the current week
 # Once disease is detected - switch over to full culling policy!
         if(sample == 1){
-            sample.design <- PrepSurveillance(sample,inc) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
+            #sample.design <- PrepSurveillance(sample,inc) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
             surv.list <- Surveillance(pop, i, sample.design, grid.list, inc, POSlive, POSdead, POSlive_locs, POSdead_locs, pigs_sampled_timestep) # Madison
             pop <- surv.list[[1]]
             POSlive <- surv.list[[2]]

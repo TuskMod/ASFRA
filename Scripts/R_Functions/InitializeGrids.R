@@ -32,9 +32,13 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
             # make a grid either uniform or random with even initial pig locations
             land_grid_list <- InitializeGrids_sub(c(len, inc), grid.opts)
         } else if (grid.opts == 'indvras'){ # if there is an input raster
-            inc <- terra::res(indv_ras_data)[1]/1000
-            km_len <- dim(indv_ras_data)[1]*inc
-            land_grid_list <- InitializeGrids_sub(indv_ras_data, grid.opts)
+            # TODO: creating a dynamic 100 x 100 grid around an 
+            # individual surveillance site
+            plands_rast <- terra::rast(indv_ras_data[1])
+            plands_res <- terr::res(plands_rast)
+            inc <- plands_res[1]/1000
+            km_len <- dim(plands_res)[1]*inc
+            land_grid_list <- InitializeGrids_sub(plands_res, grid.opts)
         }
     } else if (pop_init_grid_opts == 'heterogeneous'){ # i.e. initial sounders are distributed according to landscape preferences
         # make a grid with uneven pig initial locations...
@@ -50,10 +54,14 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
             km_len <- dim(plands_sprc[1])[1]*inc
             land_grid_list <- InitializeGrids_sub(plands_sprc, grid.opts)
         } else if (grid.opts == "indvras"){
-          # random pig distribution with raster landscape
-          inc <- terra::res(indv_ras_data[1])[1]/1000
-          km_len <- dim(indv_ras_data[1])[1]*inc
-          land_grid_list <- InitializeGrids_sub(indv_ras_data[1], grid.opts)
+          # TODO: creating grid wich equal spacing all around it for
+          # sampling purposes
+          print(indv_ras_data[[1]])
+          plands_rast <- terra::rast(indv_ras_data[[1]])
+          plands_res <- terra::res(plands_rast)
+          inc <- plands_res[1]/1000
+          km_len <- dim(plands_res[1])*inc
+          land_grid_list <- InitializeGrids_sub(plands_rast, grid.opts)
         }
     }
     return(list(land_grid_list, inc, km_len))

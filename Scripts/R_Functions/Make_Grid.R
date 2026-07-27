@@ -125,8 +125,14 @@
         }
 
     } else {
-        grid.list <- list("cells"=cells, "grid"=grid, "centroids"=centroids)
-    }
+        average_cell_value = rowMeans(values(ras))
+        grid[, 8] <- round(average_cell_value, 2)
+        #assign to centroids
+        centroids <- cbind(centroids, grid[, 8])
+        name <- names(object)
+        grid.list <- list("cells"=cells, "grid"=grid, "centroids"=centroids, "names"=name)
+        
+      }
 
     return(grid.list)
 

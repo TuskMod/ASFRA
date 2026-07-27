@@ -7,8 +7,8 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     setDT(mv.parms)
 
     # loops over combinations of variables, lands, and reps
-    lgl.index <- unlist(lapply(land_grid_list, function(x) x$names))
-
+   # lgl.index <- unlist(lapply(land_grid_list, function(x) x$names))
+    lgl.index <- 20
     # funky mis-naming (fix at some point)
     names(variables)[names(variables) == "density"] <- "dens"
 
@@ -24,7 +24,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     v.val <- unlist(lvtable2[,vars])
     l.val <- unlist(lvtable2[,land])
     r.val <- unlist(lvtable2[,rep])
-    if (v.val == 0 & l.val == 0 & r.val == 0) return(lvtable2)
+    if ((v.val == 0) & (l.val == 0) & (r.val == 0)) return(lvtable2)
 
     # read in vars
     vars <- variables[v.val,]
@@ -51,7 +51,6 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     # grab landscape data
     centroids <- land_grid_list[[lgl.entry]]$centroids
     grid <- land_grid_list[[lgl.entry]]$grid
-    lname <- land_grid_list[[lgl.entry]]$names
 
     # create sounders in starting locations according to N0 and ss parameters
     pop <- InitializeSounders(centroids, grid, c(N0, ss), pop_init_grid_opts)
