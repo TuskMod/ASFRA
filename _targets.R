@@ -158,7 +158,7 @@ list(
 
 #     ## Run Model ---------------
 #         # as currently configured, looks for existing output files and skips those that already exist
-#         # (Becase seed is set, outputs should be the same for a given landscape, variable set, and replicate)
+#         # (Because seed is set, outputs should be the same for a given landscape, variable set, and replicate)
 #         ## except that's not the case -- targets does weird things with seeds and they reset inside the model
 #         # so using tar_cue(mode = 'always') really just forces it to check for existing previous runs if parameter out.repl = 0
 #         # if out.repl = 1 (i.e. "replace outputs") it will run everything again (i.e. if something changes in the model, set out.repl to 1 to get all new results)
