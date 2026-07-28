@@ -29,7 +29,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     vars <- variables[v.val,]
     vars <- as.list(vars)
     list2env(vars, .GlobalEnv)
-
+  
     # calc vals based on variables
     # initial pigs total
     N0 <- dens*area
@@ -42,6 +42,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
 
     # movement parameters from landscape tile
     lgl.entry <- which(lgl.index == l.val)
+    browser()
 #     parameters$alpha <- 1/as.numeric(mv.parms[lgl.entry, sigdisp])
 #     parameters$theta <- as.numeric(mv.parms[lgl.entry, disp])/parameters$alpha
     parameters$alpha <- mv.parms[lgl.entry, gamma.shape]

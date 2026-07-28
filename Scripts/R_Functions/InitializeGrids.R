@@ -57,7 +57,10 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
           # TODO: creating grid wich equal spacing all around it for
           # sampling purposes
           print(indv_ras_data[[1]])
-          plands_rast <- terra::rast(indv_ras_data[[1]])
+          plands_rast <- terra::mean(terra::rast(indv_ras_data[[1]]))
+          nm <- unlist(tstrsplit(indv_ras_data, '/', keep=5))
+          nm <- unlist(tstrsplit(indv_ras_data, '[_.]', keep=2))
+          names(plands_rast) <- nm
           plands_res <- terra::res(plands_rast)
           inc <- plands_res[1]/1000
           km_len <- dim(plands_res[1])*inc

@@ -106,7 +106,8 @@ list(
     tar_target(variables, SetVarParms(parameters0)),
   
     tar_target(sample.prep,LoadSurveillanceDesign(variables$inc)),
-    tar_target(all_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "indiv_plands")),format="file"),
+    tar_target(all_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "all_plands")),format="file"),
+   # tar_target(all_edge_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "edge_plands")),format="file"),
 
     # note how filepath is differnet from analysis! 
     # we are going through all 430 tiles, seeing which fit surveillance scheme
@@ -141,8 +142,7 @@ list(
     tar_target(sample.design,MatchGridstoCell(sample.prep,parameters$inc,land_grid_list)),
 
 #     ### Get landscape-specific movement parameters
-    tar_target(mv.params, if(parameters$grid.opts=='ras' || parameters$grid.opts=="indvras"){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)}),
-#
+    tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { if(parameters$grid.opts =="indvras"){ReadTileFolders(lands_data[[1]])}}),
 #    ### Build table of all desired landscape and parameter combinations
      ### Each row is an input to the model containing replicate ID, and different parameter values
      tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)),

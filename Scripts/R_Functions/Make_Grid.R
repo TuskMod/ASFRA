@@ -108,8 +108,8 @@
             #need to get values from ras
             # VR there are four columns in this raster for the values
             # so - lets take the average of those vlaues
-            average_cell_value = rowMeans(values(ras))
-            grid[, 8] <- round(average_cell_value, 2)
+            #average_cell_value = rowMeans(values(ras))
+            grid[, 8] <- round(values(ras), 2)
             #assign to centroids
             centroids <- cbind(centroids, grid[, 8])
             name <- names(object)

@@ -175,22 +175,54 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     ## is sample within xmin and xmax?
     # need to grab a counties x and y coordinates!!
     
-    if(sample_xmin >= rast_xmin){ 
+    if((sample_xmin >= rast_xmin) & (sample_xmax < rast_xmax)){ 
        if (sample_ymin >= rast_ymin){
-         right_plands[[counter]]<-terra::rast(fs[fi])
+         right_plands[[counter]] <- terra::mean(curr_tile)
+         terra::mean(right_plands[[counter]])
          plands_names[[counter]]<-fs[fi]
-         #names(right_plands[[counter]]) <- nm[fi]
+         names(right_plands[[counter]]) <- nm[fi]
          counter <- counter + 1
        }
      
     }
-    
   }
+  
+    
+  
   # stick lands into a sprc object
 #  plands_sprc <- terra::sprc(right_plands)
 #  names(plands_sprc) <- lapply(right_plands, names)
   
   return(plands_names)
 }
+
+
+ReadTileFolders <- function(tile_path){
   
+  edge_path <- "Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv"
+  full_path <- "Landscape_Setup/NND_Lands/all_tile_attribs.csv"
+
+  fn_values <- strsplit(tile_path,"_",fixed=TRUE)
+  tile_data <- NULL
+  if(length(fn_values) == 2){
+    tile_data <- read.csv(full_path)
+  } else{
+    tile_data <- read.csv(edge_path)
+  }
+  tile_data <- tile_data[as.numeric(fn_values[[1]][[2]]),]
+  # all_cols format comes from the loaded in RDS file that already exists 
+  all_cols <- c(
+    "index", "nnd_med", "nnd_range", "nnd_mean", "nnd_sd",
+    "x", "y", "state", "gamma.shape", "gamma.scale",
+    "moranI", "gearyC", "tc", "mast", "rgd", "rds",
+    "dayl", "prcp", "tmin", "tmax", "drt", "contag",
+    "aggindex", "entropy", "simpindx", "nnd_cv",
+    "mvmt.mean", "mvmt.cv"
+  )
+  
+ # tile_data <- tile_data[, -1]
+  
+  colnames(tile_data) <- all_cols
+  return(tile_data)
+}
   
