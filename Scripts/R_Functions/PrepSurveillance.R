@@ -150,7 +150,7 @@ MatchGridstoCell <- function(sample.prep,inc,grid){
 FindSurveillanceTiles <- function(tile_path,sample.design){
   fs <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(fs, '/', keep=5))
-  nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
+ # nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
   
   county_shapefile <- sample.design$shp_file[[1]]
   # need surveillance area - so there's some bounding box 
@@ -180,7 +180,12 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
          right_plands[[counter]] <- terra::mean(curr_tile)
          terra::mean(right_plands[[counter]])
          plands_names[[counter]]<-fs[fi]
-         names(right_plands[[counter]]) <- nm[fi]
+         if (length(nm[fi]) == 3){
+            names(right_plands[[counter]]) <- nm[fi][3]
+         }
+         if (length(nm[fi]) == 2){
+           names(right_plands[[counter]]) <- nm[fi][2]
+         }
          counter <- counter + 1
        }
      
@@ -197,12 +202,13 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
 }
 
 
-ReadTileFolders <- function(tile_path){
+ReadTileFolders <- function(tile_fp){
   
   edge_path <- "Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv"
   full_path <- "Landscape_Setup/NND_Lands/all_tile_attribs.csv"
-
-  fn_values <- strsplit(tile_path,"_",fixed=TRUE)
+  split_vals = strsplit(tile_fp,"/",fixed=TRUE)
+  tile_fn <- split_vals[[1]][[5]]
+  fn_values <- strsplit(tile_fn,"_",fixed=TRUE)
   tile_data <- NULL
   if(length(fn_values) == 2){
     tile_data <- read.csv(full_path)

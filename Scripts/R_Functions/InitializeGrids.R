@@ -58,9 +58,18 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
           # sampling purposes
           print(indv_ras_data[[1]])
           plands_rast <- terra::mean(terra::rast(indv_ras_data[[1]]))
-          nm <- unlist(tstrsplit(indv_ras_data, '/', keep=5))
-          nm <- unlist(tstrsplit(indv_ras_data, '[_.]', keep=2))
-          names(plands_rast) <- nm
+          #nm <- unlist(tstrsplit(indv_ras_data, '/', keep=5))
+          
+          fs <- tstrsplit(indv_ras_data, '/')
+          nm <- tstrsplit(fs[5],"[_]")
+          if (length(nm) == 3){
+            names(plands_rast) <- nm[2]
+          }
+          if (length(nm) == 2){
+            one_split = tstrsplit(nm[2],".")
+            names(plands_rast) <- onesplit[1]
+          }
+          browser()
           plands_res <- terra::res(plands_rast)
           inc <- plands_res[1]/1000
           km_len <- dim(plands_res[1])*inc

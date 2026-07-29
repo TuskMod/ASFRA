@@ -7,7 +7,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     setDT(mv.parms)
 
     # loops over combinations of variables, lands, and reps
-    #lgl.index <- unlist(lapply(land_grid_list, function(x) x$names))
+    lgl.index <- unlist(lapply(land_grid_list, function(x) x$names))
     # funky mis-naming (fix at some point)
     names(variables)[names(variables) == "density"] <- "dens"
 
@@ -24,7 +24,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     l.val <- unlist(lvtable2[,land])
     r.val <- unlist(lvtable2[,rep])
     if ((v.val == 0) & (l.val == 0) & (r.val == 0)) return(lvtable2)
-    lgl.index <- v.val * l.val * r.val
+    #lgl.index <- v.val * l.val * r.val
     # read in vars
     vars <- variables[v.val,]
     vars <- as.list(vars)
@@ -39,20 +39,17 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     # add vars to parameters
     parameters <- c(parameters, vars)
     parameters$K <- K
-
+    browser()
     # movement parameters from landscape tile
     lgl.entry <- which(lgl.index == l.val)
-    browser()
 #     parameters$alpha <- 1/as.numeric(mv.parms[lgl.entry, sigdisp])
 #     parameters$theta <- as.numeric(mv.parms[lgl.entry, disp])/parameters$alpha
     parameters$alpha <- mv.parms[lgl.entry, gamma.shape]
     parameters$theta <- mv.parms[lgl.entry, gamma.scale]
-    
     browser()
     # grab landscape data
     centroids <- land_grid_list[[lgl.entry]]$centroids
     grid <- land_grid_list[[lgl.entry]]$grid
-    browswer()
     # create sounders in starting locations according to N0 and ss parameters
     pop <- InitializeSounders(centroids, grid, c(N0, ss), pop_init_grid_opts)
 
