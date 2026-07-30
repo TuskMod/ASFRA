@@ -1,6 +1,6 @@
 ##The purpose of this script is to run a single rep of the ASF control optimization model
 
-SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r){
+SimulateOneRun <- function(outputs, pop, centroids, grid, parameters,sample.design, K, v, l, r){
     require(dplyr)
 
 ######## Release parameters to function environment ########
@@ -11,6 +11,11 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r
 
 # track first infection in Incidence matrix
     Incidence[1] <- num_inf_0
+
+# create specialized list for surveillance
+if(sample == 1){
+    all_surv_data <- list()
+}
 
 ######## Start simulation ########
     i <- 0
@@ -111,15 +116,21 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r
 # for the current week
 # Once disease is detected - switch over to full culling policy!
         if(sample == 1){
-            #sample.design <- PrepSurveillance(sample,inc) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
-            surv.list <- Surveillance(pop, i, sample.design, grid.list, inc, POSlive, POSdead, POSlive_locs, POSdead_locs, pigs_sampled_timestep) # Madison
+            #sample.design <- PrepSurveillance(sample) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
+            print("entering surveillance")
+            print(parameters$Sensitivity)
+          #  print(sample.design)
+            surv.list <- Surveillance(pop, i, sample.design, parameters) # Madison
+            print("did surveillance!")
             pop <- surv.list[[1]]
-            POSlive <- surv.list[[2]]
-            POSdead <- surv.list[[3]]
-            POSlive_locs <- surv.list[[4]]
-            POSdead_locs <- surv.list[[5]]
-            pigs_sampled_timestep <- surv.list[[6]]
-            ## currently missing allzone for cells in monitoring zone outputs
+            print("finished pop")
+            POSlive[[i]] <- surv.list[[2]]$live_infectious_sample
+            POSdead[[i]] <- surv.list[[2]]$dead_infected_sampled
+            POSlive_locs[[i]] <- surv.list[[2]]$live_infected_sampled_locs
+            POSdead_locs[[i]] <- surv.list[[2]]$dead_infected_sampled_locs
+            print("positive and negative samples")
+            pigs_sampled_timestep <- surv.list[[2]]$pigs_sampled
+          
         }
 
         # If sampling turned off and it's detect day based on user input,
@@ -127,10 +138,10 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r
         if(sample != 1 & i == detectday & sum(pop[, c(9, 10, 12)]) > 0 & Rad > 0){
             fd.list <- FirstDetect(pop, i, POSlive, POSdead, POSlive_locs, POSdead_locs)
             pop <- fd.list[[1]]
-            POSlive <- fd.list[[2]]
-            POSdead <- fd.list[[3]]
-            POSlive_locs <- fd.list[[4]]
-            POSdead_locs <- fd.list[[5]]
+            POSlive[[i]] <- fd.list[[2]]
+            POSdead[[i]] <- fd.list[[3]]
+            POSlive_locs[[i]] <- fd.list[[4]]
+            POSdead_locs[[i]] <- fd.list[[5]]
             allzone <- matrix(c(v, l, r, i, fd.list[[6]]), nrow=1)
         }
 

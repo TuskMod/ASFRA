@@ -2,9 +2,8 @@
 # takes in a yearly sample design, and returns 
 # results of initial surveillance - and pop data
 
-Surveillance <- function(pop, i, sample.design, grid.list, inc,
-                         sensitivity=1, specificity=1, CarcassDet) {
-  # print("Surveillance function.")
+Surveillance <- function(pop, i, sample.design, parameters) {
+  print("Surveillance function.")
   
   # Check for current week in sample.design
   # rows_to_sample <- sample.design[sample.design$fiscal_week == i, ]
@@ -33,7 +32,8 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
   true_infected_dead_sampled_cells <- 0
   total_dead_pigs_sampled_cells <- 0
   
-  
+  print("ROWS TO SAMPLE!")
+  print(nrow(rows_to_sample))
   # If no sampling is planned for this week, return zeroes for all below variables
   if (nrow(rows_to_sample) == 0) {
     surv_summary <- data.frame(
@@ -56,13 +56,15 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
       true_infected_dead_sampled_cells = true_infected_dead_sampled_cells,
       total_dead_pigs_sampled_cells = total_dead_pigs_sampled_cells
     )
-    return(list(pop = pop, surveillance_data = surv_summary))
+    return(pop = pop,surveillance_data = surv_summary)
   }
   
+  print("looping through locations")
   # Loop through locations for this timestep
   for (row_index in 1:nrow(rows_to_sample)) {
     sampling_cells <- rows_to_sample$sampling_loc[[row_index]]  # cells that could be sampled
-    current_quantity <- rows_to_sample$quantity[row_index]  # how many need to be sampled
+    print(sampling_cells)
+    current_quantity <- rows_to_sample$quantity[[row_index]]  # how many need to be sampled
     cells_with_pigs <- character(0)
     
     # Check which cells have pigs
@@ -72,8 +74,10 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
         cells_with_pigs <- unique(c(cells_with_pigs, sampling_cell))
       }
     }
-    
+    print("done checking")
     rows_in_sampling_cells <- which(pop[, 3] %in% cells_with_pigs)
+    print("ROWS TO CHECK")
+    print(rows_in_sampling_cells)
     # Track true number of I's in all cells that could be sampled
     infectious_on_property <- infectious_on_property + sum(pop[rows_in_sampling_cells, 10] > 0)
     # Track true number of R's in all cells that could be sampled
@@ -96,9 +100,9 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
     carcasses_Z <- carcass_rows[which(pop[carcass_rows, 13] > 0)]  # non-infectious carcasses in area
     total_carcasses <- length(carcasses_C) + length(carcasses_Z)  # total available to find
     
-    n_carcasses_to_sample <- floor(CarcassDet * total_carcasses)  # round down
+    n_carcasses_to_sample <- floor(parameters$CarcassDet * total_carcasses)  # round down
     all_carcasses <- c(carcasses_C, carcasses_Z)
-    
+    print("carcass surveillance")
     # Sampling carcasses if any are available
     if (n_carcasses_to_sample > 0 && length(all_carcasses) > 0) {
       sampled_carcasses <- sample(all_carcasses, min(n_carcasses_to_sample, length(all_carcasses)))
@@ -106,12 +110,12 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
         cell <- pop[row, 3]
         
         if (pop[row, 12] > 0) {
-          if (rbinom(1, 1, sensitivity) == 1) {
+          if (rbinom(1, 1, parameters$Sensitivity) == 1) {
             dead_infected_sampled <- dead_infected_sampled + 1
             dead_infected_sampled_locs <- unique(c(dead_infected_sampled_locs, cell))
           }
         } else if (pop[row, 13] > 0) {
-          if (rbinom(1, 1, 1 - specificity) == 1) {
+          if (rbinom(1, 1, 1 - parameters$Specificity) == 1) {
             dead_infected_sampled <- dead_infected_sampled + 1
             dead_infected_sampled_locs <- unique(c(dead_infected_sampled_locs, cell))
           }
@@ -124,42 +128,55 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
     
     ## --- Live Pig Surveillance ---
     # counts toward quantity needing sampled
+    print("sampling pigs!")
     while (pigs_sampled < current_quantity && length(cells_with_pigs) > 0) {
       selected_cell <- sample(cells_with_pigs, 1)
       matching_rows <- which(pop[, 3] == selected_cell)
       pigs_found <- FALSE
-      
+      #infec_cell, recov_cell, living_pigs, true_dead, 
       for (row in matching_rows) {
         # Infectious (I)
         if (pop[row, 10] > 0) {
           pigs_sampled <- pigs_sampled + 1
-          if (rbinom(1, 1, sensitivity) == 1) {
+          if (rbinom(1, 1, parameters.Sensitivity) == 1) {
             live_infectious_sampled <- live_infectious_sampled + 1
             live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
+            
           }
           pigs_found <- TRUE
           sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
+          pop[row,10] <- pop[row,10] - 1
           
           # Recovered (R)
         } else if (pop[row, 11] > 0) {
           pigs_sampled <- pigs_sampled + 1
-          if (rbinom(1, 1, sensitivity) == 1) {
+          if (rbinom(1, 1, parameters$Specificity) == 1) {
             live_recovered_sampled <- live_recovered_sampled + 1
             live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
           }
           pigs_found <- TRUE
           sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
-          
-          # Susceptible or Exposed (S or E)
-        } else if (any(pop[row, c(8, 9)] > 0)) {
+          pop[row,11] <- pop[row,11] - 1
+          # Susceptible (S)
+        } else if ((pop[row, 8] > 0)) {
           pigs_sampled <- pigs_sampled + 1
-          if (rbinom(1, 1, 1 - specificity) == 1) {
+          if (rbinom(1, 1, 1 - parameters$Specificity) == 1) {
             false_positives <- false_positives + 1  # Optional: Track separately
             live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
           }
           pigs_found <- TRUE
           sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
-        }
+          pop[row,8] <- pop[row,8] - 1
+        } else if ((pop[row, 9] > 0)) {
+          pigs_sampled <- pigs_sampled + 1
+          if (rbinom(1, 1, 1 - parameters$Specificity) == 1) {
+            false_positives <- false_positives + 1  # Optional: Track separately
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, selected_cell))
+          }
+          pigs_found <- TRUE
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, selected_cell))
+          pop[row,9] <- pop[row,9] - 1
+        } 
         
         if (pigs_sampled >= current_quantity) break
       }
@@ -187,7 +204,7 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
     true_recovered_sampled_cells <- 0
     total_dead_pigs_sampled_cells <- 0
   }
-  
+
   ## Build tidy output for this timestep
   surv_summary <- data.frame(
     timestep = i,
@@ -195,8 +212,10 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
     live_infectious_sampled = live_infectious_sampled,
     live_recovered_sampled = live_recovered_sampled,
     dead_infected_sampled = dead_infected_sampled, #POSdead
+    # POSlive_locs
     live_infected_sampled_locs = if (length(live_infected_sampled_locs) == 0) NA else paste(live_infected_sampled_locs, collapse = ","),
-    dead_infected_sampled_locs = ifelse(length(dead_infected_sampled_locs) == 0, NA, paste(dead_infected_sampled_locs, collapse = ",")),
+    # POSdead_locs
+    dead_infected_sampled_locs = if(length(dead_infected_sampled_locs) == 0) NA else paste(dead_infected_sampled_locs, collapse = ","),
     pigs_sampled = pigs_sampled,
     cells_sampled = ifelse(length(cells_sampled) == 0, NA, paste(unique(cells_sampled), collapse = ",")),
     infectious_on_property = infectious_on_property,
@@ -204,13 +223,13 @@ Surveillance <- function(pop, i, sample.design, grid.list, inc,
     living_on_property = living_on_property,
     infectiousC_on_property = infectiousC_on_property,
     dead_on_property = dead_on_property,
-    true_infected_sampled_cells = true_infected_sampled_cells,
-    true_recovered_sampled_cells = true_recovered_sampled_cells,
-    total_living_pigs_sampled_cells = total_living_pigs_sampled_cells,
-    true_infected_dead_sampled_cells = true_infected_dead_sampled_cells,
-    total_dead_pigs_sampled_cells = total_dead_pigs_sampled_cells
+    #true_infected_sampled_cells = true_infected_sampled_cells,
+    #true_recovered_sampled_cells = true_recovered_sampled_cells,
+    #total_living_pigs_sampled_cells = total_living_pigs_sampled_cells,
+    #true_infected_dead_sampled_cells = true_infected_dead_sampled_cells,
+    #total_dead_pigs_sampled_cells = total_dead_pigs_sampled_cells
   )
   
-  return(list(pop = pop, surveillance_data = surv_summary))
+  return(pop = pop,surveillance_data = surv_summary)
 }
 

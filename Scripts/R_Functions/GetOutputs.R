@@ -111,12 +111,31 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         # Now, outside of the loop, check if sample == 1 to combine live detections with sampled pigs
         if (sample == 1) {
             # Get the sampled pigs for the timestep
-            pigs_sampled_timestep <- input.opts$pigs_sampled_timestep
+           # pigs_sampled_timestep <- input.opts$pigs_sampled_timestep
             ## check these hard-coded values
-            sampled_pigs_column <- matrix(unlist(pigs_sampled_timestep), nrow = 52, ncol = 1)  # Convert to a matrix (1 row, 52 columns)
-            sampled_pigs_column_dup <- matrix(rep(sampled_pigs_column, each = 2), ncol = 1)
+            #sampled_pigs_column <- matrix(unlist(pigs_sampled_timestep), nrow = 52, ncol = 1)  # Convert to a matrix (1 row, 52 columns)
+            #sampled_pigs_column_dup <- matrix(rep(sampled_pigs_column, each = 2), ncol = 1)
             # Combine the live detections with the sampled pigs as a new column
-            detections <- cbind(detections, sampled_pigs_column_dup)
+            #detections <- cbind(detections, sampled_pigs_column_dup)
+          # Get the sampled pigs for the timestep
+          pigs_sampled_timestep = input.opts$pigs_sampled_timestep
+          cells_sampled_timestep <- input.opts$cells_sampled_timestep
+          
+          # Get the sampled pigs vector
+          sampled_pigs_vector <- unlist(pigs_sampled_timestep)
+          cells_sampled_vector <- sapply(cells_sampled_timestep, function(x) length(unique(x)))
+          
+          # Dynamically set number of rows based on actual grid cells
+          sampled_pigs_column <- matrix(sampled_pigs_vector, ncol = 1)
+          cells_sampled_column <- matrix(cells_sampled_vector, ncol = 1)
+          
+          # Duplicate each row (one per detection type: live/dead)
+          sampled_pigs_column_dup <- matrix(rep(sampled_pigs_column, each = 2), ncol = 1)
+          cells_sampled_column_dup <- matrix(rep(cells_sampled_column, each = 2), ncol = 1)
+          
+          #sampled_pigs_column <- matrix(unlist(pigs_sampled_timestep), nrow = 52, ncol = 1)  # Convert to a matrix (1 row, 52 columns)
+          # Combine the live detections with the sampled pigs as a new column
+          detections = cbind(detections, sampled_pigs_column_dup, cells_sampled_column_dup)
         }
     }
     #Get Incidence and R0 vals summarized in data frame

@@ -1,6 +1,6 @@
 # Primary function to manage single simulation runs (setup, execution, output)
 
-RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.parms, lvtable2){
+RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.parms,sample.design, lvtable2){
 
     # movement parameters from NND landscape selection
     # convert to datatable
@@ -39,14 +39,12 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     # add vars to parameters
     parameters <- c(parameters, vars)
     parameters$K <- K
-    browser()
     # movement parameters from landscape tile
     lgl.entry <- which(lgl.index == l.val)
 #     parameters$alpha <- 1/as.numeric(mv.parms[lgl.entry, sigdisp])
 #     parameters$theta <- as.numeric(mv.parms[lgl.entry, disp])/parameters$alpha
     parameters$alpha <- mv.parms[lgl.entry, gamma.shape]
     parameters$theta <- mv.parms[lgl.entry, gamma.scale]
-    browser()
     # grab landscape data
     centroids <- land_grid_list[[lgl.entry]]$centroids
     grid <- land_grid_list[[lgl.entry]]$grid
@@ -60,7 +58,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     outputs <- Initialize_Outputs(parameters)
 
     # Run simulation
-    out.list <- SimulateOneRun(outputs, pop, centroids, grid, parameters, K, v.val, l.val, r.val)
+    out.list <- SimulateOneRun(outputs, pop, centroids, grid, parameters, sample.design, K, v.val, l.val, r.val)
 
     # Handle outputs, including writing storage files (returns NULL)
     summ.vals <- rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts)

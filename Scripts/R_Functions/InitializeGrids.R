@@ -69,7 +69,6 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
             one_split = tstrsplit(nm[2],".")
             names(plands_rast) <- onesplit[1]
           }
-          browser()
           plands_res <- terra::res(plands_rast)
           inc <- plands_res[1]/1000
           km_len <- dim(plands_res[1])*inc

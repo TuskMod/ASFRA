@@ -27,7 +27,7 @@
   #col6-FY start date
   #col7-week #
 
-LoadSurveillanceDesign<-function(inc){
+LoadSurveillanceDesign<-function(){
 
   # Read sampling file
   # sampling file should be in the tile of interest 
@@ -72,17 +72,35 @@ LoadSurveillanceDesign<-function(inc){
 
 }
 
-MatchGridstoCell <- function(sample.prep,inc,grid){
+MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
   sample_coords <- st_as_sf(sample.prep, coords = c("longitude", "latitude"), crs=4269) # pull out x and y coords from sample.prep, convert to sf object
   sample_sf_transformed <- st_transform(sample_coords, crs = 26917) # transform coordinates to meter based CRS
   sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
   sample_coords_transformed <- sample_coords_transformed / 1000 # convert to km
+  print("COUNTY COORDINATES")
+  print(sample_coords_transformed)
+  sample_bbox <- st_bbox(st_read(sample.prep$shp_file[[1]]))
+  sample_xmin <- sample_bbox["xmin"][[1]]
+  sample_xmax <- sample_bbox["xmax"][[1]]
+  sample_ymin <- sample_bbox["ymin"][[1]]
+  sample_ymax <- sample_bbox["ymax"][[1]]
   
+ # print("TILE COORDINATES")
+  curr_tile <- terra::rast(lands_data[[1]])
+  curr_tile <- project(curr_tile,"NAD83")
+  #print(curr_tile)
+  current_extent <- ext(curr_tile)
+  tile_centroid <- centroids(curr_tile)
+  tile_x <- x(tile_centroid[[1]])
+  tile_y <- y(tile_centroid[[1]])
+  rast_xmin <- xmin(current_extent)[[1]]
+  rast_xmax <- xmax(current_extent)[[1]]
+  rast_ymin <- ymin(current_extent)[[1]]
+  rast_ymax <- ymax(current_extent)[[1]]
   
   # Add column to sample.design so the cell # where sampling occurs can be updated
   #sample.design$sampling_loc <- 0L
   sample.prep$sampling_loc <- vector("list", nrow(sample.prep))
-  min_sample_thresh = 10
   # Loop over each sampling point and check proximity to grid centroids
   for (i in 1:nrow(sample_coords_transformed)) {
     # Extract the x and y coordinates of the current sample point
@@ -101,17 +119,24 @@ MatchGridstoCell <- function(sample.prep,inc,grid){
     #numerator = inc * 1000 * inc * 1000
     #denominator = 1000000
     #grid_cell_area = numerator/denominator
-    grid_cell_area = inc * inc
+    grid_cell_area = parameters$inc * parameters$inc
     
     # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
     num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
     
     # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
     # square root [(xf-xi)^2 + (yf-yi)^2]
-    distances <- sqrt((grid[[1]]$centroids[, 6] - sample_x)^2 + (grid[[1]]$centroids[, 7] - sample_y)^2)
+    # get centroid of grid! use this to find each cell's centroid lat/long 
+    dx_m 
+    center_x <- grid[[1]][[1]]$centroids[, 1] 
+    center_y <- grid[[1]][[1]]$centroids[, 2] 
+    lat <- tile_x + center_x/111320
+    long <- tile_y + center_y
+    distances <- sqrt((grid[[1]][[1]]$centroids[, 1] - sample_x)^2 + (grid[[1]][[1]]$centroids[, 2] - sample_y)^2)
     
     # Check if the minimum distance is within the threshold
     # Using threshold of 10 meters
+    min_sample_thresh <- (inc)/(sqrt(2))
     if (min(distances) <= min_sample_thresh) {
       # Get indices of the closest `num_cells_to_sample` grid cells
       sorted_indices <- order(distances)
@@ -119,12 +144,17 @@ MatchGridstoCell <- function(sample.prep,inc,grid){
       
       # Store the sampled grid cell indices
       sample.prep$sampling_loc[[i]] <- sampled_cell_indices
+      print("sampling loc is: ")
+      print(sampled_cell_indices)
     } else {
       # If no nearby grid cell found, store NA or empty list
       sample.prep$sampling_loc[[i]] <- NA  # or list() if you prefer
     }
   }
-  
+  return(NULL)
+  if(parameters$sample != 1){
+    return(NULL)
+  }
   return(sample.prep)
 }
 

@@ -65,6 +65,13 @@
         }
 
     }
+    
+    print(object)
+    
+    # --- Find county centroid and anchor grid from there ---
+   # county_centroid <- st_centroid(st_union(county_proj))
+  #  center_coords <- st_coordinates(county_centroid)
+    
 
 
     #get number of cells in grid

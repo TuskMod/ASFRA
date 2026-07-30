@@ -2,6 +2,16 @@
 ## inputs -- names of tm.mat files, table of cell number and centroid points
 ## cent = land_grid_list[[1]][[1]][[2]][,c(1,6,7)] for cell, x, y
 
+full.looper <- function(cent){
+  all_file_names <- list.files('Output/tm.mat/')
+  full_output <- data.table()
+  for(i in 1:length(all_file_names)){
+    out <- data.looper(all_file_names[[i]],cent)
+    full_output <- rbind(full_output,out)
+  }
+  fwrite(full_output,"results.outputs.csv")
+}
+
 data.looper <- function(infile, cent){
     library(data.table)
     # Grab the files with the infile name/numbers

@@ -1,16 +1,17 @@
 ## est ridge with landscape-based cv
-make_rslt <- function(result.outputs, variables, mv.params){
+make_rslt <- function(variables, mv.params){
     library(targets)
     library(glmnet)
     library(data.table)
 
-    rslt <- fread('result.outputs.csv')
+    rslt <- fread('Output/result.outputs.csv')
 
     setnames(rslt, c('v','l','r','est','edge.tm','max.dist','inf.area','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'))
     rslt[est == 2, est := 1]
-#     variables <- tar_read(variables)
-#     mv.params <- tar_read(mv.params)
+    #variables <- tar_read(variables)
+    #mv.params <- tar_read(mv.params)
     setDT(variables)
+    setDT(mv.params)
     variables[,v := 1:.N]
     setkey(variables, v)
     setkey(mv.params, index)
