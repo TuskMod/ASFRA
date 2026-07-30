@@ -105,7 +105,7 @@ list(
     #     ### Pull variables out of parameters list (parameters with multiple values = variables, for flexibility)
     tar_target(variables, SetVarParms(parameters0)),
   
-    tar_target(sample.prep,LoadSurveillanceDesign(variables$inc)),
+    tar_target(sample.prep,LoadSurveillanceDesign()),
     tar_target(all_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "all_plands")),format="file"),
    # tar_target(all_edge_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "edge_plands")),format="file"),
 
@@ -139,7 +139,7 @@ list(
 #
 
 #   Now, add proper cells to sample.design
-    tar_target(sample.design,MatchGridstoCell(sample.prep,parameters$inc,land_grid_list)),
+    tar_target(sample.design,MatchGridstoCell(sample.prep,parameters,land_grid_list,lands_data)),
 
 #     ### Get landscape-specific movement parameters
     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { if(parameters$grid.opts =="indvras"){ReadTileFolders(lands_data[[1]])}}),
@@ -167,6 +167,7 @@ list(
                                                  parameters = parameters,
                                                  variables = variables,
                                                  mv.parms = mv.params,
+                                                 sample.design = sample.design,
                                                  lvtable2 = lvtable2)
          , pattern = map(lvtable2) # tells targets to branch nodes by lines in lvtable2, which is the list of land, variable, and replicate combinations
          , iteration = 'vector'
@@ -184,7 +185,7 @@ list(
 #
 
     ## put together result table
-    , tar_target(rslt, make_rslt(result.outputs, variables, mv.params))
+    , tar_target(rslt, make_rslt(variables, mv.params))
     ## get results where establishment took place
     , tar_target(rslt1, rslt[est == 1,])
     ## get survival analysis table set up
