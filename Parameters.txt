@@ -151,7 +151,7 @@ pop_init_grid_opts = "ras"
 
 ### for no culling or detection for the duration
 ~ detectday = 9999
-detectday = 20
+detectday = 1
   
 * DetP, probability of infected pigs sampled as positive. for now, is just used as an input in some of the sounderlocs output processing steps. later, may be integrated into culling/surveillance process within simulation.
 
@@ -160,7 +160,21 @@ detectday = 20
 * sample, option to include specific sampling scheme for a county. Sample format for this file can be found here: "Input/sampling_scheme_template.csv"
 * This feature currently requires a county landclass preference file to construct grid. Initial implementation required county shapefile but this is deprecated.
 
-~ sample = 0
+~ sample = 1
+
+* distance threshold - # of meters radius for a surveillance location
+~ sampe_dist = 10
+
+* just_surveillance - # model only captures surveillance behavior 
+~ just_surveillance = 1
+
+* CarcassDet: carcass detection probability when conducting surveillance 
+~ CarcassDet = .001
+
+* Sensitivity and Specificity - fixed params for now
+
+~ Sensitivity = 1
+~ Specificity = 1
 
 #############################
 #### Culling parameters #####
@@ -239,7 +253,7 @@ infection to spread farther.
 
 	** incidence: matrix with timestep, num exposed, num infected, and assoc. locs. can get large, cross-replicate summaries for now ignore locs, just summarise num exp/inf across timestep. in future, will add num susc to this to calculate different measures of Rt.
 
-~ out.opts = c("sounderlocs","idzone","alldetections","incidence")
+~ out.opts = c("sounderlocs","idzone","alldetections","incidence","alldetections")
 
 
 ### Selection of variables to include in variable definition, i.e. which parameters are changing as experimental inputs
