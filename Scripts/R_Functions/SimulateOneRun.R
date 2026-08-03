@@ -122,14 +122,13 @@ if(sample == 1){
           #  print(sample.design)
             surv.list <- Surveillance(pop, i, sample.design, parameters) # Madison
             print("did surveillance!")
-            pop <- surv.list[[1]]
             print("finished pop")
-            POSlive[[i]] <- surv.list[[2]]$live_infectious_sample
-            POSdead[[i]] <- surv.list[[2]]$dead_infected_sampled
-            POSlive_locs[[i]] <- surv.list[[2]]$live_infected_sampled_locs
-            POSdead_locs[[i]] <- surv.list[[2]]$dead_infected_sampled_locs
+            POSlive[[i]] <- surv.list$live_infectious_sample
+            POSdead[[i]] <- surv.list$dead_infected_sampled
+            POSlive_locs[[i]] <- surv.list$live_infected_sampled_locs
+            POSdead_locs[[i]] <- surv.list$dead_infected_sampled_locs
             print("positive and negative samples")
-            pigs_sampled_timestep <- surv.list[[2]]$pigs_sampled
+            pigs_sampled_timestep <- surv.list$pigs_sampled
           
         }
 
