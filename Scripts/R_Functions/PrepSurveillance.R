@@ -77,20 +77,19 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
   curr_tile <- terra::rast(lands_data[[1]])
   custom_crs <- crs(curr_tile)
   # now - get CRS for sample.design
-  # assing it a CRS!
+  # assuming it a CRS!
   sample_coords <- st_as_sf(sample.prep, coords = c("longitude", "latitude"))
   st_crs(sample_coords) <- 4269
   # pull out x and y coords from sample.prep, convert to sf object
   sample_sf_transformed <- st_transform(sample_coords,custom_crs)
-  print(sample_sf_transformed)
   # transform coordinates to meter based CRS
   sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
   #sample_coords_transformed <- sample_coords_transformed / 1000 # convert to km
-  sample_bbox <- st_bbox(st_read(sample.prep$shp_file[[1]]))
-  sample_xmin <- sample_bbox["xmin"][[1]]
-  sample_xmax <- sample_bbox["xmax"][[1]]
-  sample_ymin <- sample_bbox["ymin"][[1]]
-  sample_ymax <- sample_bbox["ymax"][[1]]
+#  sample_bbox <- st_bbox(st_read(sample.prep$shp_file[[1]]))
+ # sample_xmin <- sample_bbox["xmin"][[1]]
+  #sample_xmax <- sample_bbox["xmax"][[1]]
+  #sample_ymin <- sample_bbox["ymin"][[1]]
+  #sample_ymax <- sample_bbox["ymax"][[1]]
   
  # print("TILE COORDINATES")
   #curr_tile <- project(curr_tile,4269,res=0.5  )
@@ -180,23 +179,31 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
 FindSurveillanceTiles <- function(tile_path,sample.design){
   fs <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(fs, '/', keep=5))
- # nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
-  
   county_shapefile <- sample.design$shp_file[[1]]
+  curr_tile <- terra::rast(fs[1])
+  custom_crs <- crs(curr_tile)
+  
   # need surveillance area - so there's some bounding box 
   # associated with the area , an extent 
   right_plands <- vector(mode="list")
   plands_names <- c()
   counter = 1
-  sample_bbox <- st_bbox(st_read(county_shapefile))
+  #sample_bbox <- st_bbox(st_read(county_shapefile))
+  sample_geom <-  st_read(county_shapefile)
+  st_crs(sample_geom) <- 4269
+  # pull out x and y coords from sample.prep, convert to sf object
+  sample_sf_transformed <- st_transform(sample_geom,custom_crs)
+  sample_bbox <- st_bbox(sample_sf_transformed)
+  # transform coordinates to meter based CRS
   sample_xmin <- sample_bbox["xmin"][[1]]
   sample_xmax <- sample_bbox["xmax"][[1]]
   sample_ymin <- sample_bbox["ymin"][[1]]
   sample_ymax <- sample_bbox["ymax"][[1]]
   for(fi in 1:length(fs)){
-    curr_tile <- terra::rast(fs[fi])
-    curr_tile <- project(curr_tile,"NAD83")
-    current_extent <- ext(curr_tile)
+    fi_tile <- terra::rast(fs[fi])
+   # custom_crs <- crs(curr_tile)
+    #curr_tile <- project(curr_tile,"NAD83")
+    current_extent <- ext(fi_tile)
     rast_xmin <- xmin(current_extent)[[1]]
     rast_xmax <- xmax(current_extent)[[1]]
     rast_ymin <- ymin(current_extent)[[1]]
@@ -204,10 +211,10 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     
     ## is sample within xmin and xmax?
     # need to grab a counties x and y coordinates!!
-    
-    if((sample_xmin >= rast_xmin) & (sample_xmax < rast_xmax)){ 
-       if (sample_ymin >= rast_ymin){
-         right_plands[[counter]] <- terra::mean(curr_tile)
+ 
+    if((sample_ymin >= rast_ymin) & (sample_ymax <= rast_ymax)){ 
+       if ((sample_xmin >= rast_xmin) & (sample_xmax <= rast_xmax)){
+         right_plands[[counter]] <- terra::mean(fi_tile)
          terra::mean(right_plands[[counter]])
          plands_names[[counter]]<-fs[fi]
          if (length(nm[fi]) == 3){
@@ -223,7 +230,7 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
   }
   
     
-  
+  print(plands_names)
   # stick lands into a sprc object
 #  plands_sprc <- terra::sprc(right_plands)
 #  names(plands_sprc) <- lapply(right_plands, names)

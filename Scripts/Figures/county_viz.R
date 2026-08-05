@@ -61,6 +61,9 @@
     sample.design$dates <- as.Date(sample.design$dates, format = "%m/%d/%Y") # change to standard date format
     
     tile_object <- FindSurveillanceTiles(all_lands,sample.design)[[1]]
+    if(length(tile_object) == 0){
+      next
+    }
     print(tile_object)
     county_name <- strsplit(county_shapefile,"/")[[1]][3]
     save_name <- paste(county_name,".png")
@@ -186,9 +189,9 @@
     fig_title <- paste(county_name," Surveillance Map")
     
     ggplot() +
-      #geom_sf(data = grid_centroids_sf, aes(color = factor(sampled)), size = 1, alpha = 0.7) +
+     # geom_sf(data = grid_centroids_sf, aes(color = factor(sampled)), size = 1, alpha = 0.7) +
       geom_tile(aes(x=tile_centroids[,1],y=tile_centroids[,2],fill=values(ras))) +
-      scale_fill_gradient(low = "white", high = "red") + 
+      scale_fill_gradient(low="#e7e1ef",high="#dd1c77") + 
       guides(fill=guide_colourbar(barwidth=0.5,barheight=20)) +
       geom_sf(data = county_data, fill = "grey90", size = 0.3) +
       geom_sf(data = sample_points_sf, color = "black", size = 2, shape = 4) +
