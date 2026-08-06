@@ -188,7 +188,7 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
   right_plands <- vector(mode="list")
   plands_names <- c()
   counter = 1
-  #sample_bbox <- st_bbox(st_read(county_shapefile))
+  
   sample_geom <-  st_read(county_shapefile)
   st_crs(sample_geom) <- 4269
   # pull out x and y coords from sample.prep, convert to sf object
@@ -211,7 +211,7 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     
     ## is sample within xmin and xmax?
     # need to grab a counties x and y coordinates!!
- 
+    old_counter <- counter
     if((sample_ymin >= rast_ymin) & (sample_ymax <= rast_ymax)){ 
        if ((sample_xmin >= rast_xmin) & (sample_xmax <= rast_xmax)){
          right_plands[[counter]] <- terra::mean(fi_tile)
@@ -225,7 +225,20 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
          }
          counter <- counter + 1
        }
-     
+    }
+    if(old_counter == counter){
+      if(TileinCounty(sample_bbox,current_extent)){
+        right_plands[[counter]] <- terra::mean(fi_tile)
+        terra::mean(right_plands[[counter]])
+        plands_names[[counter]]<-fs[fi]
+        if (length(nm[fi]) == 3){
+          names(right_plands[[counter]]) <- nm[fi][3]
+        }
+        if (length(nm[fi]) == 2){
+          names(right_plands[[counter]]) <- nm[fi][2]
+        }
+        counter <- counter + 1
+      }
     }
   }
   
@@ -237,6 +250,49 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
   
   return(plands_names)
 }
+
+## Need way to combine combine tiles together! 
+## Better yet - find tiles given sample design
+## i think creating a bounding box based on that feels better?????
+## a county is where the spreading happens! That must be the unit! 
+## maybe get the tile IDs for the samples and go from there.....?
+
+TileinCounty <- function(county.rast,tile.rast){
+  
+  county_xmin <- county.rast["xmin"][[1]]
+  county_xmax <- county.rast["xmax"][[1]]
+  county_ymin <- county.rast["ymin"][[1]]
+  county_ymax <- county.rast["ymax"][[1]]
+  
+  tile_xmin <- xmin(tile.rast)[[1]]
+  tile_xmax <- xmax(tile.rast)[[1]]
+  tile_ymax <- ymax(tile.rast)[[1]]
+  tile_ymin <- ymin(tile.rast)[[1]]
+  
+  within_x <- FALSE
+  within_y <- FALSE
+  
+  
+  # conditions when a county will NEVER fit in a tile 
+  if((county_xmin > tile_xmax)|| (county_xmax < tile_xmin)){
+    return(FALSE)
+  }
+  
+  if((county_ymin > tile_ymax)  || (county_ymax < tile_ymin)){
+    return(FALSE)
+  }
+  
+  # these will find counties that will definitely be in the
+  # county
+  if((county_xmin <= tile_xmax) & (county_ymin <= county_ymax)){
+    return(TRUE)
+  }
+  
+  return(FALSE)
+  
+}
+
+
 
 
 ReadTileFolders <- function(tile_fp){

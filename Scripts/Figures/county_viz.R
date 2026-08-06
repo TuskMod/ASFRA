@@ -11,14 +11,12 @@
       
       samp_data <- c()
       county_shp <- c()
-    #  all_paths$sample_files <- c()
-    #  all_paths$shp_files <- c()
+   
       for (i in 1:length(counties)){
         county <- counties[[i]]
         csv_file <- list.files(county,pattern="\\.csv$")
-        csv_path <- paste0(county,"/")
-        csv_path <- paste0(csv_path,csv_file)
-        # now - get associated .shp file with sample design
+        csv_path <- paste0(county,"/",csv_file)
+        #csv_path <- paste0(csv_path,csv_file)
         shp_dir <- list.dirs(county,recursive=FALSE)
         shp_files <- list.files(shp_dir,pattern="\\.shp")
         shp_file <- ""
@@ -30,8 +28,8 @@
             break
           }
         }
-        full_shp_path <- paste0(shp_dir,"/")
-        full_shp_path <- paste0(full_shp_path,shp_file)
+        full_shp_path <- paste0(shp_dir,"/",shp_file)
+       # full_shp_path <- paste0(full_shp_path,shp_file)
         
         county_shp <- c(county_shp,full_shp_path)
         samp_data <- c(samp_data,csv_path)
@@ -48,11 +46,8 @@
   county_path <- "../Counties-of-Interest/"
   all_paths <- FindAllCountyCSV(county_path)
   for(a in 1:length(all_paths$county_shp)){
-    #shp_file <- "../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv"
     samp_file <- all_paths[a,]$samp_data[[1]]
-  #  sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv")
     sample.design <- read.csv(samp_file)
-    #county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
     county_shapefile <- all_paths[a,]$county_shp[[1]]
     sample.design$shp_file <- county_shapefile
     
@@ -61,16 +56,18 @@
     sample.design$dates <- as.Date(sample.design$dates, format = "%m/%d/%Y") # change to standard date format
     
     tile_object <- FindSurveillanceTiles(all_lands,sample.design)[[1]]
+    print(tile_object)
     if(length(tile_object) == 0){
       next
     }
-    print(tile_object)
     county_name <- strsplit(county_shapefile,"/")[[1]][3]
     save_name <- paste(county_name,".png")
     sample <- 1
     
     ras <- terra::mean(terra::rast(tile_object))
     custom_crs <- crs(ras)
+    #custom_crs <- crs("epsg:4269")
+    #ras <- terra::project(ras,"epsg:4269")
     len <- dim(ras)[1]
     inc <- res(ras)[1]/1000
     grid.opt <- "heterogeneous"
@@ -84,7 +81,8 @@
     # resolution in meters
     county_data <- st_read(county_shapefile)
     county_data <- st_as_sf(sample.design, coords = c("longitude","latitude"))
-    st_crs(county_data) <- 4269
+    #custom_crs <- 4269
+    st_crs(county_data) <- "epsg:4269"
     county_data <- st_transform(county_data,custom_crs)
     #county_proj <- st_transform(county_data, working_crs)
     
@@ -176,8 +174,10 @@
     # Convert to kilometers
     #sample_coords_transformed <- sample_coords_transformed
     
-    
-    plot(ras)
+    county_sf <- st_read(county_shapefile)
+    st_crs(county_sf) <- 4269
+    county_transformed <- st_transform(county_sf,custom_crs)
+  
     
     sample_points_sf <- st_as_sf(
       data.frame(x = sample_coords_transformed[,1] , y = sample_coords_transformed[,2] ),
@@ -185,16 +185,20 @@
       crs = st_crs(custom_crs)
     )
     
+    num_samples <- sum(sample.design$quantity)
     tile_centroids <- crds(ras)
-    fig_title <- paste(county_name," Surveillance Map")
+    fig_title <- paste(county_name," Surveillance Map, Samples: ",num_samples)
+    
     
     ggplot() +
      # geom_sf(data = grid_centroids_sf, aes(color = factor(sampled)), size = 1, alpha = 0.7) +
+    
       geom_tile(aes(x=tile_centroids[,1],y=tile_centroids[,2],fill=values(ras))) +
       scale_fill_gradient(low="#e7e1ef",high="#dd1c77") + 
-      guides(fill=guide_colourbar(barwidth=0.5,barheight=20)) +
-      geom_sf(data = county_data, fill = "grey90", size = 0.3) +
+      guides(fill=guide_colourbar(barwidth=0.5,barheight=20),title="Land Preference") +
+      geom_sf(data = county_transformed, fill = "grey90", size = 0.3,alpha=1) +
       geom_sf(data = sample_points_sf, color = "black", size = 2, shape = 4) +
+      coord_sf(crs=custom_crs)+
       labs(title=fig_title)+
       xlab("Latitude") +
       ylab("Longitude") + 
