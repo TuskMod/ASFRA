@@ -197,10 +197,12 @@
     ggplot() +
      # geom_sf(data = grid_centroids_sf, aes(color = factor(sampled)), size = 1, alpha = 0.7) +
       geom_tile(aes(x=tile_centroids[,1],y=tile_centroids[,2],fill=values(ras))) +
-      scale_fill_gradient(low="#e7e1ef",high="#dd1c77") + 
+    #  scale_fill_gradient(low="#e7e1ef",high="#dd1c77") + 
+      scale_fill_viridis_c()+
       guides(fill=guide_colourbar(barwidth=0.5,barheight=20),title="Land Preference") +
-      geom_sf(data = county_transformed, fill = "grey90", size = 0.3,alpha=0.8) +
-      geom_sf(data = sample_points_sf, color = "black", size = 2, shape = 4) +
+      geom_sf(data = county_transformed,border.color="black", size = 0.8,alpha=0.2) +
+      geom_sf(data = sample_points_sf, color = "magenta", size = 1, shape = 19,alpha=0.4) +
+      geom_sf_label(border.colour="black")+
       coord_sf(crs=custom_crs)+
       labs(title=fig_title)+
       xlab("Latitude") +
