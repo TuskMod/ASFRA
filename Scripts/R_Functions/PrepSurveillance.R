@@ -242,8 +242,10 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     }
   }
   
+#  if(length(right_plands) >= 2){
+#    new_tile <- JoinTogetherTiles(county_shapefile,right_plands)
+#  }
     
-  print(plands_names)
   # stick lands into a sprc object
 #  plands_sprc <- terra::sprc(right_plands)
 #  names(plands_sprc) <- lapply(right_plands, names)
@@ -251,18 +253,156 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
   return(plands_names)
 }
 
-## Need way to combine combine tiles together! 
-## Better yet - find tiles given sample design
-## i think creating a bounding box based on that feels better?????
-## a county is where the spreading happens! That must be the unit! 
-## maybe get the tile IDs for the samples and go from there.....?
+FindBBoxTiles <- function(tile_path,sample_bbox){
+  fs <- list.files(tile_path, full.names=TRUE)
+  nm <- unlist(tstrsplit(fs, '/', keep=5))
+  curr_tile <- terra::rast(fs[1])
+  custom_crs <- crs(curr_tile)
+  
+  # need surveillance area - so there's some bounding box 
+  # associated with the area , an extent 
+  right_plands <- vector(mode="list")
+  plands_names <- c()
+  counter = 1
+  full_tile <- c()
+  
+  county.dat <- st_read(county.shp[[1]])
+  pland_dat <- c()
+  county.centroid <- st_centroid(county.dat)
+  merged_raster <- NULL
+  
+  
+  sample_xmin <- sample_bbox["xmin"][[1]]
+  sample_xmax <- sample_bbox["xmax"][[1]]
+  sample_ymin <- sample_bbox["ymin"][[1]]
+  sample_ymax <- sample_bbox["ymax"][[1]]
+  
+  st_crs(county.centroid) <- "NAD83"
+  coords <- st_transform(county.centroid, custom_crs) # transform coordinates to meter based CRS
+  buffered_point <- st_bbox(st_buffer(coords, dist = 50000))
+  buffered_extent <- ext(buffered_point)
+  print(ext(buffered_point))
+  ymax <- buffered_point$ymax
+  ymin <- buffered_point$ymin
+  xmax <- buffered_point$xmax
+  xmin <- buffered_point$xmin
+  
+  for(fi in 1:length(fs)){
+    fi_tile <- terra::rast(fs[fi])
+    # custom_crs <- crs(curr_tile)
+    current_extent <- ext(fi_tile)
+    rast_xmin <- xmin(current_extent)[[1]]
+    rast_xmax <- xmax(current_extent)[[1]]
+    rast_ymin <- ymin(current_extent)[[1]]
+    rast_ymax <- ymax(current_extent)[[1]]
+
+  
+    if(TileinCounty(buffered_point,current_extent)){
+        right_plands[[counter]] <- terra::mean(fi_tile)
+        terra::mean(right_plands[[counter]])
+        plands_names[[counter]]<-fs[fi]
+        if (length(nm[fi]) == 3){
+          names(right_plands[[counter]]) <- nm[fi][3]
+        }
+        if (length(nm[fi]) == 2){
+          names(right_plands[[counter]]) <- nm[fi][2]
+        }
+        counter <- counter + 1
+      }
+  }
+  return(counter)
+  
+  }
+
+JoinTogetherTiles <- function(tile_path,county.shp,sample.design){
+  
+  pland_files <- list.files(tile_path, full.names=TRUE)
+  nm <- unlist(tstrsplit(pland_files, '/', keep=5))
+  curr_tile <- terra::rast(pland_files[1])
+  custom_crs <- crs(curr_tile)
+
+  county.dat <- st_read(county.shp[[1]])
+  pland_dat <- c()
+  county.centroid <- st_centroid(county.dat)
+  merged_raster <- NULL
+  
+  coords <- st_transform(county.centroid, custom_crs) # transform coordinates to meter based CRS
+  buffered_point <- st_bbox(st_buffer(coords, dist = 50000))
+  sampled_extent <- ext(buffered_point)
+  #ymax <- buffered_point$ymax
+  #ymin <- buffered_point$ymin
+  #xmax <- buffered_point$xmax
+  #xmin <- buffered_point$xmin
+  first_tile <- NULL
+  all_rasters <- c()
+  counter <- 0
+  for(i in 1:length(pland_files)){
+    pland <- terra::mean(terra::rast(pland_files[i]))
+    custom_crs <- crs(pland)
+    current_extent <- ext(pland)
+    #pland_dat <- c(pland_dat,pland)
+    if(TileinCounty(buffered_point,current_extent)){
+       all_rasters <- c(all_rasters,pland)
+       counter <- counter + 1
+    }
+  }
+  
+  print(counter)
+  rast_list <- sprc(all_rasters)
+  merged_raster <- mosaic(rast_list,fun="min")
+  
+ # st_crs(county.centroid) <- "NAD83"
+  #coords <- st_transform(county.centroid, custom_crs) # transform coordinates to meter based CRS
+  #buffered_point <- st_bbox(st_buffer(coords, dist = 50000))
+  #print(ext(buffered_point))
+  #ymax <- buffered_point$ymax
+  #ymin <- buffered_point$ymin
+  #xmax <- buffered_point$xmax
+  #xmin <- buffered_point$xmin
+ 
+  # ok - this means that we need to add ANOTHER tile before we do any sort of cropping
+  # using the buffered_points bbox - let us find any extra tiles! 
+  ## do a check here seeing if buffered_points is truly within tile
+  ## if not - search for next tiles that fit!!
+  
+  #crop_bbox <- ext(xmin,xmax,ymin,ymax)
+  cropped_tile <- crop(merged_raster,sampled_extent,mask=TRUE)
+  print("Tile Dimensions")
+  print(dim(crds(cropped_tile))[[1]])
+  print(dim(crds(merged_raster))[[1]])
+  if((dim(crds(cropped_tile))[[1]] < 40000)){
+    print("returning normal tile!")
+    pland_names <- FindSurveillanceTiles(tile_path,sample.design)
+    print(pland_names[[1]])
+    return(terra::mean(terra::rast(pland_names[[1]])))
+  }
+
+  return(cropped_tile)
+}
+  
+
+
+
+    
+    
+
+
+## Identifies if a tile is within a county limits
+## Inputs: county.rast (county bounding box), tile.rast (tile bounding box)
+## Returns: True/False based on county and tile boudning box
 
 TileinCounty <- function(county.rast,tile.rast){
-  
+ 
   county_xmin <- county.rast["xmin"][[1]]
   county_xmax <- county.rast["xmax"][[1]]
   county_ymin <- county.rast["ymin"][[1]]
   county_ymax <- county.rast["ymax"][[1]]
+
+#  county_xmin <- xmin(county.rast)[[1]]
+#  county_xmax <- xmax(county.rast)[[1]]
+#  county_ymax <- ymax(county.rast)[[1]]
+#  county_ymin <- ymin(county.rast)[[1]]
+  
   
   tile_xmin <- xmin(tile.rast)[[1]]
   tile_xmax <- xmax(tile.rast)[[1]]
@@ -287,6 +427,8 @@ TileinCounty <- function(county.rast,tile.rast){
   if((county_xmin <= tile_xmax) & (county_ymin <= county_ymax)){
     return(TRUE)
   }
+  
+  
   
   return(FALSE)
   

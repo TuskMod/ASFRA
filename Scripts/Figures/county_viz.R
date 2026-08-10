@@ -55,17 +55,21 @@
     names(sample.design)[1] <- "dates"  # Rename the first column to 'dates'
     sample.design$dates <- as.Date(sample.design$dates, format = "%m/%d/%Y") # change to standard date format
     
-    tile_object <- FindSurveillanceTiles(all_lands,sample.design)[[1]]
-    print(tile_object)
-    if(length(tile_object) == 0){
-      next
-    }
+   # tile_fn <- FindSurveillanceTiles(all_lands,sample.design)
+  
+  #  if(length(tile_fn) == 0){
+  #    next
+  #  }
     county_name <- strsplit(county_shapefile,"/")[[1]][3]
     save_name <- paste(county_name,".png")
     sample <- 1
-    
-    ras <- terra::mean(terra::rast(tile_object))
+    print("control loop")
+    #if (length(tile_fn) > 1){
+    ras <- JoinTogetherTiles(all_lands,county_shapefile,sample.design)
     custom_crs <- crs(ras)
+    print("dimensions of .tif file")
+    print(dim(crds(ras)))
+    
     #custom_crs <- crs("epsg:4269")
     #ras <- terra::project(ras,"epsg:4269")
     len <- dim(ras)[1]
@@ -81,11 +85,9 @@
     # resolution in meters
     county_data <- st_read(county_shapefile)
     county_data <- st_as_sf(sample.design, coords = c("longitude","latitude"))
-    #custom_crs <- 4269
     st_crs(county_data) <- "epsg:4269"
     county_data <- st_transform(county_data,custom_crs)
-    #county_proj <- st_transform(county_data, working_crs)
-    
+
     # --- Define fixed grid parameters ---
     grid_size_km <- 100
     grid_size_m <- grid_size_km * 1000  # Total grid = 82,000 meters
@@ -186,17 +188,18 @@
     )
     
     num_samples <- sum(sample.design$quantity)
+    print("tile values!")
     tile_centroids <- crds(ras)
     fig_title <- paste(county_name," Surveillance Map, Samples: ",num_samples)
+    print(dim(tile_centroids))
     
-    
+   
     ggplot() +
      # geom_sf(data = grid_centroids_sf, aes(color = factor(sampled)), size = 1, alpha = 0.7) +
-    
       geom_tile(aes(x=tile_centroids[,1],y=tile_centroids[,2],fill=values(ras))) +
       scale_fill_gradient(low="#e7e1ef",high="#dd1c77") + 
       guides(fill=guide_colourbar(barwidth=0.5,barheight=20),title="Land Preference") +
-      geom_sf(data = county_transformed, fill = "grey90", size = 0.3,alpha=1) +
+      geom_sf(data = county_transformed, fill = "grey90", size = 0.3,alpha=0.8) +
       geom_sf(data = sample_points_sf, color = "black", size = 2, shape = 4) +
       coord_sf(crs=custom_crs)+
       labs(title=fig_title)+
