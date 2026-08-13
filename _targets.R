@@ -27,6 +27,12 @@ library(tarchetypes)
 library(clustermq)
 library(Rcpp)
 library(data.table)
+library(geosphere)
+library(stringr)
+library(tidyverse)
+library(dplyr)
+library(sf)
+library(terra)
 
 # This hardcodes the absolute path in _targets.yaml, so to make this more
 # portable, we rewrite it every time this pipeline is run (and we don't track
@@ -86,7 +92,7 @@ tar_option_set(packages = c("Rcpp",
                 ,error = 'stop' # for troubleshooting
 #                ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
                ,deployment='worker'
-               ,garbage_collection=TRUE
+               ,garbage_collection=1
                ,workspace_on_error=TRUE
 )
 
@@ -105,16 +111,17 @@ list(
     #     ### Pull variables out of parameters list (parameters with multiple values = variables, for flexibility)
     tar_target(variables, SetVarParms(parameters0)),
   
-    tar_target(sample.prep,LoadSurveillanceDesign()),
+    tar_target(sample.prep,LoadSurveillanceDesign(parameters0)),
+#     ### Input landscapes directory: -----------
+  #  tar_target(all_lands, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
+    # for the individual ras here is what to use!
     tar_target(all_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "all_plands")),format="file"),
-   # tar_target(all_edge_lands,(file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "edge_plands")),format="file"),
 
     # note how filepath is differnet from analysis! 
     # we are going through all 430 tiles, seeing which fit surveillance scheme
-    tar_target(lands_data, FindSurveillanceTiles(all_lands,sample.prep)),
+     tar_target(lands_data, FindSurveillanceTiles(parameters0,all_lands,sample.prep)),
+    # tar_target(lands_data,JoinTogetherTiles(parameters0,all_lands,sample.prep$shp_file,sample.prep)),
 
-#     ### Input landscapes directory: -----------
-#    tar_target(all_lands, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
 #
 
 #     ## Input cpp scripts as files to enable tracking -----
@@ -136,7 +143,7 @@ list(
 #
 #     ### Get surface parameters from raster and add to parameters list: ---------------
     tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]])),
-#
+
 
 #   Now, add proper cells to sample.design
     tar_target(sample.design,MatchGridstoCell(sample.prep,parameters,land_grid_list,lands_data)),
@@ -191,7 +198,7 @@ list(
     ## get survival analysis table set up
     , tar_target(tmtab3, tm.tab.3(rslt1, variables, mv.params))
 
-#     ## establishemnt response
+#     ## establishment response
 #     # create list of all possible models
 #     , tar_target(est.dredge.list, est.glmer.dredge(rslt))
 # #     evaluate each model to get quality of fit
