@@ -17,7 +17,7 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
         nm <- unlist(tstrsplit(nm, '[_.]', keep=2))
         plands_list <- vector(mode="list", length=length(fs))
         for(fi in 1:length(fs)){
-            plands_list[[fi]] <- terra::rast(fs[fi])
+            plands_list[[fi]] <- terra::mean(terra::rast(fs[fi]))
             names(plands_list[[fi]]) <- nm[fi]
         }
         # stick lands into a sprc object
@@ -32,10 +32,9 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
             # make a grid either uniform or random with even initial pig locations
             land_grid_list <- InitializeGrids_sub(c(len, inc), grid.opts)
         } else if (grid.opts == 'indvras'){ # if there is an input raster
-            # TODO: creating a dynamic 100 x 100 grid around an 
-            # individual surveillance site
-            plands_rast <- terra::rast(indv_ras_data[1])
-            plands_res <- terr::res(plands_rast)
+            plands_rast <-terra::mean(terra::rast(indv_ras_data[[1]]))
+            plands_res <- terra::res(plands_rast)
+            print(plands_res)
             inc <- plands_res[1]/1000
             km_len <- dim(plands_res)[1]*inc
             land_grid_list <- InitializeGrids_sub(plands_res, grid.opts)
@@ -56,7 +55,6 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
         } else if (grid.opts == "indvras"){
           # TODO: creating grid wich equal spacing all around it for
           # sampling purposes
-          print(indv_ras_data[[1]])
           plands_rast <- terra::mean(terra::rast(indv_ras_data[[1]]))
           #nm <- unlist(tstrsplit(indv_ras_data, '/', keep=5))
           
@@ -71,7 +69,7 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
           }
           plands_res <- terra::res(plands_rast)
           inc <- plands_res[1]/1000
-          km_len <- dim(plands_res[1])*inc
+          km_len <- dim(plands_rast)[1]*inc
           land_grid_list <- InitializeGrids_sub(plands_rast, grid.opts)
         }
     }

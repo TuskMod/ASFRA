@@ -41,7 +41,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     ## still need to test sample = 1
     if (end.tm > detectday & 'alldetections' %in% out.opts){
         detections.r <- out.list$alldetections
-        detections.r <- detections.r[detections.r[,1] <= end.tm & detections.r[,1] >= detectday,]
+        detections.r <- detections.r[detections.r[,1] <= end.tm, ]
         n.det <- nrow(detections.r)
         detections.r <- suppressWarnings(cbind(matrix(id.r, ncol=3, nrow=n.det, byrow=TRUE), detections.r)) # gave a warning if there were no detections; very annoying
         colnames(detections.r) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')

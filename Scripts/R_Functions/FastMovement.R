@@ -21,19 +21,33 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
 
     # set previous locations to present locations
     pop[,7] <- pop[,3]
-
+    
+    print("population stuff!")
+    
     #convert abundance/locs vector into long format
     abund.mat <- matrix(0, nrow=ncells, ncol=1)
     abund.df <- data.frame("abund" = pop[, 1], "cell" = pop[, 3])
+    print(pop)
     abund.df <- abund.df %>% dplyr::group_by(cell) %>% dplyr::summarize("abund"=sum(abund)) %>% as.data.frame()
+    print(abund.df)
+    print("CELL AMOUNT")
+    print(ncells)
     cells <- data.frame("cell" = 1:ncells)
+    print(centroids)
+    print("about to left join!")
+   
     abund.df <- left_join(cells, abund.df, by="cell")
+    print("joined!")
     abund.df$abund[is.na(abund.df$abund)] <- 0
+    print("almost done!")
     abund.mat[,1] <- abund.df$abund
-
+    print(centroids)
+    print("conversion into abundance!")
     # movement in C++ script for faster execution
     m1 <- parallelMovementRcpp_portion(pop, abund.mat[, 1, drop=FALSE], pop[, 3, drop=FALSE], centroids, mv_pref)
-
+    
+    print("parallel movement success!")
+    
     pop[,3] <- m1
 
     if(mv_pref==2 | mv_pref==3){
@@ -45,7 +59,8 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
     if(any(pop[,3] == nrow(centroids) + 1000)) {
         stop("No cells to move to! This shouldn't happen")
     }
-
+    
+    print("done!")
     #if stop function here..
     #if all sounders with dist equals zero NOT contained in rows for which prev locs=present locs
 #     print(nrow(pop[pop[,4]==0,]))

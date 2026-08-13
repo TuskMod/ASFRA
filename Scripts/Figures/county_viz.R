@@ -57,14 +57,11 @@
     
    # tile_fn <- FindSurveillanceTiles(all_lands,sample.design)
   
-  #  if(length(tile_fn) == 0){
-  #    next
-  #  }
     county_name <- strsplit(county_shapefile,"/")[[1]][3]
     save_name <- paste(county_name,".png")
     sample <- 1
     print("control loop")
-    #if (length(tile_fn) > 1){
+    print(all_lands)
     ras <- JoinTogetherTiles(all_lands,county_shapefile,sample.design)
     custom_crs <- crs(ras)
     print("dimensions of .tif file")
@@ -148,9 +145,7 @@
       crs = st_crs(custom_crs)  # use the same CRS as county_proj
     )
     
-    
     # grab sample design now! 
-    
     
     names(sample.design)[1] <- "dates"  # Rename the first column to 'dates'
     names(sample.design)[2] <- "latitude"
@@ -200,8 +195,8 @@
     #  scale_fill_gradient(low="#e7e1ef",high="#dd1c77") + 
       scale_fill_viridis_c()+
       guides(fill=guide_colourbar(barwidth=0.5,barheight=20),title="Land Preference") +
-      geom_sf(data = county_transformed,border.color="black", size = 0.8,alpha=0.2) +
-      geom_sf(data = sample_points_sf, color = "magenta", size = 1, shape = 19,alpha=0.4) +
+      geom_sf(data = county_transformed,border.color="black", size = 0.9,alpha=0.4) +
+      geom_sf(data = sample_points_sf, color = "magenta", size = 1, shape = 19,size=0.1,alpha=0.4) +
       geom_sf_label(border.colour="black")+
       coord_sf(crs=custom_crs)+
       labs(title=fig_title)+

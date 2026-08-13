@@ -27,7 +27,11 @@
   #col6-FY start date
   #col7-week #
 
-LoadSurveillanceDesign<-function(){
+LoadSurveillanceDesign<-function(parameters){
+  
+  if(parameters$sample != 1){
+    return(NULL)
+  }
 
   # Read sampling file
   # sampling file should be in the tile of interest 
@@ -65,14 +69,21 @@ LoadSurveillanceDesign<-function(){
   
   
   # Add column to sample.design so the cell # where sampling occurs can be updated
-  #sample.design$sampling_loc <- 0L
   sample.design$sampling_loc <- vector("list", nrow(sample.design))
   
   return(sample.design)
 
 }
 
+##
+# Purpose: Matching Surveillance Locations to specific grid cells
+
+##
+
 MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
+  if(parameters$sample != 1){
+    return(NULL)
+  }
   # get CRDS for tile
   curr_tile <- terra::rast(lands_data[[1]])
   custom_crs <- crs(curr_tile)
@@ -90,10 +101,7 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
   #sample_xmax <- sample_bbox["xmax"][[1]]
   #sample_ymin <- sample_bbox["ymin"][[1]]
   #sample_ymax <- sample_bbox["ymax"][[1]]
-  
- # print("TILE COORDINATES")
-  #curr_tile <- project(curr_tile,4269,res=0.5  )
-  #print(curr_tile)
+
   current_extent <- ext(curr_tile)
   tile_centroid <- centroids(curr_tile)
   tile_x <- tile_centroid$x[[1]]
@@ -140,7 +148,8 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
   
     # Check if the minimum distance is within the threshold
     # Using threshold of 100 meters
-    min_sample_thresh <- parameters$inc/sqrt(2)
+    #min_sample_thresh <- parameters$inc/sqrt(2)
+    min_sample_thresh <- 100
     if (min(distances) <= min_sample_thresh) {
       # Get indices of the closest `num_cells_to_sample` grid cells
       sorted_indices <- order(distances)
@@ -176,7 +185,11 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
 #Outputs:
 # list containing filepaths to load in
 
-FindSurveillanceTiles <- function(tile_path,sample.design){
+FindSurveillanceTiles <- function(parameters,tile_path,sample.design){
+  #print(parameters)
+  if(parameters$sample != 1){
+    return(NULL)
+  }
   fs <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(fs, '/', keep=5))
   county_shapefile <- sample.design$shp_file[[1]]
@@ -215,7 +228,6 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     if((sample_ymin >= rast_ymin) & (sample_ymax <= rast_ymax)){ 
        if ((sample_xmin >= rast_xmin) & (sample_xmax <= rast_xmax)){
          right_plands[[counter]] <- terra::mean(fi_tile)
-         terra::mean(right_plands[[counter]])
          plands_names[[counter]]<-fs[fi]
          if (length(nm[fi]) == 3){
             names(right_plands[[counter]]) <- nm[fi][3]
@@ -229,7 +241,6 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
     if(old_counter == counter){
       if(TileinCounty(sample_bbox,current_extent)){
         right_plands[[counter]] <- terra::mean(fi_tile)
-        terra::mean(right_plands[[counter]])
         plands_names[[counter]]<-fs[fi]
         if (length(nm[fi]) == 3){
           names(right_plands[[counter]]) <- nm[fi][3]
@@ -240,6 +251,7 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
         counter <- counter + 1
       }
     }
+    rm(fi_tile)
   }
   
 #  if(length(right_plands) >= 2){
@@ -253,68 +265,8 @@ FindSurveillanceTiles <- function(tile_path,sample.design){
   return(plands_names)
 }
 
-FindBBoxTiles <- function(tile_path,sample_bbox){
-  fs <- list.files(tile_path, full.names=TRUE)
-  nm <- unlist(tstrsplit(fs, '/', keep=5))
-  curr_tile <- terra::rast(fs[1])
-  custom_crs <- crs(curr_tile)
-  
-  # need surveillance area - so there's some bounding box 
-  # associated with the area , an extent 
-  right_plands <- vector(mode="list")
-  plands_names <- c()
-  counter = 1
-  full_tile <- c()
-  
-  county.dat <- st_read(county.shp[[1]])
-  pland_dat <- c()
-  county.centroid <- st_centroid(county.dat)
-  merged_raster <- NULL
-  
-  
-  sample_xmin <- sample_bbox["xmin"][[1]]
-  sample_xmax <- sample_bbox["xmax"][[1]]
-  sample_ymin <- sample_bbox["ymin"][[1]]
-  sample_ymax <- sample_bbox["ymax"][[1]]
-  
-  st_crs(county.centroid) <- "NAD83"
-  coords <- st_transform(county.centroid, custom_crs) # transform coordinates to meter based CRS
-  buffered_point <- st_bbox(st_buffer(coords, dist = 50000))
-  buffered_extent <- ext(buffered_point)
-  print(ext(buffered_point))
-  ymax <- buffered_point$ymax
-  ymin <- buffered_point$ymin
-  xmax <- buffered_point$xmax
-  xmin <- buffered_point$xmin
-  
-  for(fi in 1:length(fs)){
-    fi_tile <- terra::rast(fs[fi])
-    # custom_crs <- crs(curr_tile)
-    current_extent <- ext(fi_tile)
-    rast_xmin <- xmin(current_extent)[[1]]
-    rast_xmax <- xmax(current_extent)[[1]]
-    rast_ymin <- ymin(current_extent)[[1]]
-    rast_ymax <- ymax(current_extent)[[1]]
 
-  
-    if(TileinCounty(buffered_point,current_extent)){
-        right_plands[[counter]] <- terra::mean(fi_tile)
-        terra::mean(right_plands[[counter]])
-        plands_names[[counter]]<-fs[fi]
-        if (length(nm[fi]) == 3){
-          names(right_plands[[counter]]) <- nm[fi][3]
-        }
-        if (length(nm[fi]) == 2){
-          names(right_plands[[counter]]) <- nm[fi][2]
-        }
-        counter <- counter + 1
-      }
-  }
-  return(counter)
-  
-  }
-
-JoinTogetherTiles <- function(tile_path,county.shp,sample.design){
+JoinTogetherTiles <- function(parameters,tile_path,county.shp,sample.design){
   
   pland_files <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(pland_files, '/', keep=5))
@@ -367,14 +319,15 @@ JoinTogetherTiles <- function(tile_path,county.shp,sample.design){
   
   #crop_bbox <- ext(xmin,xmax,ymin,ymax)
   cropped_tile <- crop(merged_raster,sampled_extent,mask=TRUE)
-  print("Tile Dimensions")
+  print("Cropping tile?")
   print(dim(crds(cropped_tile))[[1]])
-  print(dim(crds(merged_raster))[[1]])
+  print(cropped_tile)
   if((dim(crds(cropped_tile))[[1]] < 40000)){
     print("returning normal tile!")
-    pland_names <- FindSurveillanceTiles(tile_path,sample.design)
-    print(pland_names[[1]])
-    return(terra::mean(terra::rast(pland_names[[1]])))
+    pland_names <- FindSurveillanceTiles(parameters,tile_path,sample.design)
+    return(pland_names)
+    #print(pland_names[[1]])
+   # return(terra::mean(terra::rast(pland_names[[1]])))
   }
 
   return(cropped_tile)
@@ -450,7 +403,7 @@ ReadTileFolders <- function(tile_fp){
   } else{
     tile_data <- read.csv(edge_path)
   }
-  tile_data <- tile_data[as.numeric(fn_values[[1]][[2]]),]
+  tile_data <- tile_data[as.numeric(fn_values[[1]][[2]])-1,]
   # all_cols format comes from the loaded in RDS file that already exists 
   all_cols <- c(
     "index", "nnd_med", "nnd_range", "nnd_mean", "nnd_sd",

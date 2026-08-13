@@ -65,7 +65,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
         sn_i <- N0/ss
 
         #default option, randomly assign sounders to cells
-        if(pop_init_grid_opts=="homogeneous"| pop_init_grid_opts=="ras"){
+        if(pop_init_grid_opts=="homogeneous" || pop_init_grid_opts=="ras"){
             assigns <- rbinom(cells, 1, sn_i/cells)
         } else {
 

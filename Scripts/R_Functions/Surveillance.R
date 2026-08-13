@@ -122,10 +122,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
     while (pigs_sampled < current_quantity && length(cells_with_pigs) > 0) {
     #  print(cells_with_pigs)
       selected_cell <- sample(cells_with_pigs, 1, replace=FALSE)
-     # print("selected cell!")
-      #print(selected_cell)
-      #print("population dimension!")
-      #print(dim(pop))
+    
       matching_rows <- which(pop[, 3] == selected_cell)
       #print("matching row found!")
       pigs_found <- FALSE

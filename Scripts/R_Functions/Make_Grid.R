@@ -109,7 +109,7 @@
     #get centroids-only object
     centroids <- grid[, c(6, 7)]
 
-    if(!("homogeneous" %in% grid.opt & sample != 1)){
+    if(!(("homogeneous" %in% grid.opt) & (sample != 1))){
         if(class(object)=="SpatRaster"){
             #need to get values from ras
             # VR there are four columns in this raster for the values

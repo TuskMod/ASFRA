@@ -27,6 +27,8 @@ if(sample == 1){
         if("sounderlocs" %in% out.opts){
             loc.list[[i]] <- pop[, c(3, 8:13)]
         }
+        
+        print("I Sum!")
 
 ######## Track I/C locations ########
         if(nrow(pop[pop[, 10] > 0,, drop=FALSE]) > 0){
@@ -48,10 +50,11 @@ if(sample == 1){
         if (any(pop[,1] > 2*ss)){
             pop <- sounderSplit(pop, ss)
         }
-
+        print("Movement!")
 ######## Movement ########
         pop <- FastMovement(pop, centroids, alpha, theta, inc, mv_pref)
 
+        print("State Change!")
 ######## State Changes ########
         #births, natural deaths, disease state changes (exposure, infection, recovery, death), carcass decay
         st.list <- StateChanges(pop, centroids, nrow(centroids), parameters, Incidence, BB, i)
@@ -70,7 +73,7 @@ if(sample == 1){
         Incidence <- st.list[[2]]
         BB <- st.list[[3]]
 
-
+        print("Going to Incidence!")
         if("incidence" %in% out.opts){
             inf.locs <- rep(pop[(pop[, 10] > 0), 3], pop[(pop[, 10] > 0), 10]) #locs infected
             inf.num <- sum(pop[, 10]) #num infected
@@ -117,17 +120,13 @@ if(sample == 1){
 # Once disease is detected - switch over to full culling policy!
         if(sample == 1){
             #sample.design <- PrepSurveillance(sample) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
-            print("entering surveillance")
-            print(parameters$Sensitivity)
-          #  print(sample.design)
+            print("Going in!")  
             surv.list <- Surveillance(pop, i, sample.design, parameters) # Madison
-            print("did surveillance!")
-            print("finished pop")
+            print("Surveillance done!")
             POSlive[[i]] <- surv.list$live_infectious_sample
             POSdead[[i]] <- surv.list$dead_infected_sampled
             POSlive_locs[[i]] <- surv.list$live_infected_sampled_locs
             POSdead_locs[[i]] <- surv.list$dead_infected_sampled_locs
-            print("positive and negative samples")
             pigs_sampled_timestep <- surv.list$pigs_sampled
           
         }
