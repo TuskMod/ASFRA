@@ -267,7 +267,9 @@ FindSurveillanceTiles <- function(parameters,tile_path,sample.design){
 
 
 JoinTogetherTiles <- function(parameters,tile_path,county.shp,sample.design){
-  
+  if(parameters$sample != 1){
+    return(NULL)
+  }
   pland_files <- list.files(tile_path, full.names=TRUE)
   nm <- unlist(tstrsplit(pland_files, '/', keep=5))
   curr_tile <- terra::rast(pland_files[1])

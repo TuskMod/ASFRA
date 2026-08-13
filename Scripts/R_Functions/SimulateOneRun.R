@@ -28,7 +28,6 @@ if(sample == 1){
             loc.list[[i]] <- pop[, c(3, 8:13)]
         }
         
-        print("I Sum!")
 
 ######## Track I/C locations ########
         if(nrow(pop[pop[, 10] > 0,, drop=FALSE]) > 0){
@@ -50,11 +49,11 @@ if(sample == 1){
         if (any(pop[,1] > 2*ss)){
             pop <- sounderSplit(pop, ss)
         }
-        print("Movement!")
+        print("movements!")
 ######## Movement ########
         pop <- FastMovement(pop, centroids, alpha, theta, inc, mv_pref)
 
-        print("State Change!")
+        print("state changes!")
 ######## State Changes ########
         #births, natural deaths, disease state changes (exposure, infection, recovery, death), carcass decay
         st.list <- StateChanges(pop, centroids, nrow(centroids), parameters, Incidence, BB, i)
@@ -73,7 +72,6 @@ if(sample == 1){
         Incidence <- st.list[[2]]
         BB <- st.list[[3]]
 
-        print("Going to Incidence!")
         if("incidence" %in% out.opts){
             inf.locs <- rep(pop[(pop[, 10] > 0), 3], pop[(pop[, 10] > 0), 10]) #locs infected
             inf.num <- sum(pop[, 10]) #num infected

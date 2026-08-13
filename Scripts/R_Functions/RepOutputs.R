@@ -39,7 +39,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     # detections (optional...)
     ## has a row for each timestep AND detection type, with timestep, code (1=live,0=dead), number of individuals detected, and position
     ## still need to test sample = 1
-    if (end.tm > detectday & 'alldetections' %in% out.opts){
+    if ('alldetections' %in% out.opts){
         detections.r <- out.list$alldetections
         detections.r <- detections.r[detections.r[,1] <= end.tm, ]
         n.det <- nrow(detections.r)
@@ -65,12 +65,13 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
 
     setDT(tm.mat.r)
     setDT(solocs.all)
-#     setDT(incidence.r)
-#     incidence.r[,state := as.numeric(factor(state, levels=c('exposed','infected','carcass')))]
+     setDT(incidence.r)
+    # setDT(detections)
+     incidence.r[,state := as.numeric(factor(state, levels=c('exposed','infected','carcass')))]
     fwrite(tm.mat.r[,.(BB,S,E,I,R,C,Z)], paste0('./Output/tm.mat/tm.mat_r',r,'_l',l,'_v',v,'.gz'), compressLevel=4L)
 #     fwrite(summ.vals.r, paste0('./Output/summ.vals/summ.vals_r',r,'_l',l,'_v',v,'.csv'))
-#     fwrite(incidence.r[,.(timestep, state, loc)], paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.gz'))
-#     fwrite(detections, paste0('./Output/detections/detections_r',r,'_l',l,'_v',v,'.csv'))
+     fwrite(incidence.r[,.(timestep, state, loc)], paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.gz'))
+     fwrite(detections, paste0('./Output/detections/detections_r',r,'_l',l,'_v',v,'.csv'))
 #     fwrite(allzone, paste0('./Output/allzone/allzone_r',r,'_l',l,'_v',v,'.csv'))
     fwrite(solocs.all[,.(time, cell, pref, S, E, I, R, C, Z)], paste0('./Output/solocs.all/solocs.all_r',r,'_l',l,'_v',v,'.gz'), compressLevel=9L)
 

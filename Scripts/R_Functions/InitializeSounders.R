@@ -183,7 +183,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     colnames(pop) <- c("Nlive", "pref", "cell", "dist", "ctrx", "ctry", "pcell", "S", "E", "I", "R", "C", "Z")
 
     #remove rows with no pigs
-    pop <- pop[pop[,1] > 0,, drop=FALSE]
+    #pop <- pop[pop[,1] > 0,, drop=FALSE]
 
     #error catches
     if(any(pop[,3] > nrow(centroids))){
