@@ -14,6 +14,7 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	  # manually set to be 1, since it is a sounder of size one
 	  # VR: changed to heterogeneous here
     infected <- InitializeSounders(centroids, grid, c(id, num_inf_0), pop_init_type="init_single", pop_init_grid_opts=parameters$pop_init_grid_opts)
+  
     # (manually change state values so S=0 and I = 1)
     infected[, 8] <- 0
     infected[, 10] <- 1

@@ -1,4 +1,4 @@
-﻿
+
 #include <RcppArmadillo.h>
 #include <RcppParallel.h>
 #include <RcppArmadilloExtensions/sample.h>
@@ -84,6 +84,7 @@ void operator()(std::size_t begin, std::size_t end) {
     arma::imat apoplocs3 = convertapoplocs();
     arma::mat acent3 = convertcent();
     arma::mat diff(acent.nrow(),1);
+    arma::vec temp_vec(1);
 
     //loop through j rows of pop matrix
     for(std::size_t j = begin; j < end; j++) {
@@ -134,6 +135,7 @@ void operator()(std::size_t begin, std::size_t end) {
 
     //initialize truemin-- selected cellnumber to move to
     arma::uvec truemin;
+      
 
     ///////////////////////////////////////
     /////// Distance-based movement //////
@@ -202,8 +204,21 @@ void operator()(std::size_t begin, std::size_t end) {
 
     //use rsf_vals as probabilities for which cell to move to
     //truemin = Rcpp::RcppArmadillo::sample(cellindarma,1,false);
-    truemin = Rcpp::RcppArmadillo::sample(set,1,0,rsf_vals);
+    int var = 0; 
+    for (int num : rsf_vals) {
+      if(num > 0){
+        var = 1;
+        break;
+      }
+    }
     
+    // if nowhere to move to - stay in place
+    if(var == 0){
+      truemin = j;
+    }
+    else{
+    // sample land values instead if potential lands to choose
+        truemin = Rcpp::RcppArmadillo::sample(set,1,0,rsf_vals);    }
     }
 
     //////////////////////////////////////////////////////////////////

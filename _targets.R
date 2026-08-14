@@ -46,7 +46,7 @@ tar_config_set(
 )
 
 # Source functions in pipeline (could also be handled by tar_source())
-lapply(list.files(file.path("Scripts","R_Functions"), full.names = TRUE, recursive = TRUE), source)
+lapply(list.files(file.path("Scripts","R_Functions"), full.names = TRUE, recursive = TRUE), tar_source)
 
 
 # set options if using clustermq (slightly more traditional hpc approach with config file and whatnot)
@@ -88,7 +88,7 @@ tar_option_set(packages = c("Rcpp",
                             "lme4",
                             "glmmTMB",
                             "glmnet"),
-               seed = 12345 ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
+               seed = NULL ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
                 ,error = 'stop' # for troubleshooting
 #                ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
                ,deployment='worker'
@@ -119,8 +119,8 @@ list(
 
     # note how filepath is differnet from analysis! 
     # we are going through all 430 tiles, seeing which fit surveillance scheme
-     tar_target(lands_data, FindSurveillanceTiles(parameters0,all_lands,sample.prep)),
-    # tar_target(lands_data,JoinTogetherTiles(parameters0,all_lands,sample.prep$shp_file,sample.prep)),
+    # tar_target(lands_data, FindSurveillanceTiles(parameters0,all_lands,sample.prep)),
+     tar_target(lands_data,JoinTogetherTiles(parameters0,all_lands,sample.prep$shp_file,sample.prep)),
 
 #
 

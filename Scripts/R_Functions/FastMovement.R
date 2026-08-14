@@ -22,8 +22,7 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
     # set previous locations to present locations
     pop[,7] <- pop[,3]
     
-    print("population stuff!")
-    
+
     #convert abundance/locs vector into long format
     abund.mat <- matrix(0, nrow=ncells, ncol=1)
     abund.df <- data.frame("abund" = pop[, 1], "cell" = pop[, 3])

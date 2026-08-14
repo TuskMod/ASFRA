@@ -229,6 +229,8 @@ if(sample == 1){
 #Remove rows in pop with 0 pigs
         pigcols <- c(1, 8:13)
         pop <- pop[which(rowSums(pop[, pigcols, drop=FALSE]) != 0),, drop=FALSE]
+        print(paste0("timestep: ",i))
+        print(colSums(pop[,8:13]))
 
     } # end while loop of timesteps
 

@@ -15,7 +15,7 @@
   #for pop_init_type="init_single", need a vector with init_loc (cell number to initialize group/individual) and n (number of individuals to initialize)
 #pop_init_type: string, "init_pop" or "init_single"
 #pop_init_grid_opts: string, "homogeneous" or "ras" or "heterogeneous"
-InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opts="homogeneous", pop_init_type="init_pop", RSF0_lc=NULL){
+InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opts="homogeneous", pop_init_type="init_pop", RSF0_lc=0){
 
     ## Parse input args and check input formatting ------------
 
@@ -186,12 +186,13 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     ## Initialize single group/individual ---------------------
 
     if(pop_init_type=="init_single"){
-        if((pop_init_grid_opts == "heterogeneous" || pop_init_grid_opts == "ras") & !missing(RSF0_lc)){
+        if(((pop_init_grid_opts == "heterogeneous" || pop_init_grid_opts == "ras") & (RSF0_lc == 0))){
             #RSF0_lc value is lc with 0 probability to move to (e.g., water body)
             if(centroids[init_locs,3]==RSF0_lc){
                 #stop condition. will need to do some checking before runs to look at center of each lc
                 #for initializing infected individual.
                 stop("individual initialized in unsuitable location (RSF probability = 0)")
+                return(NULL)
             }
         }
         #for initializing initial infected individual introduction
@@ -209,6 +210,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
         pop[,11] <- 0 #number of R status in sounder
         pop[,12] <- 0 #number of C status in sounder
         pop[,13] <- 0 #number of Z status in sounder
+        print(pop)
       }
 
     ## Tidying outputs -----------
