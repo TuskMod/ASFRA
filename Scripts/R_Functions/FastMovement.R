@@ -34,7 +34,7 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
     abund.df <- left_join(cells, abund.df, by="cell")
     abund.df$abund[is.na(abund.df$abund)] <- 0
     abund.mat[,1] <- abund.df$abund
-    return(NULL)
+    #return(NULL)
     # movement in C++ script for faster execution
     m1 <- parallelMovementRcpp_portion(pop, abund.mat[, 1, drop=FALSE], pop[, 3, drop=FALSE], centroids, mv_pref)
     

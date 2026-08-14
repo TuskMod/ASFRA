@@ -76,6 +76,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
                 #assign to cells with weighted preference according to column 8 values
                 ## this means maximum of 1 sounder per cell in starting configuration
                 assigns <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
+                ## 
             }
         }
   
@@ -109,6 +110,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
 
         #for homogeneous grid, pref col is just uniform 0
         if(pop_init_grid_opts == "homogeneous"){pop[,2] <- 0}
+    
 
         #for heterogeneous or ras grid, pref col indicates preference val of current cell
         if(pop_init_grid_opts == "heterogeneous" | pop_init_grid_opts == "ras"){pop[,2] <- grid[pop[,3],8]}
@@ -116,7 +118,39 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
         if(any(pop[,3] > nrow(centroids))){
             stop("agents initialized off the grid")
         }
-
+        
+        new_centroids <- centroids
+        new_centroids <- cbind(centroids,rep(1:dim(centroids)[1],each=1))
+        zero_coords <- which(new_centroids[,3] == 0)
+        # for individual raster, ensure all centroids are in population raster
+        if(length(zero_coords) > 0){
+          
+          #zero_df <- new_centroids[zero_coords,]
+          #zero_df <- as.data.frame(zero_df)
+          #zero_x <- distinct(zero_df,V1,.keep_all = TRUE)
+          #zero_y <- distinct(zero_df,V2,.keep_all = TRUE)
+          #correct_cells <- union(zero_x$V4,zero_y$V4)
+          correct_cells <- length(zero_coords)
+          zero_pop <- matrix(nrow=correct_cells,ncol=13)
+          
+          zero_pop[,1] <- 0 #sounder size with avg as lambda in a poisson
+          zero_pop[,2] <- 0 
+          zero_pop[,3] <- zero_coords #this will be grid location (row number)
+          zero_pop[,4] <- 0 #this will be assigned movement distance
+          zero_pop[,5] <- centroids[zero_pop[,3],1] #present location X
+          zero_pop[,6] <- centroids[zero_pop[,3],2] #present location Y
+          zero_pop[,7] <- 0 #previous location (grid row number)
+          zero_pop[,8] <- 0 #number of S status in sounder
+          zero_pop[,9] <- 0 #number of E status in sounder
+          zero_pop[,10] <- 0 #number of I status in sounder
+          zero_pop[,11] <- 0 #number of R status in sounder
+          zero_pop[,12] <- 0 #number of C status in sounder
+          zero_pop[,13] <- 0 #number of Z status in sounder
+          
+          pop <- rbind(pop,zero_pop)
+          
+        }
+        
         ## Deal with raster placements, keep realistic ------------
         #RSF0_lc value is lc with 0 probability to move to (e.g., water body)
 
@@ -135,7 +169,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
                     cellsq <- 1:cells
                     cellsq <- cellsq[-pop[,3]]
                     if(all(centroids[cellsq,3]==RSF0_lc)){
-                        stop("No suitable habitat available")
+                       stop("No suitable habitat available")
                     }
                     cellsq <- cellsq[-which(centroids[cellsq,3]==RSF0_lc)]
                     new.cell <- sample(cellsq,1)
@@ -152,7 +186,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     ## Initialize single group/individual ---------------------
 
     if(pop_init_type=="init_single"){
-        if((pop_init_grid_opts == "heterogeneous" | pop_init_grid_opts == "ras") & !missing(RSF0_lc)){
+        if((pop_init_grid_opts == "heterogeneous" || pop_init_grid_opts == "ras") & !missing(RSF0_lc)){
             #RSF0_lc value is lc with 0 probability to move to (e.g., water body)
             if(centroids[init_locs,3]==RSF0_lc){
                 #stop condition. will need to do some checking before runs to look at center of each lc
