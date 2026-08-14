@@ -88,7 +88,7 @@ tar_option_set(packages = c("Rcpp",
                             "lme4",
                             "glmmTMB",
                             "glmnet"),
-               seed = NULL ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
+               seed = NA ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
                 ,error = 'stop' # for troubleshooting
 #                ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
                ,deployment='worker'
