@@ -49,11 +49,9 @@ if(sample == 1){
         if (any(pop[,1] > 2*ss)){
             pop <- sounderSplit(pop, ss)
         }
-        print("movements!")
 ######## Movement ########
         pop <- FastMovement(pop, centroids, alpha, theta, inc, mv_pref)
 
-        print("state changes!")
 ######## State Changes ########
         #births, natural deaths, disease state changes (exposure, infection, recovery, death), carcass decay
         st.list <- StateChanges(pop, centroids, nrow(centroids), parameters, Incidence, BB, i)
@@ -118,20 +116,20 @@ if(sample == 1){
 # Once disease is detected - switch over to full culling policy!
         if(sample == 1){
             #sample.design <- PrepSurveillance(sample) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
-            print("Going in!")  
             surv.list <- Surveillance(pop, i, sample.design, parameters) # Madison
             print("Surveillance done!")
             POSlive[[i]] <- surv.list$live_infectious_sample
             POSdead[[i]] <- surv.list$dead_infected_sampled
             POSlive_locs[[i]] <- surv.list$live_infected_sampled_locs
             POSdead_locs[[i]] <- surv.list$dead_infected_sampled_locs
-            pigs_sampled_timestep <- surv.list$pigs_sampled
+            pigs_sampled_timestep[[i]] <- surv.list$pigs_sampled
+            cells_sampled_timestep[[i]] <- surv.list$cells_sampled
           
         }
 
         # If sampling turned off and it's detect day based on user input,
         # run FirstDetect because there are infected pigs to detect, and Rad>0
-        if(sample != 1 & i == detectday & sum(pop[, c(9, 10, 12)]) > 0 & Rad > 0){
+        if((sample != 1) & (i == detectday) & (sum(pop[, c(9, 10, 12)]) > 0) & (Rad > 0)){
             fd.list <- FirstDetect(pop, i, POSlive, POSdead, POSlive_locs, POSdead_locs)
             pop <- fd.list[[1]]
             POSlive[[i]] <- fd.list[[2]]
@@ -270,14 +268,23 @@ if(sample == 1){
         input.opts <- append(input.opts, templist)
         names(input.opts)[length(input.opts)] <- "POSdead_locs"
 
-        templist <- list(allzone)
-        input.opts <- append(input.opts, templist)
-        names(input.opts)[length(input.opts)] <- "allzonecells"
+        
 
         if(sample == 1){
             templist <- list(pigs_sampled_timestep)    # directly create a list with pigs_sampled_timestep
             input.opts <- append(input.opts, templist)
             names(input.opts)[length(input.opts)] <- "pigs_sampled_timestep"
+            
+            templist <- list(cells_sampled_timestep)    # directly create a list with pigs_sampled_timestep
+            input.opts <- append(input.opts, templist)
+            names(input.opts)[length(input.opts)] <- "cells_sampled_timestep"
+        }
+        else{
+            
+          templist <- list(allzone)
+          input.opts <- append(input.opts, templist)
+          names(input.opts)[length(input.opts)] <- "allzonecells"
+          
         }
     }
 
@@ -289,10 +296,16 @@ if(sample == 1){
     }
 
     list.all <- GetOutputs(pop, centroids, BB, Incidence, Tculled, ICtrue, out, detectday, Ct, out.opts, input.opts)
-
+    
 ## want the end time as output to trim matrices
-    list.all <- append(list.all, i)
+  
+  #  templist <- vector(mode="list", length=1)
+    
+ #   templist[[1]] <- i
+ #   list.all <- append(list.all, templist)
+    
+    list.all[[length(list.all)+1]] <- data.table(i)
     names(list.all)[length(list.all)] <- 'endtime'
-
+    print(list.all)
     return(list.all)
 } #function closing bracket

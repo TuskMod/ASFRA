@@ -34,7 +34,6 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
         } else if (grid.opts == 'indvras'){ # if there is an input raster
             plands_rast <-terra::mean(terra::rast(indv_ras_data[[1]]))
             plands_res <- terra::res(plands_rast)
-            print(plands_res)
             inc <- plands_res[1]/1000
             km_len <- dim(plands_res)[1]*inc
             land_grid_list <- InitializeGrids_sub(plands_res, grid.opts)

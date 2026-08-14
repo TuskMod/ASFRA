@@ -239,7 +239,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
     # POSdead_locs
     dead_infected_sampled_locs = dead_infected_sampled_locs,
     pigs_sampled = pigs_sampled,
-    #cells_sampled = ifelse(length(cells_sampled) == 0, "none", paste(unique(cells_sampled), collapse = ",")),
+    cells_sampled = ifelse(length(cells_sampled) == 0, "none", paste(unique(cells_sampled), collapse = ",")),
     infectious_on_property = infectious_on_property,
     recovered_on_property = recovered_on_property,
     living_on_property = living_on_property,

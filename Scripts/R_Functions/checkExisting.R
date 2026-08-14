@@ -9,11 +9,14 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
     if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
     if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
     if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
-#         if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
+        if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
 #         if ('./Output/allzone' %in% dirlist == FALSE){dir.create('./Output/allzone')}
     if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
 
     setDT(mv.parms)
+    print(variables)
+    print(mv.parms[,index])
+    print(reps)
     # table of all desired simulation runs
     lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
     return(lvtable)
@@ -25,11 +28,12 @@ check.existing <- function(lvtable, out.repl){
 #     summ.vals.in <- list.files('./Output/summ.vals')
 #     incidence.in <- list.files('./Output/incidence')
     solocs.all.in <- list.files('./Output/solocs.all')
+  #  detections <- list.files('./Output/detections')
     # if out.repl is not 1/TRUE, and there are things already in the output directories,
     # sort existing things into a table and find what is missing relative to lvtable
 #     if (out.repl != TRUE & length(c(tm.mat.in, summ.vals.in, incidence.in, solocs.all.in)) != 0){
-    if (out.repl != TRUE & length(c(tm.mat.in, solocs.all.in)) != 0){
-
+    if (out.repl == 0 & length(c(tm.mat.in, solocs.all.in)) != 0){
+        print("checking")
         splt.check <- function(nlst, nm){
             # slice and dice the names of existing files to get rep, var, and land id's
             instr <- as.data.table(tstrsplit(nlst, '_', keep=2:4))
@@ -45,6 +49,7 @@ check.existing <- function(lvtable, out.repl){
 #         summ.tab <- unique(as.data.table(rbindlist(lapply(summ.vals.in, splt.check, nm = 'summ.vals'))))
 #         incid.tab <- unique(as.data.table(rbindlist(lapply(incidence.in, splt.check, nm = 'incidence'))))
         solocs.tab <- unique(as.data.table(rbindlist(lapply(solocs.all.in, splt.check, nm = 'solocs.all'))))
+        print(solocs.tab)
         # connect all filetype lists together
 #         bndtab <- merge(tm.tab, summ.tab, by=c('v','l','r'), all=TRUE)
         bndtab <- merge(tm.tab, solocs.tab, by=c('v','l','r'), all=TRUE)

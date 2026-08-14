@@ -135,7 +135,8 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
           
           #sampled_pigs_column <- matrix(unlist(pigs_sampled_timestep), nrow = 52, ncol = 1)  # Convert to a matrix (1 row, 52 columns)
           # Combine the live detections with the sampled pigs as a new column
-          detections = cbind(detections, sampled_pigs_column_dup, cells_sampled_column_dup)
+        #  detections = cbind(detections, sampled_pigs_column_dup, cells_sampled_column_dup)
+          colnames(detections) <- c("time","sample_type","detections","cell_detected")
         }
     }
     #Get Incidence and R0 vals summarized in data frame
@@ -173,11 +174,13 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         templist[[1]] <- detections
         list.all <- append(list.all, templist)
         names(list.all)[length(list.all)] <- "alldetections"
-
-        templist <- vector(mode="list", length=1)
-        templist[[1]] <- input.opts$allzonecells
-        list.all <- append(list.all, templist)
-        names(list.all)[length(list.all)] <- "allzonecells"
+        
+        if(sample != 1){
+          templist <- vector(mode="list", length=1)
+          templist[[1]] <- input.opts$allzonecells
+          list.all <- append(list.all, templist)
+          names(list.all)[length(list.all)] <- "allzonecells"
+        }
     }
 
     if("incidence" %in% out.opts){
