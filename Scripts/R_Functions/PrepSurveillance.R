@@ -148,8 +148,8 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
   
     # Check if the minimum distance is within the threshold
     # Using threshold of 100 meters
-    #min_sample_thresh <- parameters$inc/sqrt(2)
-    min_sample_thresh <- 100
+    min_sample_thresh <- parameters$inc/sqrt(2)
+    #min_sample_thresh <- 100
     if (min(distances) <= min_sample_thresh) {
       # Get indices of the closest `num_cells_to_sample` grid cells
       sorted_indices <- order(distances)

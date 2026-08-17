@@ -11,23 +11,19 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     incidence <- prevrep.in[[3]]
     detections <- prevrep.in[[4]]
     allzone <- prevrep.in[[5]]
-    print("Before fail!")
     ## test these outputs if out.opts doesn't include them
     ## id by variable combination, landscape, rep, and timestep for one row per timestep data
     end.tm <- out.list$endtime[[1]]
     id.r <- c(v,l,r)
     tm.mat.r <- cbind(matrix(id.r, nrow=end.tm, ncol=3, byrow=TRUE), seq(end.tm))
     colnames(tm.mat.r) <- c("var","land","rep","timestep")
-    print("After fail!")
     #Handle effective removal rate (timestep output)
     tm.mat.r <- cbind(tm.mat.r, out.list$Ct[seq(end.tm)])
     colnames(tm.mat.r)[ncol(tm.mat.r)] <- "Ct"
-    print("did CT will do births")
     # Births
     tm.mat.r <- cbind(tm.mat.r, out.list$BB[seq(end.tm)])
     colnames(tm.mat.r)[ncol(tm.mat.r)] <- 'BB'
     
-    print("doing sounderlocs")
     #Handle sounderlocs (optional...)
     ## seems like other things were supposed to happen in sounderlocsSummarize, if we want to use those this will have to change
     if ("sounderlocs" %in% out.opts){
@@ -36,26 +32,19 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
 #         solocs.all <- cbind(v, l, r, out.list$sounderlocs)
         tm.mat.r <- cbind(tm.mat.r, solocs.r[3:8])
     }
-    print("doing detection")
     # detections (optional...)
     ## has a row for each timestep AND detection type, with timestep, code (1=live,0=dead), number of individuals detected, and position
     ## still need to test sample = 1
     if ('alldetections' %in% out.opts){
         detections.r <- as.matrix(out.list$alldetections)
-        print("will prune")
-        print(detections.r)
         detections.r <- detections.r[detections.r[,1] <= end.tm, ]
         n.det <- nrow(detections.r)
-        print("pruned")
         detections.r <- suppressWarnings(cbind(matrix(id.r, ncol=3, nrow=n.det, byrow=TRUE), detections.r)) # gave a warning if there were no detections; very annoying
-        print("binding")
         detections.r <- cbind(tm.mat.r,detections.r)
-        print("done binding")
         #colnames(detections.r) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
         #allzone.r <- out.list$allzonecells
         #colnames(allzone.r) <- c('var', 'land', 'rep', 'timestep', 'loc')
     }
-    print("doing incidence")
     # incidence -- more rows than timesteps, separate output (optional...)
     if ('incidence' %in% out.opts){ # don't want this if it's a burn-in output
         incidence.r <- out.list$incidence
@@ -69,12 +58,10 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     summ.vals.r <- matrix(c(id.r, unlist(out.list[c(1, 2, 4:9, length(out.list))])), nrow=1)
 
     colnames(summ.vals.r) <- c('var','land','rep',names(out.list[c(1, 2, 4:9, length(out.list))]))
-    print("about to save")
     setDT(tm.mat.r)
     setDT(solocs.all)
      setDT(incidence.r)
      setDT(as.data.frame(detections.r))
-    print("did detection!")
      incidence.r[,state := as.numeric(factor(state, levels=c('exposed','infected','carcass')))]
     fwrite(tm.mat.r[,.(BB,S,E,I,R,C,Z)], paste0('./Output/tm.mat/tm.mat_r',r,'_l',l,'_v',v,'.gz'), compressLevel=4L)
 #     fwrite(summ.vals.r, paste0('./Output/summ.vals/summ.vals_r',r,'_l',l,'_v',v,'.csv'))

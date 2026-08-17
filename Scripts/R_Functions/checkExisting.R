@@ -14,9 +14,6 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
     if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
 
     setDT(mv.parms)
-    print(variables)
-    print(mv.parms[,index])
-    print(reps)
     # table of all desired simulation runs
     lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
     return(lvtable)
@@ -25,6 +22,8 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
 check.existing <- function(lvtable, out.repl){
     # checks if output files exist for existing simulation runs
     tm.mat.in <- list.files('./Output/tm.mat')
+    detections.in <- list.files('./Output/detections')
+    
 #     summ.vals.in <- list.files('./Output/summ.vals')
 #     incidence.in <- list.files('./Output/incidence')
     solocs.all.in <- list.files('./Output/solocs.all')
@@ -32,7 +31,7 @@ check.existing <- function(lvtable, out.repl){
     # if out.repl is not 1/TRUE, and there are things already in the output directories,
     # sort existing things into a table and find what is missing relative to lvtable
 #     if (out.repl != TRUE & length(c(tm.mat.in, summ.vals.in, incidence.in, solocs.all.in)) != 0){
-    if (out.repl == 0 & length(c(tm.mat.in, solocs.all.in)) != 0){
+    if (out.repl == 0 & length(c(tm.mat.in, solocs.all.in,detections.in)) != 0){
         print("checking")
         splt.check <- function(nlst, nm){
             # slice and dice the names of existing files to get rep, var, and land id's
@@ -49,6 +48,7 @@ check.existing <- function(lvtable, out.repl){
 #         summ.tab <- unique(as.data.table(rbindlist(lapply(summ.vals.in, splt.check, nm = 'summ.vals'))))
 #         incid.tab <- unique(as.data.table(rbindlist(lapply(incidence.in, splt.check, nm = 'incidence'))))
         solocs.tab <- unique(as.data.table(rbindlist(lapply(solocs.all.in, splt.check, nm = 'solocs.all'))))
+        detections.tab <- unique(as.data.table(rbindlist(lapply(detections.in, splt.check, nm = 'detection'))))
         print(solocs.tab)
         # connect all filetype lists together
 #         bndtab <- merge(tm.tab, summ.tab, by=c('v','l','r'), all=TRUE)
@@ -69,5 +69,6 @@ check.existing <- function(lvtable, out.repl){
         lvtable2 <- lvtable
     }
 
+    print(lvtable2)
     return(lvtable2)
 }

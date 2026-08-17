@@ -117,9 +117,13 @@ if(sample == 1){
         if(sample == 1){
             #sample.design <- PrepSurveillance(sample) ## this is the only place sample.design is defined (sample doesn't do anything,but it's in the function definition)
             surv.list <- Surveillance(pop, i, sample.design, parameters) # Madison
-            print("Surveillance done!")
             POSlive[[i]] <- surv.list$live_infectious_sample
             POSdead[[i]] <- surv.list$dead_infected_sampled
+            print("number alive")
+            print(POSlive[[i]])
+            print("number dead")
+            print(POSdead[[i]])
+            
             POSlive_locs[[i]] <- surv.list$live_infected_sampled_locs
             POSdead_locs[[i]] <- surv.list$dead_infected_sampled_locs
             pigs_sampled_timestep[[i]] <- surv.list$pigs_sampled
@@ -306,6 +310,5 @@ if(sample == 1){
     
     list.all[[length(list.all)+1]] <- data.table(i)
     names(list.all)[length(list.all)] <- 'endtime'
-    print(list.all)
     return(list.all)
 } #function closing bracket

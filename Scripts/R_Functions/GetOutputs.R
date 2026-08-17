@@ -120,7 +120,8 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
           # Get the sampled pigs for the timestep
           pigs_sampled_timestep = input.opts$pigs_sampled_timestep
           cells_sampled_timestep <- input.opts$cells_sampled_timestep
-          
+         # pos_live_locs <- inputs.opts$live_infected_sampled_locs,
+        #  pos_dead_locs <- inputs.opts$dead_infected_sampled_locs,
           # Get the sampled pigs vector
           sampled_pigs_vector <- unlist(pigs_sampled_timestep)
           cells_sampled_vector <- sapply(cells_sampled_timestep, function(x) length(unique(x)))
