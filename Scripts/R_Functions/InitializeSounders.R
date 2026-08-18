@@ -186,6 +186,63 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     ## Initialize single group/individual ---------------------
 
     if(pop_init_type=="init_single"){
+      
+      #######################################################################
+      ## PHASE 3: Determine coordinates for desired initial infection site ##
+      #######################################################################
+      # possible keywords user could input
+      location_keywords <- c("center", "top left", "top right", 
+                             "middle left", "middle right", 
+                             "bottom left", "bottom right")
+      
+      # start_infect_loc is keyword that users set equal to desired infection site
+      # here is a flag if keyword is not one of the above
+      if (!(start_infect_loc %in% location_keywords)) {
+        stop(paste("Invalid keyword for infection location:", start_infect_loc))
+      }
+      
+      # determine bounding box of grid using centroids from grid matrix
+      x_vals <- grid[, 6]  # centroid X
+      y_vals <- grid[, 7]  # centroid Y
+      
+      x_min <- min(x_vals)
+      x_max <- max(x_vals)
+      y_min <- min(y_vals)
+      y_max <- max(y_vals)
+      
+      x_mid <- (x_min + x_max) / 2
+      x_left_center <- x_min + (x_mid - x_min) / 2
+      x_right_center <- x_mid + (x_max - x_mid) / 2
+      
+      y_third <- (y_max - y_min) / 3
+      y_top <- y_max - y_third / 2
+      y_mid <- y_min + y_third + y_third / 2
+      y_bot <- y_min + y_third / 2
+      
+      
+      location_centers <- list(
+        "center" = c(x_mid, (y_min + y_max) / 2),
+        "top left" = c(x_left_center, y_top),
+        "top right" = c(x_right_center, y_top),
+        "middle left" = c(x_left_center, y_mid),
+        "middle right" = c(x_right_center, y_mid),
+        "bottom left" = c(x_left_center, y_bot),
+        "bottom right" = c(x_right_center, y_bot)
+      )
+      
+      # here we assign the coordinates to infect_loc to be used later
+      target <- location_centers[[start_infect_loc]]
+      
+      # calculate distance between all centroids and infection location
+      # distance = sqrt((x2 - x1)^2 + (y2-y1)^2)
+      distances <- sqrt((x_vals - target[1])^2 + (y_vals - target[2])^2)
+      
+      # Whichever centroid/cell has the smallest distance is the point of infection
+      infect_cell <- which.min(distances)
+      
+      # future code needs the cell # where infection starts
+      infect_coords <- grid[infect_cell, 6:7]
+      infect_loc <- infect_cell
         if(((pop_init_grid_opts == "heterogeneous" || pop_init_grid_opts == "ras") & (RSF0_lc == 0))){
             #RSF0_lc value is lc with 0 probability to move to (e.g., water body)
             if(centroids[init_locs,3]==RSF0_lc){

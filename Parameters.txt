@@ -98,6 +98,16 @@ K = 1500
 * density, pigs/km2. Recommended density levels: 1.5, 3, 5 pigs/km2, for initial distribution
 * ss, sounder size targetr for initial distribution
 * B1 -- "phi" in 2022 paper -- scaling parameter for transmission probability given contact among grid cells -- direct transmission
+* spawn_type: 
+  - "random_pref": sounder is initialized randomly in grid, excluding cells where lc = 0
+  - "land_pref": given a grid with land-cover, distribution of land cover values determines where sounder is initialized
+  - "center_pref": sounder is initialized in center of grid
+  - "nw_pref": sounder is initialized in norrthwest portion of grid
+  - "sw_pref": sounder is initialized in southwest portion of grid
+  - "ne_pref" sounder is initialized in north east portion of grid 
+  - "se_pref": sounder is initialized in south east porition of grid
+  - "n_pref": sounder is initialized in northern centroid of grid
+  - "s_pref": sounder is initialized in southern centroid of grid
 
 For now, sounder size (ss) and probability of infection given contact (B1) will be automatically determined based on input density levels as follows:
 	FL:
