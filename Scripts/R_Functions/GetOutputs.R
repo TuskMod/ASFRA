@@ -98,15 +98,15 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         POSdead <- input.opts$POSdead
         POSdead_locs <- input.opts$POSdead_locs
         all_sampled <- input.opts$pigs_sampled
-        all_cells <- input.opts$allzonecells
+        all_cells <- input.opts$cells_sampled
 
         detections <- rbindlist(lapply(1:length(POSlive), function(i){
             live.detections.i <- data.table(i, 1, POSlive[[i]], POSlive_locs[[i]])
             # Create dead detections after live detections are populated
             dead.detections.i <- data.table(i, 0, POSdead[[i]], POSdead_locs[[i]])
-            all.sampled.i <- data.table(i,-1,all_sampled,all_cells)
+            all.sampled.i <- data.table(i,-1,all_sampled[[i]],all_cells[[i]])
             # Combine live and dead detections into detections.i
-            detections.i <- rbind(live.detections.i, dead.detections.i)
+            detections.i <- rbind(live.detections.i, dead.detections.i,all.sampled.i)
             return(detections.i)
         }))
 

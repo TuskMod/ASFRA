@@ -323,11 +323,11 @@ JoinTogetherTiles <- function(parameters,tile_path,county.shp,sample.design){
   
   #crop_bbox <- ext(xmin,xmax,ymin,ymax)
   cropped_tile <- crop(merged_raster,sampled_extent,mask=TRUE)
-  print("Cropping tile?")
-  print(dim(crds(cropped_tile))[[1]])
-  print(cropped_tile)
+  #print("Cropping tile?")
+  #print(dim(crds(cropped_tile))[[1]])
+  #print(cropped_tile)
   if((dim(crds(cropped_tile))[[1]] < 40000)){
-    print("returning normal tile!")
+   # print("returning normal tile!")
     pland_names <- FindSurveillanceTiles(parameters,tile_path,sample.design)
    # completed_tile <- terra::mean(terra::rast(pland_names[[1]]))
   #  names(completed_tile) <- 
