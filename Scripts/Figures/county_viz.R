@@ -186,8 +186,7 @@
     print("tile values!")
     tile_centroids <- crds(ras)
     fig_title <- paste(county_name," Surveillance Map, Samples: ",num_samples)
-    print(dim(tile_centroids))
-    
+
    
     ggplot() +
      # geom_sf(data = grid_centroids_sf, aes(color = factor(sampled)), size = 1, alpha = 0.7) +
