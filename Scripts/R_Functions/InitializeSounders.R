@@ -82,7 +82,8 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
   
         sn <- sum(assigns) #generated number of rows (sounders), size from random assignment of sounders to cells
         init_locs <- which(assigns==1) #get the locations where sounders have been initialized
-
+        print("Initial Locations")
+        print(init_locs[1000:length(init_locs)])
         #Initialize the sounder population matrix
         #each row is a sounder
         pop <- matrix(nrow=sn,ncol=13)
@@ -98,6 +99,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
         pop[,11] <- 0 #number of R status in sounder
         pop[,12] <- 0 #number of C status in sounder
         pop[,13] <- 0 #number of Z status in sounder
+      
         ####################
         #pop_col_names = c("SounderSize","Landscape",
         #                  "CurCell","MoveDistance",

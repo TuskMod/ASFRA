@@ -54,18 +54,24 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
         } else if (grid.opts == "indvras"){
           # TODO: creating grid wich equal spacing all around it for
           # sampling purposes
+        
           plands_rast <- terra::mean(terra::rast(indv_ras_data[[1]]))
           #nm <- unlist(tstrsplit(indv_ras_data, '/', keep=5))
-          
           fs <- tstrsplit(indv_ras_data, '/')
-          nm <- tstrsplit(fs[5],"[_]")
-          if (length(nm) == 3){
-            names(plands_rast) <- nm[2]
+          if(fs[[1]] == "Input"){
+            names(plands_rast) <= "1"
           }
-          if (length(nm) == 2){
-            one_split = tstrsplit(nm[2],".")
-            names(plands_rast) <- onesplit[1]
+          else{
+            nm <- tstrsplit(fs[5],"[_]")
+            if (length(nm) == 3){
+                names(plands_rast) <- nm[2]
+            }
+            if (length(nm) == 2){
+                one_split = tstrsplit(nm[2],".")
+                names(plands_rast) <- onesplit[1]
+            }
           }
+            
           plands_res <- terra::res(plands_rast)
           inc <- plands_res[1]/1000
           km_len <- dim(plands_rast)[1]*inc

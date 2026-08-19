@@ -31,6 +31,8 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
         solocs.all <- out.list$sounderlocs
 #         solocs.all <- cbind(v, l, r, out.list$sounderlocs)
         tm.mat.r <- cbind(tm.mat.r, solocs.r[3:8])
+        setDT(solocs.all)
+        
     }
     # detections (optional...)
     ## has a row for each timestep AND detection type, with timestep, code (1=live,0=dead), number of individuals detected, and position
@@ -44,6 +46,8 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
         #colnames(detections.r) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
         #allzone.r <- out.list$allzonecells
         #colnames(allzone.r) <- c('var', 'land', 'rep', 'timestep', 'loc')
+        setDT(as.data.frame(detections.r))
+        
     }
     # incidence -- more rows than timesteps, separate output (optional...)
     if ('incidence' %in% out.opts){ # don't want this if it's a burn-in output
@@ -51,6 +55,8 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
         n.inc = nrow(incidence.r)
         incidence.r <- suppressWarnings(cbind(matrix(id.r, ncol=3, nrow=n.inc, byrow=TRUE), incidence.r))
         colnames(incidence.r) <- c('var', 'land', 'rep', 'timestep', 'state', 'loc')
+        setDT(incidence.r)
+        
     }
 
     # single value per vlr combination outputs
@@ -59,13 +65,10 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
 
     colnames(summ.vals.r) <- c('var','land','rep',names(out.list[c(1, 2, 4:9, length(out.list))]))
     setDT(tm.mat.r)
-    setDT(solocs.all)
-     setDT(incidence.r)
-     setDT(as.data.frame(detections.r))
-     incidence.r[,state := as.numeric(factor(state, levels=c('exposed','infected','carcass')))]
+     #incidence.r[,state := as.numeric(factor(state, levels=c('exposed','infected','carcass')))]
     fwrite(tm.mat.r[,.(BB,S,E,I,R,C,Z)], paste0('./Output/tm.mat/tm.mat_r',r,'_l',l,'_v',v,'.gz'), compressLevel=4L)
 #     fwrite(summ.vals.r, paste0('./Output/summ.vals/summ.vals_r',r,'_l',l,'_v',v,'.csv'))
-     fwrite(incidence.r[,.(timestep, state, loc)], paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.gz'))
+     #fwrite(incidence.r[,.(timestep, state, loc)], paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.gz'))
      fwrite(detections.r, paste0('./Output/detections/detections_r',r,'_l',l,'_v',v,'.csv'))
 #     fwrite(allzone, paste0('./Output/allzone/allzone_r',r,'_l',l,'_v',v,'.csv'))
     fwrite(solocs.all[,.(time, cell, pref, S, E, I, R, C, Z)], paste0('./Output/solocs.all/solocs.all_r',r,'_l',l,'_v',v,'.gz'), compressLevel=9L)

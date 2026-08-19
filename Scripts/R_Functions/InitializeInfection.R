@@ -30,8 +30,15 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	                       "e", "w", 
 	                       "se", "sw")
 	
-	first_phrase <- split(location_centerm,"_")[1]
-	if(parameters$spawn_type.contains(location_keywords)){
+	first_phrase <- split(parameters$spawn_type,"_")[1]
+	correct_phrase <- ""
+	for(i in 1:length(location_keywords)){
+	  if(str_detect(parameters$spawn_type,location_keywords[[i]])){
+	    correct_phrase <- location_keywords[[i]]
+	    break
+	  }
+	}
+	if(correct_phrase != ""){
 	  
 	  # determine bounding box of grid using centroids from grid matrix
 	  x_vals <- grid[, 6]  # centroid X
@@ -61,7 +68,7 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	  )
 	  
 	  # here we assign the coordinates to infect_loc to be used later
-	  target <- location_centers[[start_infect_loc]]
+	  target <- location_centers[[correct_phrase]]
 	  
 	  # calculate distance between all centroids and infection location
 	  # distance = sqrt((x2 - x1)^2 + (y2-y1)^2)

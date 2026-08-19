@@ -37,7 +37,10 @@ LoadSurveillanceDesign<-function(parameters){
   # sampling file should be in the tile of interest 
   county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
   sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv") # maybe make this more generic so user doesn't have to put in path?
-  # need to ensure surveillance county is in tile that is being looked at 
+#  county_shapefile <- "../Counties-of-Interest/MuscogeeGA/partnership_shapefiles_24v2_13215/PVS_24_v2_county_13215.shp"
+#  sample.design <- read.csv("../Counties-of-Interest/MuscogeeGA/sampling-Muscogee-GA.csv") # maybe make this more generic so user doesn't have to put in path?
+  
+   # need to ensure surveillance county is in tile that is being looked at 
    working_crs <- 3087
  # min_sample_thresh = 10
   # Aggregate by week and store weeks to be sampled in variable
@@ -301,7 +304,6 @@ JoinTogetherTiles <- function(parameters,tile_path,county.shp,sample.design){
     }
   }
   
-  print(counter)
   rast_list <- sprc(all_rasters)
   merged_raster <- mosaic(rast_list,fun="min")
   
@@ -327,12 +329,18 @@ JoinTogetherTiles <- function(parameters,tile_path,county.shp,sample.design){
   if((dim(crds(cropped_tile))[[1]] < 40000)){
     print("returning normal tile!")
     pland_names <- FindSurveillanceTiles(parameters,tile_path,sample.design)
+   # completed_tile <- terra::mean(terra::rast(pland_names[[1]]))
+  #  names(completed_tile) <- 
     return(pland_names)
     #print(pland_names[[1]])
    # return(terra::mean(terra::rast(pland_names[[1]])))
   }
+  
+  rf <- writeRaster(cropped_tile,filename = file.path("Input","muscogee.tif"),overwrite=TRUE)
+  pland_names <- c()
+  pland_names <- c(pland_names,"Input/muscogee.tif")
 
-  return(cropped_tile)
+  return(pland_names)
 }
   
 

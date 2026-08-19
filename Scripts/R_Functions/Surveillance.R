@@ -9,8 +9,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
   fiscal_week_current <- ((i - 1) %% 52) + 1
   # so here, rows_to_sample comes from real data
   rows_to_sample <- sample.design[sample.design$fiscal_week == fiscal_week_current, ]
-  
-  
+
   # Initialize outputs
   live_infectious_sampled <- 0
   live_recovered_sampled <-0
@@ -57,20 +56,41 @@ Surveillance <- function(pop, i, sample.design, parameters) {
   }
   pigs_found <- FALSE
   
+  # 
+  all_surveillance_cells <- rows_to_sample$sampling_loc
+  surveillance_cells <- c()
+  for(s in 1:length(all_surveillance_cells)){
+    surveillance_cells <- c(surveillance_cells,all_surveillance_cells[[s]])
+  }
+  sounder_cells <- pop[,3]
+  surveilled_cells_with_sounders <- intersect(surveillance_cells,sounder_cells)
+  if(length(surveilled_cells_with_sounders) > 0){
+    print(surveilled_cells_with_sounders)
+    print("found sounders!")
+  }
+  #surveillance_quantity <- sum(sample.design[rows_to_sample,]$quantity)
+  
+  # idealized surveillance? or 
+  
+  
   # Loop through locations for this timestep
   for (row_index in 1:nrow(rows_to_sample)) {
     sampling_cells <- rows_to_sample$sampling_loc[[row_index]]  # cells that could be sampled
+   
     current_quantity <- rows_to_sample$quantity[[row_index]]  # how many need to be sampled
   
-    cells_with_pigs <- character(0)
+    cells_with_pigs <- c()
 
     # Check which cells have pigs
     for (sampling_cell in sampling_cells) {
-      matching_rows <- which(pop[, 3] == sampling_cell)
+      matching_rows <- which(pop[,3] == sampling_cell[[1]])
       if (length(matching_rows) > 0) {
         cells_with_pigs <- unique(c(cells_with_pigs, sampling_cell))
       }
     }
+   # next
+    #print(sampling_cells)
+    #print(pop[,3])
     rows_in_sampling_cells <- which(pop[, 3] %in% cells_with_pigs)
     # Track true number of I's in all cells that could be sampled
     infectious_on_property <- infectious_on_property + sum(pop[rows_in_sampling_cells, 10] > 0)
@@ -82,8 +102,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
     infectiousC_on_property <- infectiousC_on_property + sum(pop[rows_in_sampling_cells, 12] > 0)
     # Track total dead population in all cells that could be sampled
     dead_on_property <- dead_on_property + sum(rowSums(pop[rows_in_sampling_cells, 12:13, drop = FALSE]) > 0)
-    
-    
+  
     pigs_available_to_sample <- sum(pop[, 3] %in% cells_with_pigs)
     if (pigs_available_to_sample == 0) next
     
@@ -122,9 +141,9 @@ Surveillance <- function(pop, i, sample.design, parameters) {
     # counts toward quantity needing sampled
     while ((pigs_sampled < current_quantity) && (length(cells_with_pigs) > 0)) {
     #  print(cells_with_pigs)
-      selected_cell <- (sample(cells_with_pigs, 1, replace=FALSE))
+      sampled_cell <- (sample(cells_with_pigs, 1, replace=FALSE))
     
-      matching_rows <- which(pop[, 3] == selected_cell)
+      matching_rows <- which(pop[, 3] == sampled_cell)
       #print("matching row found!")
       pigs_found <- FALSE
       #infec_cell, recov_cell, living_pigs, true_dead, 
@@ -135,11 +154,11 @@ Surveillance <- function(pop, i, sample.design, parameters) {
           pigs_sampled <- pigs_sampled + 1
           if (rbinom(1, 1, parameters$Sensitivity) == 1) {
             live_infectious_sampled <- live_infectious_sampled + 1
-            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, as.character(selected_cell)))
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, (sampled_cell)))
             
           }
           pigs_found <- TRUE
-          sampled_cells_this_week <- unique(c(sampled_cells_this_week, as.character(selected_cell)))
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, (sampled_cell)))
           pop[row,10] <- pop[row,10] - 1
           
           # Recovered (R)
@@ -148,22 +167,22 @@ Surveillance <- function(pop, i, sample.design, parameters) {
           pigs_sampled <- pigs_sampled + 1
           if (rbinom(1, 1, parameters$Specificity) == 1) {
             live_recovered_sampled <- live_recovered_sampled + 1
-            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, as.character(selected_cell)))
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, (sampled_cell)))
           }
           pigs_found <- TRUE
-          sampled_cells_this_week <- unique(c(sampled_cells_this_week, as.character(selected_cell)))
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, (sampled_cell)))
           pop[row,11] <- pop[row,11] - 1
           # Susceptible (S)
         } else if ((pop[row, 8] > 0)) {
-          #print("S")
+          print("S")
           pigs_sampled <- pigs_sampled + 1
           if (rbinom(1, 1, 1 - parameters$Specificity) == 1) {
             false_positives <- false_positives + 1  # Optional: Track separately
-            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, as.character(selected_cell)))
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, (sampled_cell)))
           }
           #print("passed")
-          #pigs_found <- TRUE
-          sampled_cells_this_week <- unique(c(sampled_cells_this_week, as.character(selected_cell)))
+          pigs_found <- TRUE
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, (sampled_cell)))
           #print("sampled cells this week")
           #print(sampled_cells_this_week)
           pop[row,8] <- pop[row,8] - 1
@@ -173,10 +192,10 @@ Surveillance <- function(pop, i, sample.design, parameters) {
           pigs_sampled <- pigs_sampled + 1
           if (rbinom(1, 1, 1 - parameters$Specificity) == 1) {
             false_positives <- false_positives + 1  # Optional: Track separately
-            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, as.character(selected_cell)))
+            live_infected_sampled_locs <- unique(c(live_infected_sampled_locs, as.character(sampled_cell)))
           }
-          #pigs_found <- TRUE
-          sampled_cells_this_week <- unique(c(sampled_cells_this_week, as.character(selected_cell)))
+          pigs_found <- TRUE
+          sampled_cells_this_week <- unique(c(sampled_cells_this_week, as.character(sampled_cell)))
           pop[row,9] <- pop[row,9] - 1
         } 
         
@@ -184,7 +203,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
       }
       
       if (!pigs_found) {
-        cells_with_pigs <- setdiff(cells_with_pigs, as.character(selected_cell))
+        cells_with_pigs <- setdiff(cells_with_pigs, (sampled_cell))
       }
     }
   }
