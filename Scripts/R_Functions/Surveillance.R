@@ -205,6 +205,8 @@ Surveillance <- function(pop, i, sample.design, parameters) {
       if (!pigs_found) {
         cells_with_pigs <- setdiff(cells_with_pigs, (sampled_cell))
       }
+      cells_sampled <- unique(c(cells_sampled, sampled_cell))
+      
     }
   }
   
@@ -251,7 +253,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
   }
   else
   {
-    cells_sampled <- paste(cells_sampled, collapse = ",")
+    cells_sampled <- paste(sampled_cells_this_week, collapse = ",")
   }
   surv_summary <- data.frame(
     timestep = i,

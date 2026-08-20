@@ -97,9 +97,10 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         POSlive_locs <- input.opts$POSlive_locs
         POSdead <- input.opts$POSdead
         POSdead_locs <- input.opts$POSdead_locs
-        all_sampled <- input.opts$pigs_sampled
-        all_cells <- input.opts$cells_sampled
-
+        all_sampled <- input.opts$pigs_sampled_timestep
+        all_cells <- input.opts$cells_sampled_timestep
+        print("sanity check")
+        print(length(POSlive))
         detections <- rbindlist(lapply(1:length(POSlive), function(i){
             live.detections.i <- data.table(i, 1, POSlive[[i]], POSlive_locs[[i]])
             # Create dead detections after live detections are populated
@@ -120,25 +121,26 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
             # Combine the live detections with the sampled pigs as a new column
             #detections <- cbind(detections, sampled_pigs_column_dup)
           # Get the sampled pigs for the timestep
-          pigs_sampled_timestep = input.opts$pigs_sampled_timestep
-          cells_sampled_timestep <- input.opts$cells_sampled_timestep
+          #pigs_sampled_timestep = input.opts$pigs_sampled_timestep
+          #cells_sampled_timestep <- input.opts$cells_sampled_timestep
          # pos_live_locs <- inputs.opts$live_infected_sampled_locs,
         #  pos_dead_locs <- inputs.opts$dead_infected_sampled_locs,
           # Get the sampled pigs vector
-          sampled_pigs_vector <- unlist(pigs_sampled_timestep)
-          cells_sampled_vector <- sapply(cells_sampled_timestep, function(x) length(unique(x)))
+        #  sampled_pigs_vector <- unlist(pigs_sampled_timestep)
+         # cells_sampled_vector <- sapply(cells_sampled_timestep, function(x) length(unique(x)))
           
           # Dynamically set number of rows based on actual grid cells
-          sampled_pigs_column <- matrix(sampled_pigs_vector, ncol = 1)
-          cells_sampled_column <- matrix(cells_sampled_vector, ncol = 1)
+         # sampled_pigs_column <- matrix(sampled_pigs_vector, ncol = 1)
+        #  cells_sampled_column <- matrix(cells_sampled_vector, ncol = 1)
           
           # Duplicate each row (one per detection type: live/dead)
-          sampled_pigs_column_dup <- matrix(rep(sampled_pigs_column, each = 2), ncol = 1)
-          cells_sampled_column_dup <- matrix(rep(cells_sampled_column, each = 2), ncol = 1)
+         # sampled_pigs_column_dup <- matrix(rep(sampled_pigs_column, each = 2), ncol = 1)
+          #cells_sampled_column_dup <- matrix(rep(cells_sampled_column, each = 2), ncol = 1)
           
           #sampled_pigs_column <- matrix(unlist(pigs_sampled_timestep), nrow = 52, ncol = 1)  # Convert to a matrix (1 row, 52 columns)
           # Combine the live detections with the sampled pigs as a new column
         #  detections = cbind(detections, sampled_pigs_column_dup, cells_sampled_column_dup)
+          print("colnames detections")
           colnames(detections) <- c("time","sample_type","detections","cell_detected")
         }
     }
@@ -175,9 +177,12 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
     if("alldetections" %in% out.opts){
         templist <- vector(mode="list", length=1)
         templist[[1]] <- detections
+        print(templist)
         list.all <- append(list.all, templist)
-        names(list.all)[length(list.all)] <- "alldetections"
         
+        names(list.all)[length(list.all)] <- "alldetections"
+        print(list.all$alldetections)
+        print("saved into names")
         if(sample != 1){
           templist <- vector(mode="list", length=1)
           templist[[1]] <- input.opts$allzonecells
@@ -192,6 +197,7 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         list.all <- append(list.all, templist)
         names(list.all)[length(list.all)] <- "incidence"
     }
+    print("about to return")
 
     return(list.all)
 }

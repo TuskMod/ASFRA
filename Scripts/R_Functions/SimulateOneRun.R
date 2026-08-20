@@ -20,9 +20,11 @@ if(sample == 1){
 ######## Start simulation ########
     i <- 0
     while(any(pop[, 9, drop=FALSE] != 0 | pop[, 10, drop=FALSE] != 0 | pop[, 12, drop=FALSE] != 0) & i < thyme){
+      
         i <- i+1 ## keeps the counting clean if the virus dies out before 'thyme'
         print(paste0("timestep: ",i))
         print(colSums(pop[,8:13]))
+       
 
         if("sounderlocs" %in% out.opts){
             loc.list[[i]] <- pop[, c(3, 8:13)]
@@ -229,8 +231,7 @@ if(sample == 1){
 #Remove rows in pop with 0 pigs
         pigcols <- c(1, 8:13)
         pop <- pop[which(rowSums(pop[, pigcols, drop=FALSE]) != 0),, drop=FALSE]
-        print(paste0("timestep: ",i))
-        print(colSums(pop[,8:13]))
+       
 
     } # end while loop of timesteps
 
@@ -305,8 +306,9 @@ if(sample == 1){
     
  #   templist[[1]] <- i
  #   list.all <- append(list.all, templist)
-    
+    print("about to save")
     list.all[[length(list.all)+1]] <- data.table(i)
+    print("Returning out of one run!")
     names(list.all)[length(list.all)] <- 'endtime'
     return(list.all)
 } #function closing bracket

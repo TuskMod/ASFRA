@@ -6,6 +6,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
 
     # if it is the burnin, the r=0 below will overwrite NA defaults in this irrelevant
     # if it is after the burn-in, these will have existing values that new values will be added to
+    print("starting repoutputs")
     tm.mat <- prevrep.in[[1]]
     summ.vals <- prevrep.in[[2]]
     incidence <- prevrep.in[[3]]
@@ -23,29 +24,47 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     # Births
     tm.mat.r <- cbind(tm.mat.r, out.list$BB[seq(end.tm)])
     colnames(tm.mat.r)[ncol(tm.mat.r)] <- 'BB'
-    
+
     #Handle sounderlocs (optional...)
     ## seems like other things were supposed to happen in sounderlocsSummarize, if we want to use those this will have to change
     if ("sounderlocs" %in% out.opts){
+        print("about to save sounder locs!")
         solocs.r <- sounderlocsSummarize(out.list$sounderlocs, r)[[1]]
         solocs.all <- out.list$sounderlocs
+        print("saved sounder locs!")
 #         solocs.all <- cbind(v, l, r, out.list$sounderlocs)
+        print(solocs.r)
+        print(tm.mat.r)
         tm.mat.r <- cbind(tm.mat.r, solocs.r[3:8])
+        print("column bind!")
         setDT(solocs.all)
+        print("finished sounder locs!")
         
     }
     # detections (optional...)
     ## has a row for each timestep AND detection type, with timestep, code (1=live,0=dead), number of individuals detected, and position
     ## still need to test sample = 1
     if ('alldetections' %in% out.opts){
-        detections.r <- as.matrix(out.list$alldetections)
-        detections.r <- detections.r[detections.r[,1] <= end.tm, ]
+        print("starting detection saving!")
+        print(out.list$alldetections)
+       # detections.r <- as.matrix(out.list$alldetections)
+        detections.r <- out.list$alldetections
+       
+        detections.r <- detections.r[detections.r$time <= end.tm,]
+        
+        replication_times <- rep(3,dim(tm.mat.r)[[1]])
+       
+        dup_tm <- tm.mat.r[rep(row.names(tm.mat.r), times = replication_times), ]
+        #print(dup_tm)
         n.det <- nrow(detections.r)
+        #print(n.det)
+        #print("done")
         detections.r <- suppressWarnings(cbind(matrix(id.r, ncol=3, nrow=n.det, byrow=TRUE), detections.r)) # gave a warning if there were no detections; very annoying
-        detections.r <- cbind(tm.mat.r,detections.r)
+        detections.r <- cbind(dup_tm,detections.r)
         #colnames(detections.r) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
         #allzone.r <- out.list$allzonecells
         #colnames(allzone.r) <- c('var', 'land', 'rep', 'timestep', 'loc')
+        print("about to save detections!")
         setDT(as.data.frame(detections.r))
         
     }
