@@ -207,33 +207,38 @@ void operator()(std::size_t begin, std::size_t end) {
     int var = 0; 
     for (int num : rsf_vals) {
       if(num > 0){
+        //std::cout << "good rsf value " << num << "\n";
         var = 1;
         break;
       }
     }
     
-    // if nowhere to move to - stay in place
+
+    // sample land values!
     if(var == 0){
-      truemin = j;
-    }
+      truemin = Rcpp::RcppArmadillo::sample(set,1,0,rsf_vals); 
+      outpop(j,0)=truemin[0]+1; //+1 is to get appropriate index
+      
+      }
     else{
-    // sample land values instead if potential lands to choose
-        truemin = Rcpp::RcppArmadillo::sample(set,1,0,rsf_vals);    }
+      outpop(j,0)=apoplocs(j,0);
+      
     }
+    }
+    
 
     //////////////////////////////////////////////////////////////////
     /////// Assign chosen location after movement pref options //////
     ////////////////////////////////////////////////////////////////
 
     //set location to selected cell in set with minimum abundance
-    outpop(j,0)=truemin[0]+1; //+1 is to get appropriate index
 
     } else{ //else to 'if any cells in set'
 
     //there should always be a possible cell to move to (unless barriers introduced in model)
     //currently, if no cells in set, should generate error
     //this will output unrealistic location number that can be used in R script to generate error
-    outpop(j,0)=acent.nrow()+1000;
+    outpop(j,0)=j;
 
     }
 
