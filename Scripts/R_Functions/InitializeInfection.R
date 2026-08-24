@@ -7,11 +7,12 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	num_inf_0 <- parameters$num_inf_0
 
 	if(parameters$spawn_type == "random_pref"){
-	  navigable_land <- which(centroids[,3] > 0)
-	  infect_cell <- sample(navigable_land,1)
+	  navigable_land <- which(grid[,8] > 0)
+	  possible_cells <- (grid[navigable_land,1])
+	  infect_cell <- sample(possible_cells,1)
 	}
 	
-	if(parameters$spawn_type == "lc_pref"){
+	if(parameters$spawn_type == "land_pref"){
 	  #initialize needed objects
 	  cells <- nrow(centroids)
 	  
@@ -26,20 +27,23 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	  infect_cell <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
 	}
 	
-	location_keywords <- c("n", "nw", "ne", 
-	                       "e", "w", 
-	                       "se", "sw")
+	if(parameters$spawn_type != "land_pref" && parameters$spawn_type != "random_pref"){
 	
-	first_phrase <- split(parameters$spawn_type,"_")[1]
-	correct_phrase <- ""
-	for(i in 1:length(location_keywords)){
-	  if(str_detect(parameters$spawn_type,location_keywords[[i]])){
-	    correct_phrase <- location_keywords[[i]]
-	    break
-	  }
-	}
+  	location_keywords <- c("n", "nw", "ne", 
+  	                       "e", "w", 
+  	                       "se", "sw")
+  	
+  	first_phrase <- split(parameters$spawn_type,"_")[1]
+  	correct_phrase <- ""
+  	for(i in 1:length(location_keywords)){
+  	  if(str_detect(first_phrase,location_keywords[[i]])){
+  	    correct_phrase <- location_keywords[[i]]
+  	    break
+  	  }
+  	}
+  	print(correct_phrase)
 	if(correct_phrase != ""){
-	  
+	  print("normal choosing.")
 	  # determine bounding box of grid using centroids from grid matrix
 	  x_vals <- grid[, 6]  # centroid X
 	  y_vals <- grid[, 7]  # centroid Y
@@ -86,6 +90,7 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	  }
 	  
 	}
+	}
 	#find the midpoint of the grid where the infected sounder will end up
 #	midpoint <- c(median(centroids[, 1]), median(centroids[, 2]))
 #	id <- which(centroids[, 1] >= midpoint[1] & centroids[, 2] >= midpoint[2])[1] #location on grid closest to midpoint
@@ -93,14 +98,20 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
     # generate a sounder of one infected individual at num_inf_0 points (usually 1)
 	  # manually set to be 1, since it is a sounder of size one
 	  # VR: changed to heterogeneous here
+	
     infected <- InitializeSounders(centroids, grid, c(infect_cell, num_inf_0), pop_init_type="init_single", pop_init_grid_opts=parameters$pop_init_grid_opts)
   
     # (manually change state values so S=0 and I = 1)
+   # pop[pop[,2] == infected[,2],] <- infected 
     infected[, 8] <- 0
     infected[, 10] <- 1
+    new_pop <- as.data.frame(pop) %>%
+                filter(cell != infect_cell)
+    new_pop <- as.matrix(new_pop)
     ## could have the option to change initial infected sounder size
     #combine infected pig with pop matrix
-    pop <- rbind(pop, infected)
-
+    pop <- rbind(new_pop, infected)
+    #print(pop[pop[,3] == infect_cell,])
+    #pop[pop[,3] == infect_cell,] <- infected
 	return(pop)
 }

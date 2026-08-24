@@ -207,7 +207,7 @@ void operator()(std::size_t begin, std::size_t end) {
     int var = 0; 
     for (int num : rsf_vals) {
       if(num > 0){
-        //std::cout << "good rsf value " << num << "\n";
+        std::cout << "good rsf value " << num << "\n";
         var = 1;
         break;
       }
@@ -215,7 +215,7 @@ void operator()(std::size_t begin, std::size_t end) {
     
 
     // sample land values!
-    if(var == 0){
+    if(var == 1){
       truemin = Rcpp::RcppArmadillo::sample(set,1,0,rsf_vals); 
       outpop(j,0)=truemin[0]+1; //+1 is to get appropriate index
       

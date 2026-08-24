@@ -200,10 +200,11 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
                 return(NULL)
             }
         }
+      
         #for initializing initial infected individual introduction
         pop <- matrix(nrow=1, ncol=13)
         pop[,1] <- n #sounder size with avg as lambda in a poisson
-        pop[,2] <- 0
+        pop[,2] <- grid[init_locs,8]
         pop[,3] <- init_locs #this will be grid location (row number)
         pop[,4] <- 0 #this will be assigned movement distance
         pop[,5] <- centroids[pop[, 3], 1] #present location X

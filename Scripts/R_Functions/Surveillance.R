@@ -64,10 +64,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
   }
   sounder_cells <- pop[,3]
   surveilled_cells_with_sounders <- intersect(surveillance_cells,sounder_cells)
-  if(length(surveilled_cells_with_sounders) > 0){
-    print(surveilled_cells_with_sounders)
-    print("found sounders!")
-  }
+ 
   #surveillance_quantity <- sum(sample.design[rows_to_sample,]$quantity)
   
   # idealized surveillance? or 
@@ -89,9 +86,9 @@ Surveillance <- function(pop, i, sample.design, parameters) {
       }
     }
    # next
-    #print(sampling_cells)
-    #print(pop[,3])
+ 
     rows_in_sampling_cells <- which(pop[, 3] %in% cells_with_pigs)
+    
     # Track true number of I's in all cells that could be sampled
     infectious_on_property <- infectious_on_property + sum(pop[rows_in_sampling_cells, 10] > 0)
     # Track true number of R's in all cells that could be sampled

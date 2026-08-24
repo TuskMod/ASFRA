@@ -9,6 +9,16 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
     } else if(mv_pref==3 & (missing(RSF_mat0) | missing(RSF_mat))){
         stop("mv_pref set to RSF-availability movement (3), but RSF matrices not supplied")
     }
+    
+    num_infec <- length(pop[pop[,10] >0,])
+    if (num_infec > 0) {
+      I_cell_prefs <- centroids[pop[pop[,10] > 0,3],3]
+      for(i in 1:length(I_cell_prefs)){
+        if( I_cell_prefs[[i]] == 0){
+          stop("Started in an ocean tile!")
+        }
+      }
+    }
 
     #get distances from gamma distribution (km)
     pop[,4] <- rgamma(nrow(pop), shape=alpha, scale=theta)/1000
@@ -48,6 +58,17 @@ FastMovement <- function(pop, centroids, alpha, theta, inc, mv_pref, RSF_mat=NUL
     #if stop function here.. if no cells to move to (i.e. if your movement units are in meters)
     if(any(pop[,3] == nrow(centroids) + 1000)) {
         stop("No cells to move to! This shouldn't happen")
+    }
+    
+    num_infec <- length(pop[pop[,10] >0,])
+    if (num_infec > 0) {
+      I_cell_prefs <- centroids[pop[pop[,10] > 0,3],3]
+   
+      for(i in 1:length(I_cell_prefs)){
+        if( I_cell_prefs[[i]] == 0){
+          stop("Moved to an ocean tile!")
+        }
+      }
     }
     
     #if stop function here..

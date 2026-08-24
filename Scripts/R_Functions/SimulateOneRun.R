@@ -16,7 +16,7 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters,sample.desi
 if(sample == 1){
     all_surv_data <- list()
 }
-
+  
 ######## Start simulation ########
     i <- 0
     while(any(pop[, 9, drop=FALSE] != 0 | pop[, 10, drop=FALSE] != 0 | pop[, 12, drop=FALSE] != 0) & i < thyme){
@@ -46,11 +46,13 @@ if(sample == 1){
 
         I_locs[[i]] <- pop[pop[, 10] > 0, 3]
         C_locs[[i]] <- pop[pop[, 12] > 0, 3]
-
+       
+   
 ######## Sounder Split ########
         if (any(pop[,1] > 2*ss)){
             pop <- sounderSplit(pop, ss)
         }
+      
 ######## Movement ########
         pop <- FastMovement(pop, centroids, alpha, theta, inc, mv_pref)
 
@@ -125,8 +127,7 @@ if(sample == 1){
             POSlive_locs[[i]] <- surv.list$live_infected_sampled_locs
             POSdead_locs[[i]] <- surv.list$dead_infected_sampled_locs
             pigs_sampled_timestep[[i]] <- surv.list$pigs_sampled
-            print("num sampled")
-            print(pigs_sampled_timestep[[i]])
+            
             cells_sampled_timestep[[i]] <- surv.list$cells_sampled
           
         }

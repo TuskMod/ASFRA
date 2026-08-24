@@ -99,8 +99,7 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         POSdead_locs <- input.opts$POSdead_locs
         all_sampled <- input.opts$pigs_sampled_timestep
         all_cells <- input.opts$cells_sampled_timestep
-        print("sanity check")
-        print(length(POSlive))
+       
         detections <- rbindlist(lapply(1:length(POSlive), function(i){
             live.detections.i <- data.table(i, 1, POSlive[[i]], POSlive_locs[[i]])
             # Create dead detections after live detections are populated
@@ -177,12 +176,10 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
     if("alldetections" %in% out.opts){
         templist <- vector(mode="list", length=1)
         templist[[1]] <- detections
-        print(templist)
         list.all <- append(list.all, templist)
         
         names(list.all)[length(list.all)] <- "alldetections"
-        print(list.all$alldetections)
-        print("saved into names")
+      
         if(sample != 1){
           templist <- vector(mode="list", length=1)
           templist[[1]] <- input.opts$allzonecells
@@ -197,7 +194,6 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
         list.all <- append(list.all, templist)
         names(list.all)[length(list.all)] <- "incidence"
     }
-    print("about to return")
 
     return(list.all)
 }

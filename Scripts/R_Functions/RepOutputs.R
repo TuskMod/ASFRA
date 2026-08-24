@@ -28,25 +28,18 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     #Handle sounderlocs (optional...)
     ## seems like other things were supposed to happen in sounderlocsSummarize, if we want to use those this will have to change
     if ("sounderlocs" %in% out.opts){
-        print("about to save sounder locs!")
         solocs.r <- sounderlocsSummarize(out.list$sounderlocs, r)[[1]]
         solocs.all <- out.list$sounderlocs
-        print("saved sounder locs!")
 #         solocs.all <- cbind(v, l, r, out.list$sounderlocs)
-        print(solocs.r)
-        print(tm.mat.r)
+       
         tm.mat.r <- cbind(tm.mat.r, solocs.r[3:8])
-        print("column bind!")
         setDT(solocs.all)
-        print("finished sounder locs!")
-        
+
     }
     # detections (optional...)
     ## has a row for each timestep AND detection type, with timestep, code (1=live,0=dead), number of individuals detected, and position
     ## still need to test sample = 1
     if ('alldetections' %in% out.opts){
-        print("starting detection saving!")
-        print(out.list$alldetections)
        # detections.r <- as.matrix(out.list$alldetections)
         detections.r <- out.list$alldetections
        
@@ -64,7 +57,6 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
         #colnames(detections.r) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
         #allzone.r <- out.list$allzonecells
         #colnames(allzone.r) <- c('var', 'land', 'rep', 'timestep', 'loc')
-        print("about to save detections!")
         setDT(as.data.frame(detections.r))
         
     }
