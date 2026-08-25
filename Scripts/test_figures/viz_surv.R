@@ -37,7 +37,7 @@ infec_sampled <- c()
 
 for (f in 1:length(file_paths)){
   split_file <- strsplit(file_paths[f],"_")
-  if(split_file[[1]][[4]] == "v7.csv"){
+  if(split_file[[1]][[4]] == "v6.csv"){
     file_data <- read.csv(file_paths[f])
     total_sampled <-c(total_sampled,sum(file_data$detections))
     detect_df <- file_data %>% filter(sample_type == 1)

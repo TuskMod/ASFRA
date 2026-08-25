@@ -48,10 +48,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
         replication_times <- rep(3,dim(tm.mat.r)[[1]])
        
         dup_tm <- tm.mat.r[rep(row.names(tm.mat.r), times = replication_times), ]
-        #print(dup_tm)
         n.det <- nrow(detections.r)
-        #print(n.det)
-        #print("done")
         detections.r <- suppressWarnings(cbind(matrix(id.r, ncol=3, nrow=n.det, byrow=TRUE), detections.r)) # gave a warning if there were no detections; very annoying
         detections.r <- cbind(dup_tm,detections.r)
         #colnames(detections.r) <- c('var', 'land', 'rep', 'timestep', 'code', 'detected', 'loc')
@@ -67,7 +64,11 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
         incidence.r <- suppressWarnings(cbind(matrix(id.r, ncol=3, nrow=n.inc, byrow=TRUE), incidence.r))
         colnames(incidence.r) <- c('var', 'land', 'rep', 'timestep', 'state', 'loc')
         setDT(incidence.r)
-        
+    }
+    
+    if(parameters$sample == 1){
+      county_name <- parameters$surv_county
+      folder_name <- paste0('./Output/',county_name,'-detections/detections_r')
     }
 
     # single value per vlr combination outputs
@@ -80,7 +81,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     fwrite(tm.mat.r[,.(BB,S,E,I,R,C,Z)], paste0('./Output/tm.mat/tm.mat_r',r,'_l',l,'_v',v,'.gz'), compressLevel=4L)
 #     fwrite(summ.vals.r, paste0('./Output/summ.vals/summ.vals_r',r,'_l',l,'_v',v,'.csv'))
      #fwrite(incidence.r[,.(timestep, state, loc)], paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.gz'))
-     fwrite(detections.r, paste0('./Output/detections/detections_r',r,'_l',l,'_v',v,'.csv'))
+     fwrite(detections.r, paste0(folder_name,r,'_l',l,'_v',v,'.csv'))
 #     fwrite(allzone, paste0('./Output/allzone/allzone_r',r,'_l',l,'_v',v,'.csv'))
     fwrite(solocs.all[,.(time, cell, pref, S, E, I, R, C, Z)], paste0('./Output/solocs.all/solocs.all_r',r,'_l',l,'_v',v,'.gz'), compressLevel=9L)
 

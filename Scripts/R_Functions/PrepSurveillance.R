@@ -35,8 +35,13 @@ LoadSurveillanceDesign<-function(parameters){
 
   # Read sampling file
   # sampling file should be in the tile of interest 
-  county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
-  sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv") # maybe make this more generic so user doesn't have to put in path?
+  county_of_interest <- parameters$surv_county
+  county_data <- read.csv("county_data.csv")
+  county_row %>% county_data %>% filter(county_name == county_of_interest)
+  sample.design <- read.csv(county_row$sample.design)
+  county_shapefile <- county_row$county_shp
+  #county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
+  #sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv") # maybe make this more generic so user doesn't have to put in path?
 #  county_shapefile <- "../Counties-of-Interest/MuscogeeGA/partnership_shapefiles_24v2_13215/PVS_24_v2_county_13215.shp"
 #  sample.design <- read.csv("../Counties-of-Interest/MuscogeeGA/sampling-Muscogee-GA.csv") # maybe make this more generic so user doesn't have to put in path?
   
@@ -98,12 +103,6 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
   sample_sf_transformed <- st_transform(sample_coords,custom_crs)
   # transform coordinates to meter based CRS
   sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
-  #sample_coords_transformed <- sample_coords_transformed / 1000 # convert to km
-#  sample_bbox <- st_bbox(st_read(sample.prep$shp_file[[1]]))
- # sample_xmin <- sample_bbox["xmin"][[1]]
-  #sample_xmax <- sample_bbox["xmax"][[1]]
-  #sample_ymin <- sample_bbox["ymin"][[1]]
-  #sample_ymax <- sample_bbox["ymax"][[1]]
 
   current_extent <- ext(curr_tile)
   tile_centroid <- centroids(curr_tile)

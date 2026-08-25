@@ -5,13 +5,18 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
 
     library(data.table)
     # if any output folders are missing, create them
+    county_name <- parameters$surv_county
+    folder_name <- paste0('./Output/',county_name,'-detections/detections_r')
+    
     dirlist <- list.dirs()
     if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
     if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
     if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
-        if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
+    if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
+    if (folder_name %in% dirlist == FALSE){dir.create(folder_name)}
 #         if ('./Output/allzone' %in% dirlist == FALSE){dir.create('./Output/allzone')}
     if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
+    
 
     setDT(mv.parms)
     # table of all desired simulation runs

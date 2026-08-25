@@ -66,9 +66,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
   surveilled_cells_with_sounders <- intersect(surveillance_cells,sounder_cells)
  
   #surveillance_quantity <- sum(sample.design[rows_to_sample,]$quantity)
-  
-  # idealized surveillance? or 
-  
+  probability_detection <- 1- ((pop[,8] + pop[,11])/(pop[,8] + pop[,9] + pop[,10] + pop[,11]))
   
   # Loop through locations for this timestep
   for (row_index in 1:nrow(rows_to_sample)) {
