@@ -67,8 +67,8 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     }
     
     if(parameters$sample == 1){
-      county_name <- parameters$surv_county
-      folder_name <- paste0('./Output/',county_name,'-sample/')
+      county_name <- parameters$sample_county
+      folder_name <- paste0('./Output/',county_name,'-detections/')
     }
 
     # single value per vlr combination outputs
