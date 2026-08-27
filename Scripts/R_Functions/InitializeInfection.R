@@ -12,6 +12,12 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	  infect_cell <- sample(possible_cells,1)
 	}
 	
+	if(parameters$spawn_type == "randomhypercube_pref"){
+	  # create a lat/long matrix to do the hypercube sampling
+	  latlong_matrix <- randomLHS(500000,2)
+	  
+	}
+	
 	if(parameters$spawn_type == "land_pref"){
 	  #initialize needed objects
 	  cells <- nrow(centroids)

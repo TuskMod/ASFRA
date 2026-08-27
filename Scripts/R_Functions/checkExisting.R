@@ -5,19 +5,25 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
 
     library(data.table)
     # if any output folders are missing, create them
-    county_name <- parameters$surv_county
-    folder_name <- paste0('./Output/',county_name,'-detections/detections_r')
+    county_name <- parameters$sample_county
+    folder_name <- paste0('./Output/',county_name,'-detections')
     
     dirlist <- list.dirs()
     if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
     if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
     if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
     if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
-    if (folder_name %in% dirlist == FALSE){dir.create(folder_name)}
+    if (folder_name %in% dirlist == FALSE){
+      dir.create(folder_name)
+      dir.create(paste0(folder_name,"/detections/"))
+      dir.create(paste0(folder_name,"/tm.mat/"))
+      dir.create(paste0(folder_name,"/solocs.all/"))
+      dir.create(paste0(folder_name,"/incidence/"))
+      dir.create(paste0(folder_name,"/summ.vals/"))
+      }
 #         if ('./Output/allzone' %in% dirlist == FALSE){dir.create('./Output/allzone')}
     if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
     
-
     setDT(mv.parms)
     # table of all desired simulation runs
     lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
@@ -54,7 +60,7 @@ check.existing <- function(lvtable, out.repl){
 #         incid.tab <- unique(as.data.table(rbindlist(lapply(incidence.in, splt.check, nm = 'incidence'))))
         solocs.tab <- unique(as.data.table(rbindlist(lapply(solocs.all.in, splt.check, nm = 'solocs.all'))))
         detections.tab <- unique(as.data.table(rbindlist(lapply(detections.in, splt.check, nm = 'detection'))))
-        print(solocs.tab)
+        #print(solocs.tab)
         # connect all filetype lists together
 #         bndtab <- merge(tm.tab, summ.tab, by=c('v','l','r'), all=TRUE)
         bndtab <- merge(tm.tab, solocs.tab, by=c('v','l','r'), all=TRUE)

@@ -178,8 +178,7 @@ Surveillance <- function(pop, i, sample.design, parameters) {
           #print("passed")
           pigs_found <- TRUE
           sampled_cells_this_week <- unique(c(sampled_cells_this_week, (sampled_cell)))
-          #print("sampled cells this week")
-          #print(sampled_cells_this_week)
+          
           pop[row,8] <- pop[row,8] - 1
           #print("S Done")
         } else if ((pop[row, 9] > 0)) {

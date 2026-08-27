@@ -6,7 +6,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
 
     # if it is the burnin, the r=0 below will overwrite NA defaults in this irrelevant
     # if it is after the burn-in, these will have existing values that new values will be added to
-    print("starting repoutputs")
+    #print("starting repoutputs")
     tm.mat <- prevrep.in[[1]]
     summ.vals <- prevrep.in[[2]]
     incidence <- prevrep.in[[3]]
@@ -68,7 +68,7 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     
     if(parameters$sample == 1){
       county_name <- parameters$surv_county
-      folder_name <- paste0('./Output/',county_name,'-detections/detections_r')
+      folder_name <- paste0('./Output/',county_name,'-sample/')
     }
 
     # single value per vlr combination outputs
@@ -78,12 +78,12 @@ rep_outputs <- function(out.list, v, l, r, parameters, out.opts, prevrep.in = as
     colnames(summ.vals.r) <- c('var','land','rep',names(out.list[c(1, 2, 4:9, length(out.list))]))
     setDT(tm.mat.r)
      #incidence.r[,state := as.numeric(factor(state, levels=c('exposed','infected','carcass')))]
-    fwrite(tm.mat.r[,.(BB,S,E,I,R,C,Z)], paste0('./Output/tm.mat/tm.mat_r',r,'_l',l,'_v',v,'.gz'), compressLevel=4L)
+    fwrite(tm.mat.r[,.(BB,S,E,I,R,C,Z)], paste0(folder_name,'tm.mat/','tm.mat_r',r,'_l',l,'_v',v,'.gz'), compressLevel=4L)
 #     fwrite(summ.vals.r, paste0('./Output/summ.vals/summ.vals_r',r,'_l',l,'_v',v,'.csv'))
      #fwrite(incidence.r[,.(timestep, state, loc)], paste0('./Output/incidence/incidence_r',r,'_l',l,'_v',v,'.gz'))
-     fwrite(detections.r, paste0(folder_name,r,'_l',l,'_v',v,'.csv'))
+     fwrite(detections.r, paste0(folder_name,'detections/','detections_',r,'_l',l,'_v',v,'.csv'))
 #     fwrite(allzone, paste0('./Output/allzone/allzone_r',r,'_l',l,'_v',v,'.csv'))
-    fwrite(solocs.all[,.(time, cell, pref, S, E, I, R, C, Z)], paste0('./Output/solocs.all/solocs.all_r',r,'_l',l,'_v',v,'.gz'), compressLevel=9L)
+    fwrite(solocs.all[,.(time, cell, pref, S, E, I, R, C, Z)], paste0(folder_name,'solocs.all/',',solocs.all_r',r,'_l',l,'_v',v,'.gz'), compressLevel=9L)
 
 #     return(list(tm.mat, summ.vals, incidence, detections, allzone, solocs.all))
     return(summ.vals.r)

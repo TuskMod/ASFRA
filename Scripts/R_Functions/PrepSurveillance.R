@@ -35,9 +35,11 @@ LoadSurveillanceDesign<-function(parameters){
 
   # Read sampling file
   # sampling file should be in the tile of interest 
-  county_of_interest <- parameters$surv_county
+  county_of_interest <- parameters$sample_county
   county_data <- read.csv("county_data.csv")
-  county_row %>% county_data %>% filter(county_name == county_of_interest)
+  county_row <- county_data %>% filter(county_name == county_of_interest)
+  print(county_row)
+  print(county_row$sample.design)
   sample.design <- read.csv(county_row$sample.design)
   county_shapefile <- county_row$county_shp
   #county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
@@ -405,6 +407,8 @@ ReadTileFolders <- function(tile_fp){
   full_path <- "Landscape_Setup/NND_Lands/all_tile_attribs.csv"
   split_vals = strsplit(tile_fp,"/",fixed=TRUE)
   tile_fn <- split_vals[[1]][[5]]
+  print(tile_fp)
+  print(tile_fn)
   fn_values <- strsplit(tile_fn,"_",fixed=TRUE)
   tile_data <- NULL
   if(length(fn_values) == 2){
@@ -412,7 +416,19 @@ ReadTileFolders <- function(tile_fp){
   } else{
     tile_data <- read.csv(edge_path)
   }
-  tile_data <- tile_data[as.numeric(fn_values[[1]][[2]])-1,]
+  print(fn_values)
+  if (length(fn_values[[1]]) == 3){
+    print("three")
+    num <- fn_values[[1]][[2]]
+  }
+  if (length(fn_values[[1]]) == 2){
+   
+    one_split = strsplit(fn_values[[1]][[2]],"[.]")
+    num <- one_split[[1]][[1]]
+  }
+  print(num)
+  print(as.numeric(num))
+  tile_data <- tile_data[as.numeric(num),]
   # all_cols format comes from the loaded in RDS file that already exists 
   all_cols <- c(
     "index", "nnd_med", "nnd_range", "nnd_mean", "nnd_sd",
@@ -424,8 +440,9 @@ ReadTileFolders <- function(tile_fp){
   )
   
  # tile_data <- tile_data[, -1]
-  
+  print
   colnames(tile_data) <- all_cols
+  print(tile_data)
   return(tile_data)
 }
   

@@ -67,8 +67,8 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
                 names(plands_rast) <- nm[2]
             }
             if (length(nm) == 2){
-                one_split = tstrsplit(nm[2],".")
-                names(plands_rast) <- onesplit[1]
+                one_split = tstrsplit(nm[2],"[.]")
+                names(plands_rast) <- one_split[1]
             }
           }
             

@@ -139,7 +139,7 @@ GetOutputs <- function(pop, centroids, BB, Incidence, Tculled, ICtrue, out, dete
           #sampled_pigs_column <- matrix(unlist(pigs_sampled_timestep), nrow = 52, ncol = 1)  # Convert to a matrix (1 row, 52 columns)
           # Combine the live detections with the sampled pigs as a new column
         #  detections = cbind(detections, sampled_pigs_column_dup, cells_sampled_column_dup)
-          print("colnames detections")
+          #print("colnames detections")
           colnames(detections) <- c("time","sample_type","detections","cell_detected")
         }
     }
