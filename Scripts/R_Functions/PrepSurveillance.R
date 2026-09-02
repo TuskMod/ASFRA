@@ -205,17 +205,19 @@ FindSurveillanceTiles <- function(parameters,tile_path,sample.design){
   right_plands <- vector(mode="list")
   plands_names <- c()
   counter = 1
-  
+  print(county_shapefile)
   sample_geom <-  st_read(county_shapefile)
   st_crs(sample_geom) <- 4269
   # pull out x and y coords from sample.prep, convert to sf object
   sample_sf_transformed <- st_transform(sample_geom,custom_crs)
   sample_bbox <- st_bbox(sample_sf_transformed)
+  print(sample_bbox)
   # transform coordinates to meter based CRS
   sample_xmin <- sample_bbox["xmin"][[1]]
   sample_xmax <- sample_bbox["xmax"][[1]]
   sample_ymin <- sample_bbox["ymin"][[1]]
   sample_ymax <- sample_bbox["ymax"][[1]]
+  
   for(fi in 1:length(fs)){
     fi_tile <- terra::rast(fs[fi])
    # custom_crs <- crs(curr_tile)
@@ -403,44 +405,52 @@ TileinCounty <- function(county.rast,tile.rast){
 
 ReadTileFolders <- function(tile_fp){
   
-  edge_path <- "Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv"
-  full_path <- "Landscape_Setup/NND_Lands/all_tile_attribs.csv"
+  #edge_path <- "Landscape_Setup/NND_Lands/all_tile_attribs_edge.csv"
+  #full_path <- "Landscape_Setup/NND_Lands/all_tile_attribs.csv"
+  county_path <- "Landscape_Setup/custom_tile2/custom_tile/4_Output/all_tile_attribs.csv"
   split_vals = strsplit(tile_fp,"/",fixed=TRUE)
-  tile_fn <- split_vals[[1]][[5]]
   print(tile_fp)
-  print(tile_fn)
+  print("TILE")
+  print(split_vals)
+  tile_fn <- split_vals[[1]][6]
+  
   fn_values <- strsplit(tile_fn,"_",fixed=TRUE)
   tile_data <- NULL
-  if(length(fn_values) == 2){
-    tile_data <- read.csv(full_path)
-  } else{
-    tile_data <- read.csv(edge_path)
-  }
+  tile_data <- read.csv(county_path)
+  # if(length(fn_values) == 2){
+#    tile_data <- read.csv(full_path)
+ # } else{
+  #  tile_data <- read.csv(edge_path)
+  #}
+  print(tile_data)
+  print(tile_fn)
   print(fn_values)
   if (length(fn_values[[1]]) == 3){
     print("three")
     num <- fn_values[[1]][[2]]
   }
-  if (length(fn_values[[1]]) == 2){
+  if (length(fn_values[[1]]) == 4){
    
-    one_split = strsplit(fn_values[[1]][[2]],"[.]")
-    num <- one_split[[1]][[1]]
+    one_split = strsplit(fn_values[[1]][[4]],"[.]")
+    num <- paste0(fn_values[[1]][[3]],"_",one_split[[1]][[1]])
   }
   print(num)
-  print(as.numeric(num))
-  tile_data <- tile_data[as.numeric(num),]
+  print(tile_data)
+  tile_data <- tile_data %>% filter(index == num)
+  
+  # tile_data <- tile_data[as.numeric(num),]
   # all_cols format comes from the loaded in RDS file that already exists 
   all_cols <- c(
     "index", "nnd_med", "nnd_range", "nnd_mean", "nnd_sd",
     "x", "y", "state", "gamma.shape", "gamma.scale",
     "moranI", "gearyC", "tc", "mast", "rgd", "rds",
-    "dayl", "prcp", "tmin", "tmax", "drt", "contag",
+    "prcp", "tmin", "tmax", "drt", "contag",
     "aggindex", "entropy", "simpindx", "nnd_cv",
     "mvmt.mean", "mvmt.cv"
   )
   
  # tile_data <- tile_data[, -1]
-  print
+
   colnames(tile_data) <- all_cols
   print(tile_data)
   return(tile_data)

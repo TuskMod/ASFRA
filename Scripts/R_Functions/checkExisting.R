@@ -47,6 +47,7 @@ check.existing <- function(lvtable, out.repl){
         splt.check <- function(nlst, nm){
             # slice and dice the names of existing files to get rep, var, and land id's
             instr <- as.data.table(tstrsplit(nlst, '_', keep=2:4))
+            print(instr)
             instr <- instr[,lapply(.SD, function(x) unlist(regmatches(x, gregexpr('(\\d+)', x))))]
             setnames(instr, c('r','l','v'))
             # indicate thet the combination has existing output files
@@ -55,6 +56,7 @@ check.existing <- function(lvtable, out.repl){
             return(instr)
         }
         # check for output files separately for each type of output file
+      
         tm.tab <- unique(as.data.table(rbindlist(lapply(tm.mat.in, splt.check, nm = 'tm.mat'))))
 #         summ.tab <- unique(as.data.table(rbindlist(lapply(summ.vals.in, splt.check, nm = 'summ.vals'))))
 #         incid.tab <- unique(as.data.table(rbindlist(lapply(incidence.in, splt.check, nm = 'incidence'))))

@@ -7,7 +7,9 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     setDT(mv.parms)
 
     # loops over combinations of variables, lands, and reps
+   
     lgl.index <- unlist(lapply(land_grid_list, function(x) x$names))
+    print(lgl.index)
     # funky mis-naming (fix at some point)
     names(variables)[names(variables) == "density"] <- "dens"
 
@@ -18,7 +20,10 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     # these essentially just grab the compiled functions
     Rcpp::sourceCpp(file.path("Scripts", "cpp_Functions", "Movement_Fast_Generalized.cpp"), cacheDir = './cppcache_mv', rebuild=FALSE)
     Rcpp::sourceCpp(file.path("Scripts", "cpp_Functions", "Fast_FOI_Matrix.cpp"), cacheDir = './cppcache_ffoi', rebuild=FALSE)
-
+    
+    print(lvtable2)
+    
+    
     # lvtable2 is read in by dynamic branching of targets, so it only has one row
     v.val <- unlist(lvtable2[,vars])
     l.val <- unlist(lvtable2[,land])
@@ -39,8 +44,16 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     # add vars to parameters
     parameters <- c(parameters, vars)
     parameters$K <- K
+    
+    
+    print(lgl.index)
+    print(l.val)
+    
     # movement parameters from landscape tile
     lgl.entry <- which(lgl.index == (l.val))
+    
+    print(lgl.entry)
+    
 #     parameters$alpha <- 1/as.numeric(mv.parms[lgl.entry, sigdisp])
 #     parameters$theta <- as.numeric(mv.parms[lgl.entry, disp])/parameters$alpha
     parameters$alpha <- mv.parms[lgl.entry, gamma.shape]

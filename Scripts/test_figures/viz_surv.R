@@ -24,7 +24,7 @@ library(terra)
 # For now, let us just replicate parts of Madison's work
 # I think the stat modeling is the next part...
 
-detection_folder <- "Output/Hancock-MS-detections/detections/"
+detection_folder <- "Output/Sarasota-FL-detections/detections/"
 
 file_paths <- list.files(path = detection_folder,
                          pattern= "\\.csv",
@@ -35,7 +35,7 @@ total_sampled <- c()
 all_sampled <- c()
 infec_sampled <- c()
 
-hancock_ms_variables <- read.csv("hancock_ms_vars.csv")
+hancock_ms_variables <- read.csv("sarasota_fl_vars.csv")
 
 plotIncidences <- function(file_paths,variables){
   
@@ -85,16 +85,16 @@ plotIncidences <- function(file_paths,variables){
   }
  
   average_week <- mean(detect_weeks)
- print(average_week)
  all_data <- data.frame(Incidence= infec_vals,
                         Time= all_times,
                         ContactRate = class_types
-                        )
+                      )
+ print(round(average_week))
  ggplot(all_data,aes(x = Time,y=Incidence,color=ContactRate)) +
    stat_summary(geom = "point",fun="mean") +
    stat_summary(fun.data = "mean_se", geom="errorbar") +
    geom_vline(xintercept=round(average_week),linetype="dashed",color="red") + 
-   ggtitle("Hi Contact Scenarios only ones that cause Outbreaks, average week of detection is 33.4 ")
+   ggtitle(paste0("Hi Contact Scenarios only ones that cause Outbreaks, average week of detection is ",round(average_week)))
  #return()
 }
 
@@ -162,23 +162,22 @@ plotVariantIncidences <- function(file_paths,variables){
   }
   
   #average_week <- mean(detect_weeks)
-  print(infec_vals)
-  print(all_times)
-  print(all_vars)
-  
+
   all_data <- data.frame(Incidence= infec_vals,
                          Time= all_times,
                          Variant = all_vars
   )
+  print("Poland Mean Weeks")
   print(mean(detect_weeks_pol))
+  print("DR Mean Weeks")
   print(mean(detect_weeks_dr))
   ggplot(all_data,aes(x = Time,y=Incidence,color=(Variant))) +
     stat_summary(geom = "point",fun="mean") +
     scale_color_manual(values=c("#B10DC9","#85144b"))+
     stat_summary(fun.data = "mean_se", geom="errorbar") +
-    geom_vline(xintercept=round(mean(detect_weeks_dr)),linetype="dashed",color="red") + 
-    geom_vline(xintercept=round(mean(detect_weeks_pol)),linetype="dashed",color="blue") +
-    ggtitle("Hi contact only: DR Variant detected more quickly than Poland Variant ")
+    geom_vline(xintercept=round(mean(detect_weeks_dr)),linetype="dashed",color="#B10DC9") + 
+    geom_vline(xintercept=round(mean(detect_weeks_pol)),linetype="dashed",color="#85144b") +
+    ggtitle(paste0("Hi contact only: DR Strain detected ", round(mean(detect_weeks_dr))," weeks, Poland ",round(mean(detect_weeks_pol))," weeks "))
   #return()
 }
 
@@ -216,7 +215,7 @@ plotDetectionProbs <- function (file_paths,variables){
     
     N <- file_data$S + file_data$E + file_data$I + file_data$R + file_data$C +file_data$Z
     
-    detection_probability <- 1- ((file_data$S + file_data$R) / N)
+    detection_probability <- 1- ((file_data$S + file_data$R +file_data$Z) / N)
     all_detect <- rep(0,78)
     all_N <- rep(0,78)
     all_I <- rep(0,78)
@@ -225,7 +224,6 @@ plotDetectionProbs <- function (file_paths,variables){
     all_R <- rep(0,78)
     if(N[1] > 20000){
       density <- rep(3,78)
-      print(detection_probability)
     }
     else{
       density <- rep(1.5,78)
@@ -278,8 +276,8 @@ plotDetectionProbs <- function (file_paths,variables){
     stat_summary(geom = "point",fun="mean") +
     stat_summary(fun.data = "mean_se", geom="errorbar") +
     facet_grid(Density ~ Strain, axes="all", axis.labels = "all_x") +
-    geom_vline(xintercept=round(mean(detect_weeks_dr)),linetype="dashed",color="red") + 
-   geom_vline(xintercept=round(mean(detect_weeks_pol)),linetype="dashed",color="blue") 
+    geom_vline(xintercept=round(mean(detect_weeks_dr)),linetype="dashed",color="#B10DC9") + 
+   geom_vline(xintercept=round(mean(detect_weeks_pol)),linetype="dashed",color="#85144b") 
   # ggtitle("Highest probability of detection occurs after Incidence Peak ")
   
 }

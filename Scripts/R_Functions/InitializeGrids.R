@@ -52,22 +52,26 @@ InitializeGrids <- function(path, indv_ras_data,parameters0){
             km_len <- dim(plands_sprc[1])[1]*inc
             land_grid_list <- InitializeGrids_sub(plands_sprc, grid.opts)
         } else if (grid.opts == "indvras"){
-          # TODO: creating grid wich equal spacing all around it for
+          # TODO: creating grid which equal spacing all around it for
           # sampling purposes
         
           plands_rast <- terra::mean(terra::rast(indv_ras_data[[1]]))
           #nm <- unlist(tstrsplit(indv_ras_data, '/', keep=5))
+      
           fs <- tstrsplit(indv_ras_data, '/')
+          
           if(fs[[1]] == "Input"){
             names(plands_rast) <= "1"
           }
           else{
-            nm <- tstrsplit(fs[5],"[_]")
-            if (length(nm) == 3){
-                names(plands_rast) <- nm[2]
+         
+            nm <- tstrsplit(fs[6],"[_]")
+           
+            if (length(nm) == 4){
+                one_split = tstrsplit(nm[4],"[.]")
+                names(plands_rast) <- paste0(nm[[3]][[1]],"_",one_split[[1]])
             }
             if (length(nm) == 2){
-                one_split = tstrsplit(nm[2],"[.]")
                 names(plands_rast) <- one_split[1]
             }
           }

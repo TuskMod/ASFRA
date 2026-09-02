@@ -5,7 +5,7 @@ make_rslt <- function(variables, mv.params){
     library(data.table)
 
     rslt <- fread('Output/result.outputs.csv')
-
+    print(rslt)
     setnames(rslt, c('v','l','r','est','edge.tm','max.dist','inf.area','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'))
     rslt[est == 2, est := 1]
     #variables <- tar_read(variables)

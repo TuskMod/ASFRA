@@ -41,17 +41,18 @@
   }
   
   
-  
-  
   county_path <- "../Counties-of-Interest/"
   all_paths <- FindAllCountyCSV(county_path)
   for(a in 1:length(all_paths$county_shp)){
     samp_file <- all_paths[a,]$samp_data[[1]]
     sample.design <- read.csv(samp_file)
+    
     county_shapefile <- all_paths[a,]$county_shp[[1]]
     sample.design$shp_file <- county_shapefile
     
-    all_lands <- (file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "all_plands"))
+    
+    #all_lands <- (file.path("Landscape_Setup","Pipeline_SSF_Weekly","4_Output", "all_plands"))
+    all_lands <- file.path("Landscape_Setup","custom_tile2","custom_tile","4_Output","land_tiles")
     names(sample.design)[1] <- "dates"  # Rename the first column to 'dates'
     sample.design$dates <- as.Date(sample.design$dates, format = "%m/%d/%Y") # change to standard date format
     
@@ -60,12 +61,19 @@
     county_name <- strsplit(county_shapefile,"/")[[1]][3]
     save_name <- paste(county_name,".png")
     sample <- 1
-    print("control loop")
-    print(all_lands)
-    ras <- JoinTogetherTiles(all_lands,county_shapefile,sample.design)
+   
+    parameters <- data.frame(sample  = 1)
+    #parameters$sample <- 1
+    
+    names <- FindSurveillanceTiles(parameters,all_lands,sample.design)
+    if (length(names) > 1){
+      print("neighboring tiles")
+      names <- names[[2]]
+    }
+    ras <- terra::mean(terra::rast(names[[1]]))
+    #crds(ras,na.rm = 0) 
+    #names(ras) <- terra::mean(ras)
     custom_crs <- crs(ras)
-    print("dimensions of .tif file")
-    print(dim(crds(ras)))
     
     #custom_crs <- crs("epsg:4269")
     #ras <- terra::project(ras,"epsg:4269")
@@ -77,6 +85,8 @@
     if(dim(ras)[1]!=len){
       stop("dimensions of raster do not match input len")
     }
+  
+    if(dim(crds(ras))[1] != 40000){next}
     
     # Transform county shapefile to declared CRS which is county dependent
     # resolution in meters

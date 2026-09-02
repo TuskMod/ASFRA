@@ -8,11 +8,12 @@ SetVarParms <- function(parameters){
     variable_messy <- variable_messy[names(variable_messy) %in% c('out.opts', 'input', names(variable_messy)[grep('^B1', names(variable_messy))], 'ss', 'mort_val_test') == FALSE]
     # get all combinations
     temptab <- expand.grid(variable_messy)
+
     # build out table of parameters that are defined in sync, e.g. B1, density, ss with specific contact
     canonical.params <- data.frame(contact = rep(parameters$contact, each = length(parameters$density)),
                                     density = rep(parameters$density, length(parameters$contact)),
                                     ss = rep(parameters$ss, length(parameters$contact)))
-
+  
     B1 <- unlist(lapply(parameters$contact, function(x){parameters[paste0('B1__',x)]}))
     rename.to.contact <- function(vars, in.name='contact'){
         # pulls out contact names from parameter values separated by __ and sticks them in a table
@@ -55,8 +56,10 @@ SetVarParms <- function(parameters){
 
     result <- inner_join(result, shaperate_table, by='contact')
     result <- inner_join(result, variant_table, by='variant')
-    #print(result)
-    #result <- result[result$variant == "DR"]
+    
+    # save the variables that were used for this run
+    
+    write.csv(result,"saved_variables.csv")
 
 
     return(result)
