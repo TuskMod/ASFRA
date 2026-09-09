@@ -24,7 +24,7 @@ library(terra)
 # For now, let us just replicate parts of Madison's work
 # I think the stat modeling is the next part...
 
-detection_folder <- "Output/Sarasota-FL-detections/detections/"
+detection_folder <- "Output/Richland-SC-detections/detections/"
 
 file_paths <- list.files(path = detection_folder,
                          pattern= "\\.csv",
@@ -35,7 +35,7 @@ total_sampled <- c()
 all_sampled <- c()
 infec_sampled <- c()
 
-hancock_ms_variables <- read.csv("sarasota_fl_vars.csv")
+hancock_ms_variables <- read.csv("richland_sc_vars.csv")
 
 plotIncidences <- function(file_paths,variables){
   
@@ -52,6 +52,8 @@ plotIncidences <- function(file_paths,variables){
   weeks <- seq(1,78,1)
   all_times <- c()
   detect_weeks <- c()
+  # incidence is number of susceptibles that
+  # transition to E compartment
   for (f in 1:length(file_paths)){
     file_data <- read.csv(file_paths[f])
     split_file <- strsplit(file_paths[f],"_")

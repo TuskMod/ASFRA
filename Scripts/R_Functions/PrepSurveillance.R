@@ -42,10 +42,6 @@ LoadSurveillanceDesign<-function(parameters){
   print(county_row$sample.design)
   sample.design <- read.csv(county_row$sample.design)
   county_shapefile <- county_row$county_shp
-  #county_shapefile <- "../Counties-of-Interest/SarasotaFL/partnership_shapefiles_24v2_12115/PVS_24_v2_county_12115.shp"
-  #sample.design <- read.csv("../Counties-of-Interest/SarasotaFL/sampling-Sarasota-FL.csv") # maybe make this more generic so user doesn't have to put in path?
-#  county_shapefile <- "../Counties-of-Interest/MuscogeeGA/partnership_shapefiles_24v2_13215/PVS_24_v2_county_13215.shp"
-#  sample.design <- read.csv("../Counties-of-Interest/MuscogeeGA/sampling-Muscogee-GA.csv") # maybe make this more generic so user doesn't have to put in path?
   
    # need to ensure surveillance county is in tile that is being looked at 
    working_crs <- 3087
@@ -90,7 +86,7 @@ LoadSurveillanceDesign<-function(parameters){
 
 ##
 
-MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
+MatchGridtoCell <- function(sample.prep,parameters,grid,lands_data){
   if(parameters$sample != 1){
     return(NULL)
   }
@@ -165,6 +161,124 @@ MatchGridstoCell <- function(sample.prep,parameters,grid,lands_data){
       # If no nearby grid cell found, store NA or empty list
       sample.prep$sampling_loc[[i]] <- NA  # or list() if you prefer
     }
+  }
+  
+  return(sample.prep)
+}
+
+
+
+AssignCellstoTraps <- function(sample.prep,parameters,grid,lands_data){
+  if(parameters$sample != 1){
+    return(NULL)
+  }
+  # get CRDS for tile
+  curr_tile <- terra::rast(lands_data[[1]])
+  custom_crs <- crs(curr_tile)
+  # now - get CRS for sample.design
+  # assuming it a CRS!
+  sample_coords <- st_as_sf(sample.prep, coords = c("longitude", "latitude"))
+  st_crs(sample_coords) <- 4269
+  # pull out x and y coords from sample.prep, convert to sf object
+  sample_sf_transformed <- st_transform(sample_coords,custom_crs)
+  # transform coordinates to meter based CRS
+  sample_coords_transformed <- st_coordinates(sample_sf_transformed) # extract the coordinates only
+  
+  current_extent <- ext(curr_tile)
+  tile_centroid <- centroids(curr_tile)
+  tile_x <- tile_centroid$x[[1]]
+  tile_y <- tile_centroid$y[[1]]
+  rast_xmin <- xmin(current_extent)[[1]]
+  rast_xmax <- xmax(current_extent)[[1]]
+  rast_ymin <- ymin(current_extent)[[1]]
+  rast_ymax <- ymax(current_extent)[[1]]
+  
+  # Add column to sample.design so the cell # where sampling occurs can be updated
+  #sample.design$sampling_loc <- 0L
+  sample.prep$sampling_loc <- vector("list", nrow(sample.prep))
+  # Loop over each sampling point and check proximity to grid centroids
+  for (i in 1:nrow(sample_coords_transformed)) {
+    # Extract the x and y coordinates of the current sample point
+    sample_x <- sample_coords_transformed[i, 1]
+    sample_y <- sample_coords_transformed[i, 2]
+    
+    cell_val <- terra::cellFromXY(curr_tile,cbind(x=c(sample_x),y=c(sample_y)))
+    
+    
+    
+    
+    # Get the acreage for the current sample point (assuming you have an 'acres' column in the dataframe)
+    names(sample.prep)[5] <- "acres"  # Rename the first column to 'dates'
+    acres <- sample.prep$acres[i]
+    
+    # Convert acres to square kilometers
+    #area_km2 <- acres * 0.00404686
+    area_km2 <- parameters$trap_radius
+    # Resolution of a grid cell in km2 calculation
+    # VR: need to check this conversion more? is this correct??
+    #numerator = inc * 1000 * inc * 1000
+    #denominator = 1000000
+    #grid_cell_area = numerator/denominator
+    grid_cell_area = parameters$inc * parameters$inc
+    
+    # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
+    num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
+    
+    # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
+    # square root [(xf-xi)^2 + (yf-yi)^2]
+    # get centroid of grid! use this to find each cell's centroid lat/long 
+    
+    tile_coords <- crds(curr_tile)
+    
+    
+    matrix_size <- area_km2 / parameters$inc
+    ncols <- (matrix_size*2) -1
+    cent_cell <- cell_val
+    radius <- matrix_size-1
+    # starting_cell is the first cell ID if instead of a cricel
+    # we were using a rectangle bounding box 
+    starting_cell <- (cell_val - radius) - (radius)
+    
+    full_seq <- seq(starting_cell,(starting_cell+ncols*ncols)-1,by=1)
+    full_matrix <- matrix(full_seq,ncols,byrow=T)
+    r_y <- radius
+    within_cells <- c()
+    for(x in 1:ncols){
+      r_x <- -1*radius
+      for(y in 1:ncols){
+        distance_from_origin <- sqrt((r_x - 0)^2 + (r_y - 0)^2)
+        r_x <- r_x + 1
+        if(distance_from_origin <= radius){
+          within_cells <- c(within_cells,full_matrix[x,y])
+        }
+      }
+    }
+    sample.prep$sampling_loc[[i]] <- within_cells
+    # 1  2  3  4  5  6   7 
+    # 8  9  10 11 12 13 14
+    # 15 16 17 18 19 20 21
+    # 22 23 24 25 26 27 28 
+    # 29 30 31 32 33 34 35
+    # 36 37 38 39 40 41 42
+    # 43 44 45 46 47 48 49
+  #   distances <- (sqrt((tile_coords[,1] - sample_x)^2 + (tile_coords[,2] - sample_y)^2))/1000
+  #   
+  #   # Check if the minimum distance is within the threshold
+  #   # Using threshold of 100 meters
+  #   min_sample_thresh <- parameters$inc/sqrt(2)
+  #   #min_sample_thresh <- 100
+  #   if (min(distances) <= min_sample_thresh) {
+  #     # Get indices of the closest `num_cells_to_sample` grid cells
+  #     sorted_indices <- order(distances)
+  #     sampled_cell_indices <- sorted_indices[1:num_cells_to_sample]
+  #     
+  #     # Store the sampled grid cell indices
+  #     sample.prep$sampling_loc[[i]] <- sampled_cell_indices
+  #   } else {
+  #     # If no nearby grid cell found, store NA or empty list
+  #     sample.prep$sampling_loc[[i]] <- NA  # or list() if you prefer
+  #   }
+  # }
   }
   
   return(sample.prep)
@@ -339,9 +453,6 @@ JoinTogetherTiles <- function(parameters,tile_path,county.shp,sample.design){
    # return(terra::mean(terra::rast(pland_names[[1]])))
   }
   
-  rf <- writeRaster(cropped_tile,filename = file.path("Input","muscogee.tif"),overwrite=TRUE)
-  pland_names <- c()
-  pland_names <- c(pland_names,"Input/muscogee.tif")
 
   return(pland_names)
 }
@@ -409,9 +520,7 @@ ReadTileFolders <- function(tile_fp){
   #full_path <- "Landscape_Setup/NND_Lands/all_tile_attribs.csv"
   county_path <- "Landscape_Setup/custom_tile2/custom_tile/4_Output/all_tile_attribs.csv"
   split_vals = strsplit(tile_fp,"/",fixed=TRUE)
-  print(tile_fp)
-  print("TILE")
-  print(split_vals)
+  
   tile_fn <- split_vals[[1]][6]
   
   fn_values <- strsplit(tile_fn,"_",fixed=TRUE)
@@ -422,9 +531,7 @@ ReadTileFolders <- function(tile_fp){
  # } else{
   #  tile_data <- read.csv(edge_path)
   #}
-  print(tile_data)
-  print(tile_fn)
-  print(fn_values)
+  
   if (length(fn_values[[1]]) == 3){
     print("three")
     num <- fn_values[[1]][[2]]
@@ -434,8 +541,7 @@ ReadTileFolders <- function(tile_fp){
     one_split = strsplit(fn_values[[1]][[4]],"[.]")
     num <- paste0(fn_values[[1]][[3]],"_",one_split[[1]][[1]])
   }
-  print(num)
-  print(tile_data)
+  
   tile_data <- tile_data %>% filter(index == num)
   
   # tile_data <- tile_data[as.numeric(num),]
@@ -452,7 +558,6 @@ ReadTileFolders <- function(tile_fp){
  # tile_data <- tile_data[, -1]
 
   colnames(tile_data) <- all_cols
-  print(tile_data)
   return(tile_data)
 }
   
