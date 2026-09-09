@@ -202,27 +202,17 @@ AssignCellstoTraps <- function(sample.prep,parameters,grid,lands_data){
     sample_x <- sample_coords_transformed[i, 1]
     sample_y <- sample_coords_transformed[i, 2]
     
-    cell_val <- terra::cellFromXY(curr_tile,cbind(x=c(sample_x),y=c(sample_y)))
-    
-    
-    
+    trap_center <- terra::cellFromXY(curr_tile,cbind(x=c(sample_x),y=c(sample_y)))
     
     # Get the acreage for the current sample point (assuming you have an 'acres' column in the dataframe)
     names(sample.prep)[5] <- "acres"  # Rename the first column to 'dates'
     acres <- sample.prep$acres[i]
-    
-    # Convert acres to square kilometers
-    #area_km2 <- acres * 0.00404686
-    area_km2 <- parameters$trap_radius
-    # Resolution of a grid cell in km2 calculation
-    # VR: need to check this conversion more? is this correct??
-    #numerator = inc * 1000 * inc * 1000
-    #denominator = 1000000
-    #grid_cell_area = numerator/denominator
-    grid_cell_area = parameters$inc * parameters$inc
+
     
     # Calculate the number of grid cells to sample based on the area (rounding up to ensure entire area is covered)
-    num_cells_to_sample <- ceiling(area_km2 / grid_cell_area)
+    surrounding_cells <- ceiling(parameters$trap_radius / parameters$inc)
+    diameter <- round((2*parameters$trap_radius)/(parameters$inc))
+    
     
     # Calculate the Euclidean distance (dist between 2 points) from this sample point to each centroid in the grid
     # square root [(xf-xi)^2 + (yf-yi)^2]
@@ -231,28 +221,42 @@ AssignCellstoTraps <- function(sample.prep,parameters,grid,lands_data){
     tile_coords <- crds(curr_tile)
     
     
-    matrix_size <- area_km2 / parameters$inc
-    ncols <- (matrix_size*2) -1
-    cent_cell <- cell_val
-    radius <- matrix_size-1
+    matrix_size <- diameter
+    ncols <- diameter -1
+    radius <- parameters$trap_radius - ((parameters$inc))
     # starting_cell is the first cell ID if instead of a cricel
     # we were using a rectangle bounding box 
-    starting_cell <- (cell_val - radius) - (radius)
+    starting_cell <- trap_center-round((ncols*ncols)/2)
+    print(trap_center)
     
     full_seq <- seq(starting_cell,(starting_cell+ncols*ncols)-1,by=1)
     full_matrix <- matrix(full_seq,ncols,byrow=T)
     r_y <- radius
+    
     within_cells <- c()
+    print(full_matrix)
+    if (ncols %% 2 == 1){
+      cent_x <- round(ncols/2)+1
+      cent_y <- round(ncols/2)+1
+    }
+    else{
+      cent_x <- round(ncols/2)
+      cent_y <- round(ncols/2)
+    }
+    
     for(x in 1:ncols){
-      r_x <- -1*radius
       for(y in 1:ncols){
-        distance_from_origin <- sqrt((r_x - 0)^2 + (r_y - 0)^2)
-        r_x <- r_x + 1
+        distance_from_origin <- (sqrt((x*parameters$inc - cent_x*parameters$inc)^2 + (y*parameters$inc - cent_y*parameters$inc)^2))
+        
+        print(radius)
+        print(distance_from_origin)
+        
         if(distance_from_origin <= radius){
           within_cells <- c(within_cells,full_matrix[x,y])
         }
       }
     }
+    print(within_cells)
     sample.prep$sampling_loc[[i]] <- within_cells
     # 1  2  3  4  5  6   7 
     # 8  9  10 11 12 13 14
