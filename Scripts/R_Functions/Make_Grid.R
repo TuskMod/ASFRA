@@ -63,6 +63,7 @@ Make_Grid <- function(object, grid.opt="homogeneous", sample=0, sample.design=NU
         if(dim(ras)[1]!=len){
             stop("dimensions of raster do not match input len")
         }
+        ras <- subst(ras, NA, 0) # fills in NA values from rasters on the edge of the map with 0 (impassible)
 
     }
 

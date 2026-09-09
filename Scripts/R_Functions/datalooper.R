@@ -2,7 +2,7 @@
 ## inputs -- names of tm.mat files, table of cell number and centroid points
 ## cent = land_grid_list[[1]][[1]][[2]][,c(1,6,7)] for cell, x, y
 
-data.looper <- function(infile, cent){
+data.looper <- function(infile, cent, lvtable){
     library(data.table)
     # Grab the files with the infile name/numbers
     tm.mat <- fread(paste0('./Output/tm.mat/', infile), select=c('E', 'I'))
@@ -22,7 +22,7 @@ data.looper <- function(infile, cent){
     vval <- as.numeric(vlr[[3]])
     lval <- as.numeric(vlr[[2]])
     rval <- as.numeric(vlr[[1]])
-
+browser()
     # get wavespeed metrics (also trim data to a distance equal to the closest edge to introduction point)
     eic.edge <- wave_speed(solocs.all, cent)
 

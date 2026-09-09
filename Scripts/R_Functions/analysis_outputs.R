@@ -220,37 +220,37 @@
     # it may have more to do with seasonality, if we included that (carcass degradation, movement, daylight hours, temperatures, etc.)
     # I think we can test this with the cvd core and nnd parameters, as well as movement parameters
 #     contact is the intermediary between density and variant -- variant controls duration of opportunity, density controls frequency of opportunity, but contact controsl success of each opportunity
-    est.glmer.dredge <- function(rslt){
-
-        est.glmer <- glmmTMB(est ~
-                contact + variant + density +    # epi/population parameters (Hi/Lo)
-                contact:density + contact:variant +
-                nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
-                mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
-                moranI +                         # landscape preference autocorrelation
-                rgd +                            # landscape ruggedness
-                tc + mast +                      # vegetation (tree cover, masting species)
-                rds +                            # roads
-#                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
-                tmax +
-                simpindx +             # land cover classification fragmentation metrics
-                (1|l),                           # random effects -- landscape ID
-            data = rslt # includes non-established
-            , family=binomial
-            , na.action = na.fail
-#             , control = glmerControl(autoscale=TRUE)
-            , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
-    )
-    # what should drive establishment? obviously contact, density, variant, but also processes upstream from that --
-    # - how far away sounders tend to be (nnd_med)
-    # - how much sounders move (gamma shape and scale)
-    # -
-    library(MuMIn)
-    est.dredge <- dredge(est.glmer, trace=2,
-                                evaluate=FALSE,
-                         fixed=c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
-    return(est.dredge)
-    }
+#     est.glmer.dredge <- function(rslt){
+#
+#         est.glmer <- glmmTMB(est ~
+#                 contact + variant + density +    # epi/population parameters (Hi/Lo)
+#                 contact:density + contact:variant +
+#                 nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
+#                 mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
+#                 moranI +                         # landscape preference autocorrelation
+#                 rgd +                            # landscape ruggedness
+#                 tc + mast +                      # vegetation (tree cover, masting species)
+#                 rds +                            # roads
+# #                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
+#                 tmax +
+#                 simpindx +             # land cover classification fragmentation metrics
+#                 (1|l),                           # random effects -- landscape ID
+#             data = rslt # includes non-established
+#             , family=binomial
+#             , na.action = na.fail
+# #             , control = glmerControl(autoscale=TRUE)
+#             , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
+#     )
+#     # what should drive establishment? obviously contact, density, variant, but also processes upstream from that --
+#     # - how far away sounders tend to be (nnd_med)
+#     # - how much sounders move (gamma shape and scale)
+#     # -
+#     library(MuMIn)
+#     est.dredge <- dredge(est.glmer, trace=2,
+#                                 evaluate=FALSE,
+#                          fixed=c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
+#     return(est.dredge)
+#     }
 #     est.avg <- model.avg(est.dredge)
 #     est.avg <- model.avg(subset(est.dredge, cumsum(weight) <= 0.95))
 
@@ -259,117 +259,117 @@
     # what would affect infection speed? most things... things related to contact, pig movement, including variances/cv... probably not climate
     # connectivity nnd, sounder movement, autocorrelation of habitat preference? maybe!
     # ruggedness probably yeah, tree cover I suspect has to do with how clumpy the sounders are on the environment
-    inf.spd.glmer.dredge <- function(rslt1){
-        inf.spd.lmer <- glmmTMB(inf.spd ~
-                contact + variant + density +    # epi/population parameters (Hi/Lo)
-                contact:density + contact:variant +
-                nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
-                mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
-                moranI +                         # landscape preference autocorrelation
-                rgd +                            # landscape ruggedness
-                tc + mast +                      # vegetation (tree cover, masting species)
-                rds +                            # roads
-#                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
-                tmax +
-                simpindx +             # land cover classification fragmentation metrics
-                (1|l),                           # random effects -- landscape ID
-            data = rslt1 # includes those who established and didn't necessarily make it to the 50km mark
-            ,family=gaussian
-#             , control = lmerControl(autoscale=TRUE)
-            , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
-            , na.action = na.fail
-        )
-        inf.spd.dredge <- dredge(inf.spd.lmer, trace=2,
-                                evaluate=FALSE,
-                         fixed=c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
-        return(inf.spd.dredge)
-    }
+#     inf.spd.glmer.dredge <- function(rslt1){
+#         inf.spd.lmer <- glmmTMB(inf.spd ~
+#                 contact + variant + density +    # epi/population parameters (Hi/Lo)
+#                 contact:density + contact:variant +
+#                 nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
+#                 mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
+#                 moranI +                         # landscape preference autocorrelation
+#                 rgd +                            # landscape ruggedness
+#                 tc + mast +                      # vegetation (tree cover, masting species)
+#                 rds +                            # roads
+# #                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
+#                 tmax +
+#                 simpindx +             # land cover classification fragmentation metrics
+#                 (1|l),                           # random effects -- landscape ID
+#             data = rslt1 # includes those who established and didn't necessarily make it to the 50km mark
+#             ,family=gaussian
+# #             , control = lmerControl(autoscale=TRUE)
+#             , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
+#             , na.action = na.fail
+#         )
+#         inf.spd.dredge <- dredge(inf.spd.lmer, trace=2,
+#                                 evaluate=FALSE,
+#                          fixed=c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
+#         return(inf.spd.dredge)
+#     }
 #     inf.spd.avg <- model.avg(subset(inf.spd.dredge, cumsum(weight) <= 0.95), fit=TRUE)
 
     # SOUNDER WEEKS
     # should be a factor of spread, longevity, ... distribution on the landscape
-    sounder.weeks.glmer.dredge <- function(rslt1){
-        sounder.weeks.glmer <- glmmTMB(sounder.weeks ~
-                contact + variant + density +    # epi/population parameters (Hi/Lo)
-                contact:density + contact:variant +
-                nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
-                mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
-                moranI +                         # landscape preference autocorrelation
-                rgd +                            # landscape ruggedness
-                tc + mast +                      # vegetation (tree cover, masting species)
-                rds +                            # roads
-#                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
-                tmax +
-                simpindx +             # land cover classification fragmentation metrics
-                (1|l),                           # random effects -- landscape ID
-                family=nbinom2,
-            data = rslt1 # includes those who didn't make it to the 50km mark
-            , na.action = na.fail
-            , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
-        )
-        snd.weeks.dredge <- dredge(sounder.weeks.glmer, trace=2,
-                                evaluate=FALSE,
-                                fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
-        return(snd.weeks.dredge)
-    }
+#     sounder.weeks.glmer.dredge <- function(rslt1){
+#         sounder.weeks.glmer <- glmmTMB(sounder.weeks ~
+#                 contact + variant + density +    # epi/population parameters (Hi/Lo)
+#                 contact:density + contact:variant +
+#                 nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
+#                 mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
+#                 moranI +                         # landscape preference autocorrelation
+#                 rgd +                            # landscape ruggedness
+#                 tc + mast +                      # vegetation (tree cover, masting species)
+#                 rds +                            # roads
+# #                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
+#                 tmax +
+#                 simpindx +             # land cover classification fragmentation metrics
+#                 (1|l),                           # random effects -- landscape ID
+#                 family=nbinom2,
+#             data = rslt1 # includes those who didn't make it to the 50km mark
+#             , na.action = na.fail
+#             , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
+#         )
+#         snd.weeks.dredge <- dredge(sounder.weeks.glmer, trace=2,
+#                                 evaluate=FALSE,
+#                                 fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
+#         return(snd.weeks.dredge)
+#     }
 #     snd.weeks.avg <- model.avg(subset(snd.weeks.dredge, cumsum(weight) <= 0.95), fit=TRUE)
 
     # PROPORTION INFECTED CELLS -- makes sense as a beta
     # infected proportion of cells would have to do with connectivity (nnd, and fragmentation), movement and contact
-    prop.infd.beta.dredge <- function(rslt1){
-        rslt1[prop.infd == 1, prop.infd := 0.999]
-        prop.infd.beta <- glmmTMB::glmmTMB(prop.infd ~
-                contact + variant + density +    # epi/population parameters (Hi/Lo)
-                contact:density + contact:variant +
-                nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
-                mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
-                moranI +                         # landscape preference autocorrelation
-                rgd +                            # landscape ruggedness
-                tc + mast +                      # vegetation (tree cover, masting species)
-                rds +                            # roads
-#                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
-                tmax +
-                simpindx +             # land cover classification fragmentation metrics
-                (1|l),                           # random effects -- landscape ID
-                family=glmmTMB::beta_family(link='logit'),
-            data = rslt1 # includes those who didn't make it to the 50km mark
-            , na.action = na.fail
-            , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
-        )
-        prop.infd.dredge <- dredge(prop.infd.beta, trace=2,
-                                evaluate=FALSE,
-                                fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
-        return(prop.infd.dredge)
-    }
+#     prop.infd.beta.dredge <- function(rslt1){
+#         rslt1[prop.infd == 1, prop.infd := 0.999]
+#         prop.infd.beta <- glmmTMB::glmmTMB(prop.infd ~
+#                 contact + variant + density +    # epi/population parameters (Hi/Lo)
+#                 contact:density + contact:variant +
+#                 nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
+#                 mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
+#                 moranI +                         # landscape preference autocorrelation
+#                 rgd +                            # landscape ruggedness
+#                 tc + mast +                      # vegetation (tree cover, masting species)
+#                 rds +                            # roads
+# #                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
+#                 tmax +
+#                 simpindx +             # land cover classification fragmentation metrics
+#                 (1|l),                           # random effects -- landscape ID
+#                 family=glmmTMB::beta_family(link='logit'),
+#             data = rslt1 # includes those who didn't make it to the 50km mark
+#             , na.action = na.fail
+#             , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
+#         )
+#         prop.infd.dredge <- dredge(prop.infd.beta, trace=2,
+#                                 evaluate=FALSE,
+#                                 fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
+#         return(prop.infd.dredge)
+#     }
 #     prop.infd.avg <- model.avg(subset(prop.infd.dredge, cumsum(weight) <= 0.95), fit=TRUE)
 #     summary(prop.infd.beta)
 
     # MAXIMUM INCIDENCE
     # should be density, movement, contact, continuity, variant, etc.
-    max.inc.glmer.dredge <- function(rslt1){
-        max.inc.glmer.nbinom <- glmmTMB(max.inc ~
-                contact + variant + density +    # epi/population parameters (Hi/Lo)
-                contact:density + contact:variant +
-                nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
-                mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
-                moranI +                         # landscape preference autocorrelation
-                rgd +                            # landscape ruggedness
-                tc + mast +                      # vegetation (tree cover, masting species)
-                rds +                            # roads
-#                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
-                tmax +
-                simpindx +             # land cover classification fragmentation metrics
-                (1|l),                           # random effects -- landscape ID
-            family=nbinom2,
-            data = rslt1 # includes those who didn't make it to the 50km mark
-            , na.action = na.fail
-            , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
-        )
-        max.inc.dredge <- dredge(max.inc.glmer.nbinom, trace=2,
-                                evaluate=FALSE,
-                                fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
-        return(max.inc.dredge)
-    }
+#     max.inc.glmer.dredge <- function(rslt1){
+#         max.inc.glmer.nbinom <- glmmTMB(max.inc ~
+#                 contact + variant + density +    # epi/population parameters (Hi/Lo)
+#                 contact:density + contact:variant +
+#                 nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
+#                 mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
+#                 moranI +                         # landscape preference autocorrelation
+#                 rgd +                            # landscape ruggedness
+#                 tc + mast +                      # vegetation (tree cover, masting species)
+#                 rds +                            # roads
+# #                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
+#                 tmax +
+#                 simpindx +             # land cover classification fragmentation metrics
+#                 (1|l),                           # random effects -- landscape ID
+#             family=nbinom2,
+#             data = rslt1 # includes those who didn't make it to the 50km mark
+#             , na.action = na.fail
+#             , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
+#         )
+#         max.inc.dredge <- dredge(max.inc.glmer.nbinom, trace=2,
+#                                 evaluate=FALSE,
+#                                 fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)'))
+#         return(max.inc.dredge)
+#     }
 #     max.inc.avg <- model.avg(subset(max.inc.dredge, cumsum(weight) <= 0.95), fit=TRUE)
 
     # TIME TO ESCAPE
@@ -385,211 +385,210 @@
         tmtab3 <- tmtab2[tm <= tm.esc | is.na(tm.esc),]
         tmtab3[, exc:=0]
         tmtab3[tm == tm.esc, exc := 1]
+        tmtab3[tm.esc == 78, exc := 0]
         tmtab3 <- tmtab3[variables[,.(v, contact, variant, density)], on=.(v)]
         tmtab3 <- tmtab3[mv.params, on=.(l=index)]
         tmtab3[,names(.SD) := lapply(.SD, as.factor), .SDcols=c('contact','variant','density')]
     }
 
-    tm.esc.binom.dredge <- function(tmtab3, variables, mv.params){
-        tm.esc.bin <- glmmTMB(exc ~ tm +
-                contact + variant + density +    # epi/population parameters (Hi/Lo)
-                contact:density + contact:variant +
-                nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
-                mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
-                moranI +                         # landscape preference autocorrelation
-                rgd +                            # landscape ruggedness
-                tc + mast +                      # vegetation (tree cover, masting species)
-                rds +                            # roads
-#                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
-                tmax +
-                simpindx +             # land cover classification fragmentation metrics
-                (1|l),                           # random effects -- landscape ID
-            family=binomial(link = 'logit'),
-            data = tmtab3 # includes those who didn't make it to the 50km mark
-            , na.action = na.fail
-    #          , control = glmerControl(autoscale=TRUE)
-            , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
-        )
-        tm.esc.dredge <- dredge(tm.esc.bin, trace=2,
-                                evaluate=FALSE,
-                                fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)','cond(tm)'))
-        return(tm.esc.dredge)
-    }
+#     tm.esc.binom.dredge <- function(tmtab3, variables, mv.params){
+#         tm.esc.bin <- glmmTMB(exc ~ tm +
+#                 contact + variant + density +    # epi/population parameters (Hi/Lo)
+#                 contact:density + contact:variant +
+#                 nnd_med + nnd_mean + nnd_cv +    # sounder distribution parameters
+#                 mvmt.mean + mvmt.cv +            # sounder movement (mean, coefficint of variance)
+#                 moranI +                         # landscape preference autocorrelation
+#                 rgd +                            # landscape ruggedness
+#                 tc + mast +                      # vegetation (tree cover, masting species)
+#                 rds +                            # roads
+# #                 dayl +                         # turns out average year-long daylight averages have a range of about 20 seconds-- should remove that one from everything...
+#                 tmax +
+#                 simpindx +             # land cover classification fragmentation metrics
+#                 (1|l),                           # random effects -- landscape ID
+#             family=binomial(link = 'logit'),
+#             data = tmtab3 # includes those who didn't make it to the 50km mark
+#             , na.action = na.fail
+#     #          , control = glmerControl(autoscale=TRUE)
+#             , control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000), profile=TRUE)
+#         )
+#         tm.esc.dredge <- dredge(tm.esc.bin, trace=2,
+#                                 evaluate=FALSE,
+#                                 fixed = c('cond(contact)','cond(variant)','cond(density)','cond(contact:variant)','cond(contact:density)','cond(tm)'))
+#         return(tm.esc.dredge)
+#     }
 #     tm.esc.avg <- model.avg(subset(tm.esc.dredge, cumsum(weight) <= 0.95), fit=TRUE)
 
-    model.eval <- function(dredge.list, rslt) {
-        # depending on which dredge.list is coming in (from which response variable) any of rslt, rslt1, or tmtab3 may be required
-        mod <- eval(dredge.list[[1]])
-        return(mod)
-    }
+#     model.eval <- function(dredge.list, rslt) {
+#         # depending on which dredge.list is coming in (from which response variable) any of rslt, rslt1, or tmtab3 may be required
+#         mod <- eval(dredge.list[[1]])
+#         return(mod)
+#     }
+#
+#     model.eval1 <- function(dredge.list, rslt1) {
+#         # depending on which dredge.list is coming in (from which response variable) any of rslt, rslt1, or tmtab3 may be required
+#         rslt1[prop.infd == 1, prop.infd := 0.999]
+#         mod <- eval(dredge.list[[1]])
+#         return(mod)
+#     }
+#
+#     model.eval.esc <- function(dredge.list, tmtab3) {
+#         # depending on which dredge.list is coming in (from which response variable) any of rslt, rslt1, or tmtab3 may be required
+#         mod <- eval(dredge.list[[1]])
+#         return(mod)
+#     }
+#
+#     ref.to.list <- function(modoutput, is.esc){
+#         if (is.esc == 1){
+#             modoutput <- modoutput[[1]]
+#         }
+#         formula.resp <- paste(formula(modoutput)[2])
+#         formula.pred <- paste(formula(modoutput)[3])
+#         nvars <- extractAIC(modoutput)[1]
+#         AIC <- extractAIC(modoutput)[2]
+#         nll <- logLik(modoutput)[1]
+#         coefs <- apply(coef(modoutput)[[1]]$l, 2, mean)
+#         return(c(list(resp = formula.resp, preds = formula.pred, nvars = nvars, AIC = AIC, nll = nll), coefs))
+#     }
+#
+#     list.to.table <- function(modlist){
+#         dat <- rbindlist(modlist, fill=TRUE)
+#         dat[,id := 1:.N]
+#         setorder(dat, 'AIC')
+#         return(dat[, rank := 1:.N][,dAIC := AIC - min(AIC)])
+#     }
+#
+#     table.filter <- function(dat, daicval, modelmin){
+#         dat.out <- dat[dAIC<=daicval,]
+#         if (nrow(dat.out) <= modelmin){
+#             dat.out <- dat[order(dAIC)][1:modelmin,]
+#         }
+#         return(dat.out)
+#     }
+#
+#
+#     model.avgs <- function(x.table, x.dredge){
+#         modids <- x.table[,id]
+#         avgmod <- model.avg(x.dredge, fit=TRUE)
+#         coefs <- data.table(t(coef(avgmod)))
+#         nms <- lapply(names(coefs), function(x) gsub('cond','', x))
+#         nms <- lapply(nms, function(x) gsub('\\(','', x))
+#         nms <- lapply(nms, function(x) gsub('\\)','', x))
+#         names(coefs) <- unlist(nms)
+#         setnames(coefs, 'Int','(Intercept)')
+#         outtab <- rbind(x.table, coefs, fill=TRUE)
+#         return(outtab)
+#     }
+#
+#     combine.models <- function(est.model.avg, inf.spd.model.avg, snd.wk.model.avg, prop.infd.model.avg, max.inc.model.avg, tm.esc.model.avg){
+#         est.model.avg[is.na(resp),resp := 'est.avg']
+#         inf.spd.model.avg[is.na(resp),resp := 'inf.spd.avg']
+#         snd.wk.model.avg[is.na(resp),resp := 'sounder.weeks.avg']
+#         prop.infd.model.avg[is.na(resp),resp := 'prop.infd.avg']
+#         max.inc.model.avg[is.na(resp),resp := 'max.inc.avg']
+#         tm.esc.model.avg[is.na(resp),resp := 'exc.avg']
+#         try(setnames(tm.esc.model.avg, 'contactLo:density', 'contactLo:density5'), silent=TRUE)
+#         mod.avgs <- rbindlist(list(est.model.avg, inf.spd.model.avg, snd.wk.model.avg, prop.infd.model.avg, max.inc.model.avg, tm.esc.model.avg), fill=TRUE)
+#         #??? add names of models and column for loo.land
+#     }
+#
+#     lolo.table <- function(mv.params, allmods, rslt){
+#         lolo.table <- CJ(lindx=unique(rslt[,l]), resp.var=c('est','inf.spd','sounder.weeks','prop.infd','max.inc','exc'), fam='none')#, est.resp=0, exc.resp=0)
+#         ## connect this table with output of combine.models; add exp.var based on allmods results and lnd based on the names of lands
+#         lolo.table[resp.var == 'est', fam := 'binomial']
+# #         lolo.table[resp.var == 'est', est.resp := 1]
+#         lolo.table[resp.var == 'inf.spd', fam := 'gaussian']
+#         lolo.table[resp.var == 'sounder.weeks', fam := 'nbinom2']
+#         lolo.table[resp.var == 'prop.infd', fam := 'beta_family']
+#         lolo.table[resp.var == 'max.inc', fam := 'nbinom2']
+#         lolo.table[resp.var == 'exc', fam := 'binomial']
+# #         lolo.table[resp.var == 'exc', exc.resp := 1]
+#         lolo.table[,resp.avg := paste0(resp.var, '.avg')]
+# #         lolo.table <- allmods[lolo.table, on=.(resp = resp.avg)]
+#         lolo.table <- allmods[lolo.table, on=.(resp = resp.var), allow.cartesian=TRUE]
+#         return(lolo.table)
+#     }
+#     # resp, preds, nvars, AIC, nll, [coefficients], id, rank, dAIC, lindx, fam, resp.avg
+#
+#     lolo.predict <- function(lolo.table.pred, rslt, rslt1, tmtab3){
+#         lindx <- lolo.table.pred[,lindx]
+#         resp.var <- lolo.table.pred[,resp]
+#         fam <- lolo.table.pred[,fam]
+# #         coefs <- 'contact + variant + density + contact:density + contact:variant + nnd_med + nnd_mean + nnd_cv + mvmt.mean + mvmt.cv + moranI + rgd + tc + mast + rds + tmax + simpindx + (1|l)'
+#         coefs <- lolo.table.pred[,preds]
+# #         tm.in <- ''
+#         dat <- rslt
+#         if (resp.var == 'exc'){
+#             dat <- tmtab3
+#         } else if (resp.var != 'est') {
+#             dat <- rslt1
+#         }
+#         if (resp.var == 'prop.infd') {
+#             rslt1[prop.infd == 1, prop.infd := 0.999]
+#             dat <- rslt1
+#         }
+#         trn <- dat[l != lindx,]
+#         tst <- dat[l == lindx,]
+#         ## will need to change how models are run in glmmTMB based on structure of mod.list
+#         m <- glmmTMB(formula(paste0(resp.var, '~', coefs)),
+#                      data=trn, family=fam,
+#                      control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000)))#, profile=TRUE))
+#         tst[,yhat := predict(m, newdata=tst, re.form=NA, type='response', allow.new.levels = TRUE)]
+#         tst[,resp := resp.var][,mod := coefs]
+#         return(tst)
+#     }
+#     # v, l, r, est, inf.spd, sounder.weeks, prop.infd, max.inc, tm.esc, contact, variant, density, [exp.vars], resp.var
+#
+#     calc.rmse <- function(test.fit.tab, lolo.combos){
+#         #might need to add model numbers to the tables before they are combined
+# #         tab[,mod := .GRP, by=.(l, resp.var, mod)] # labels groups by number according to the by= statement
+#         test.fit.tab <- test.fit.tab[unique(lolo.combos[,.(resp, fam)]), on=.NATURAL]
+#         test.fit.tab[,ydiff.sq := (as.numeric(.SD[[.BY[[1]]]]) - yhat)^2, by=resp] # pulls the values from resp.var column and uses them to choose which columns (named like the values) to use for .SD
+#         rmse.tab <- unique(test.fit.tab[,rmse := sqrt(sum(ydiff.sq)/.N), by=.(l, resp, mod)][,.(l, resp, mod, rmse, fam)])
+#         return(rmse.tab)
+#     }
 
-    model.eval1 <- function(dredge.list, rslt1) {
-        # depending on which dredge.list is coming in (from which response variable) any of rslt, rslt1, or tmtab3 may be required
-        rslt1[prop.infd == 1, prop.infd := 0.999]
-        mod <- eval(dredge.list[[1]])
-        return(mod)
-    }
-
-    model.eval.esc <- function(dredge.list, tmtab3) {
-        # depending on which dredge.list is coming in (from which response variable) any of rslt, rslt1, or tmtab3 may be required
-        mod <- eval(dredge.list[[1]])
-        return(mod)
-    }
-
-    ref.to.list <- function(modoutput, is.esc){
-        if (is.esc == 1){
-            modoutput <- modoutput[[1]]
-        }
-        formula.resp <- paste(formula(modoutput)[2])
-        formula.pred <- paste(formula(modoutput)[3])
-        nvars <- extractAIC(modoutput)[1]
-        AIC <- extractAIC(modoutput)[2]
-        nll <- logLik(modoutput)[1]
-        coefs <- apply(coef(modoutput)[[1]]$l, 2, mean)
-        return(c(list(resp = formula.resp, preds = formula.pred, nvars = nvars, AIC = AIC, nll = nll), coefs))
-    }
-
-    list.to.table <- function(modlist){
-        dat <- rbindlist(modlist, fill=TRUE)
-        dat[,id := 1:.N]
-        setorder(dat, 'AIC')
-        return(dat[, rank := 1:.N][,dAIC := AIC - min(AIC)])
-    }
-
-    table.filter <- function(dat, daicval, modelmin){
-        dat.out <- dat[dAIC<=daicval,]
-        if (nrow(dat.out) <= modelmin){
-            dat.out <- dat[order(dAIC)][1:modelmin,]
-        }
-        return(dat.out)
-    }
-
-
-    model.avgs <- function(x.table, x.dredge){
-        modids <- x.table[,id]
-        avgmod <- model.avg(x.dredge, fit=TRUE)
-        coefs <- data.table(t(coef(avgmod)))
-        nms <- lapply(names(coefs), function(x) gsub('cond','', x))
-        nms <- lapply(nms, function(x) gsub('\\(','', x))
-        nms <- lapply(nms, function(x) gsub('\\)','', x))
-        names(coefs) <- unlist(nms)
-        setnames(coefs, 'Int','(Intercept)')
-        outtab <- rbind(x.table, coefs, fill=TRUE)
-        return(outtab)
-    }
-
-    combine.models <- function(est.model.avg, inf.spd.model.avg, snd.wk.model.avg, prop.infd.model.avg, max.inc.model.avg, tm.esc.model.avg){
-        est.model.avg[is.na(resp),resp := 'est.avg']
-        inf.spd.model.avg[is.na(resp),resp := 'inf.spd.avg']
-        snd.wk.model.avg[is.na(resp),resp := 'sounder.weeks.avg']
-        prop.infd.model.avg[is.na(resp),resp := 'prop.infd.avg']
-        max.inc.model.avg[is.na(resp),resp := 'max.inc.avg']
-        tm.esc.model.avg[is.na(resp),resp := 'exc.avg']
-        try(setnames(tm.esc.model.avg, 'contactLo:density', 'contactLo:density5'), silent=TRUE)
-        mod.avgs <- rbindlist(list(est.model.avg, inf.spd.model.avg, snd.wk.model.avg, prop.infd.model.avg, max.inc.model.avg, tm.esc.model.avg), fill=TRUE)
-        #??? add names of models and column for loo.land
-    }
-
-    lolo.table <- function(mv.params, allmods, rslt){
-        lolo.table <- CJ(lindx=unique(rslt[,l]), resp.var=c('est','inf.spd','sounder.weeks','prop.infd','max.inc','exc'), fam='none')#, est.resp=0, exc.resp=0)
-        ## connect this table with output of combine.models; add exp.var based on allmods results and lnd based on the names of lands
-        lolo.table[resp.var == 'est', fam := 'binomial']
-#         lolo.table[resp.var == 'est', est.resp := 1]
-        lolo.table[resp.var == 'inf.spd', fam := 'gaussian']
-        lolo.table[resp.var == 'sounder.weeks', fam := 'nbinom2']
-        lolo.table[resp.var == 'prop.infd', fam := 'beta_family']
-        lolo.table[resp.var == 'max.inc', fam := 'nbinom2']
-        lolo.table[resp.var == 'exc', fam := 'binomial']
-#         lolo.table[resp.var == 'exc', exc.resp := 1]
-        lolo.table[,resp.avg := paste0(resp.var, '.avg')]
-#         lolo.table <- allmods[lolo.table, on=.(resp = resp.avg)]
-        lolo.table <- allmods[lolo.table, on=.(resp = resp.var), allow.cartesian=TRUE]
-        return(lolo.table)
-    }
-    # resp, preds, nvars, AIC, nll, [coefficients], id, rank, dAIC, lindx, fam, resp.avg
-
-    lolo.predict <- function(lolo.table.pred, rslt, rslt1, tmtab3){
-        lindx <- lolo.table.pred[,lindx]
-        resp.var <- lolo.table.pred[,resp]
-        fam <- lolo.table.pred[,fam]
-#         coefs <- 'contact + variant + density + contact:density + contact:variant + nnd_med + nnd_mean + nnd_cv + mvmt.mean + mvmt.cv + moranI + rgd + tc + mast + rds + tmax + simpindx + (1|l)'
-        coefs <- lolo.table.pred[,preds]
-#         tm.in <- ''
-        dat <- rslt
-        if (resp.var == 'exc'){
-            dat <- tmtab3
-        } else if (resp.var != 'est') {
-            dat <- rslt1
-        }
-        if (resp.var == 'prop.infd') {
-            rslt1[prop.infd == 1, prop.infd := 0.999]
-            dat <- rslt1
-        }
-        trn <- dat[l != lindx,]
-        tst <- dat[l == lindx,]
-        ## will need to change how models are run in glmmTMB based on structure of mod.list
-        m <- glmmTMB(formula(paste0(resp.var, '~', coefs)),
-                     data=trn, family=fam,
-                     control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000)))#, profile=TRUE))
-        tst[,yhat := predict(m, newdata=tst, re.form=NA, type='response', allow.new.levels = TRUE)]
-        tst[,resp := resp.var][,mod := coefs]
-        return(tst)
-    }
-    # v, l, r, est, inf.spd, sounder.weeks, prop.infd, max.inc, tm.esc, contact, variant, density, [exp.vars], resp.var
-
-    calc.rmse <- function(test.fit.tab, lolo.combos){
-        #might need to add model numbers to the tables before they are combined
-#         tab[,mod := .GRP, by=.(l, resp.var, mod)] # labels groups by number according to the by= statement
-        test.fit.tab <- test.fit.tab[unique(lolo.combos[,.(resp, fam)]), on=.NATURAL]
-        test.fit.tab[,ydiff.sq := (as.numeric(.SD[[.BY[[1]]]]) - yhat)^2, by=resp] # pulls the values from resp.var column and uses them to choose which columns (named like the values) to use for .SD
-        rmse.tab <- unique(test.fit.tab[,rmse := sqrt(sum(ydiff.sq)/.N), by=.(l, resp, mod)][,.(l, resp, mod, rmse, fam)])
-        return(rmse.tab)
-    }
-
-    get.pred.mods <- function(rmse.tab, allmods, rslt, rslt1, tmtab3){
-        avg.mods <- rmse.tab[,mean(rmse), by=.(resp, mod, fam)]
-        best.mods <- avg.mods[order(V1)][,.SD[1], by=resp]
-        best.mods.tab <- allmods[best.mods, on=.(resp,preds=mod)]
-        setnames(best.mods.tab, 'V1', 'rmse.avg')
-        mod.list <- lapply(1:nrow(best.mods.tab), function(x){
-            resp.var <- best.mods.tab[x, resp]
-            fam <- best.mods.tab[x, fam]
-            coefs <- best.mods.tab[x, preds]
-            dat <- rslt
-            if (resp.var == 'exc'){
-                dat <- tmtab3
-            } else if (resp.var != 'est') {
-                dat <- rslt1
-            }
-            if (resp.var == 'prop.infd') {
-                rslt1[prop.infd == 1, prop.infd := 0.999]
-                dat <- rslt1
-            }
-            m <- glmmTMB(formula(paste0(resp.var, '~', coefs)),
-                     data=dat, family=fam,
-                     control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000)))
-            return(m)
-        })
-        return(mod.list)
-    }
+#     get.pred.mods <- function(rmse.tab, allmods, rslt, rslt1, tmtab3){
+#         avg.mods <- rmse.tab[,mean(rmse), by=.(resp, mod, fam)]
+#         best.mods <- avg.mods[order(V1)][,.SD[1], by=resp]
+#         best.mods.tab <- allmods[best.mods, on=.(resp,preds=mod)]
+#         setnames(best.mods.tab, 'V1', 'rmse.avg')
+#         mod.list <- lapply(1:nrow(best.mods.tab), function(x){
+#             resp.var <- best.mods.tab[x, resp]
+#             fam <- best.mods.tab[x, fam]
+#             coefs <- best.mods.tab[x, preds]
+#             dat <- rslt
+#             if (resp.var == 'exc'){
+#                 dat <- tmtab3
+#             } else if (resp.var != 'est') {
+#                 dat <- rslt1
+#             }
+#             if (resp.var == 'prop.infd') {
+#                 rslt1[prop.infd == 1, prop.infd := 0.999]
+#                 dat <- rslt1
+#             }
+#             m <- glmmTMB(formula(paste0(resp.var, '~', coefs)),
+#                      data=dat, family=fam,
+#                      control=glmmTMBControl(optCtrl=list(iter.max=1000,eval.max=1000)))
+#             return(m)
+#         })
+#         return(mod.list)
+#     }
 
 oos.tiles <- function(tiledat, rslt, variables){
     # the rest of the tiles' data for predictions
     tiledat <- fread(tiledat)
 #     tiledat <- fread('./Landscape_Setup/NND_Lands/all_tile_attribs.csv')
     setnames(tiledat, c('index', 'nnd_med', 'nnd_range', 'nnd_mean', 'nnd_sd', 'x', 'y', 'state', 'gamma.shape', 'gamma.scale',
-                        'moranI', 'gearyC', 'tc', 'mast', 'rgd', 'rds', 'dayl', 'prcp', 'tmin', 'tmax', 'drt', 'contag', 'aggindex',
+                        'moranI', 'gearyC', 'tc', 'mast', 'rgd', 'rds', 'prcp', 'tmin', 'tmax', 'drt', 'contag', 'aggindex',
                         'entropy', 'simpindx', 'nnd_cv', 'mvmt.mean', 'mvmt.cv'))
 #     tiledat <- tiledat[index %in% rslt[,l] == FALSE, ]
     setDT(variables)
     variables[,v := 1:.N]
     tvar <- CJ(l = unique(tiledat[,index]), var = variables[,v])
     tiledat <- tvar[tiledat, on=.(l=index)][variables, on=.(var=v)]
-
 #     tiledat <- tiledat[,.(l, var, contact, variant, density, nnd_med, nnd_range, nnd_mean, nnd_sd, nnd_cv, gamma.shape, gamma.scale, moranI, tc, mast, rgd, rds, dayl, prcp, drt, contag, aggindex, entropy, simpindx, mvmt.mean, mvmt.cv, tmax)]
-    tiledat[,names(.SD) := lapply(.SD, as.numeric), .SDcols=c('gamma.shape', 'gamma.scale', 'moranI', 'tc', 'mast', 'rgd', 'rds','dayl','prcp','drt','contag','aggindex','entropy','simpindx')]
+    tiledat[,names(.SD) := lapply(.SD, as.numeric), .SDcols=c('gamma.shape', 'gamma.scale', 'moranI', 'tc', 'mast', 'rgd', 'rds','prcp','drt','contag','aggindex','entropy','simpindx')]
     tiledat[,names(.SD) := lapply(.SD, as.factor), .SDcols=c('contact', 'variant', 'density')]
-
     # non-correlated covariates from above
 #     vif.preds <- car::vif(glmer(inf.area ~ contact + variant + density + nnd_med + nnd_mean + moranI + tc + mast + rgd + rds + dayl + tmax + simpindx + nnd_cv + mvmt.mean + mvmt.cv + (1|l), data=rslt, family = poisson, control=glmerControl(autoscale=TRUE)))
 #     tiledat <- tiledat[,.(l, var, contact, variant, density, nnd_med, nnd_mean, nnd_cv, moranI, tc, mast, rgd, rds, dayl, tmax, simpindx, mvmt.mean, mvmt.cv)]
@@ -602,10 +601,11 @@ oos.preds <- function(predmods, lambda.mins, tiledat){
     if (resp.var == 'exc') {
         tiledat <- tiledat[CJ(l=unique(tiledat[,l]), tm=1:78), on=.(l), allow.cartesian=TRUE]
     }
-    tiledat.trim <- tiledat[,.(contact, variant, density, nnd_med, nnd_range, nnd_mean, nnd_sd, moranI, gearyC, tc, mast, rgd, rds, dayl, prcp, tmin, tmax, drt, contag, aggindex, entropy, simpindx, nnd_cv, mvmt.mean, mvmt.cv)]
+    tiledat.trim <- tiledat[,.(contact, variant, density, nnd_med, nnd_range, nnd_mean, nnd_sd, moranI, gearyC, tc, mast, rgd, rds, prcp, tmin, tmax, drt, contag, aggindex, entropy, simpindx, nnd_cv, mvmt.mean, mvmt.cv)]
     pred <- predict(predmods[[1]],
                     newx=model.matrix(~., tiledat.trim)[,-1],
-                    s=lambda.mins)#exact=TRUE)
+                    s=lambda.mins,
+                    type='response')#exact=TRUE)
     coefs.vals <- coef(predmods[[1]], s=lambda.mins)
     coefs.used <- rownames(coefs.vals)[which(coefs.vals != 0)]
     # add some kind of identifier to the output for the response variable, maybe the model too
@@ -721,7 +721,7 @@ maps.plot <- function(preds.table, rslt, rslt1, tmtab3, variables){
     yrng <- bounds[c(2,4)]
 
     # loop through response variables
-    lapply(c('est','inf.spd','sounder.weeks','prop.infd','max.inc','exc'), function(pred.var){
+    lapply(c('est','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'), function(pred.var){
         # get the values predicted by the models to set the ranges necessary for the map colors
         pred.var.vals <- values(vect(merge(pot.pts.box, preds.table[,.SD,.SDcols=c('l','var',pred.var)], by='l')))
         pred.var.vals$edge <- 0
@@ -777,125 +777,133 @@ maps.plot <- function(preds.table, rslt, rslt1, tmtab3, variables){
 
 
 ## heatmaps
-    heatmap <- function(mod, oos.tile.dat, oos.tile.dat.edge, lambda.mins){
-        # looped by targets inputs on mod and lambda.mins
-        # use the 2 most important landscape attributes, vary them for the axes, and for each combination of contact, variant, and density make a colored heatmap of response value predictions
-        # mark points where actual landscapes were
-        # use averages of other landscape values for model inputs
+heatmap <- function(mod, oos.tile.dat, oos.tile.dat.edge, lambda.mins){
+    # looped by targets inputs on mod and lambda.mins
+    # use the 2 most important landscape attributes, vary them for the axes, and for each combination of contact, variant, and density make a colored heatmap of response value predictions
+    # mark points where actual landscapes were
+    # use averages of other landscape values for model inputs
 
-        # pull in model coefficients
-        coefs <- coef(mod[[1]], s=lambda.mins)
-        # keep only the landscape-associated values
-        coefs <- coefs[(rownames(coefs) %in% c('(Intercept)', 'contactLo', 'density5', 'variantPol')==FALSE), 1]
-        if (length(coefs[coefs!=0]) >=2){
-            # grab the two coefficients with the greatest effect sizes for the plot axes
-            ## make sure these leave negative coefficients as negative
-            coefs <- sort(abs(unlist(coefs)), decreasing=TRUE)[1:2]
-            # grab coefficient names
-            cnames <- names(coefs)
-            cf1nm <- cnames[1]
-            cf2nm <- cnames[2]
-            # get the tile data for the non-simulated landscapes
-            tiledats <- rbind(oos.tile.dat, oos.tile.dat.edge, fill=TRUE, use.names=TRUE)
-            # get ranges of coefficients for each
-            coef1.range <- range(tiledats[,..cf1nm])
-            coef2.range <- range(tiledats[,..cf2nm])
-            # create a table with all combinations of the active coefficients and the non-landscape variables
-            ht.table <- CJ(
-                cf1 = seq(coef1.range[1], coef1.range[2], length.out=25)
-                , cf2 = seq(coef2.range[1], coef2.range[2], length.out=25)
-                , density = c(1.5,5)
-                , contact = c('Hi','Lo')
-                , variant = c('DR','Pol'))
-            # keep the landscape variables from the tile data and average them
-            landval.avgs <- apply(oos.tile.dat[,c(3:6,12:29)], 2, mean)
-            # filter out landscape variables that are included in the plot axes
-            landval.avgs <- landval.avgs[names(landval.avgs) %in% names(coefs) == FALSE]
-            # get the name of the response variable
-            resp.var <- str_trim(unlist(tstrsplit(unlist(tstrsplit(paste(mod[[1]]$call[3]), ',', keep=2)), ']', keep=1)))
-            setnames(ht.table, c('cf1','cf2'), c(cnames[1], cnames[2]))
-            # connect coefficient combination with average landscape variables
-            ht.table <- cbind(ht.table, as.data.table(t(landval.avgs)))
-            browser()
-            # set population/epidemiology variables as factors
-            ht.table[,names(.SD) := lapply(.SD, as.factor), .SDcols=c('density','contact','variant')]
-            # predict the response for each variable value combination
-            ht.table[,pred := predict(mod[[1]], newx=model.matrix(~., ht.table)[,-1], s=lambda.mins)]#, type='response', allow.new.levels=TRUE)]
-            # make table of variaable combinations to feed into mapply function below (to generate 8 heatmaps)
-            quick.vars <- unique(ht.table[,.(density, contact, variant)])
-            # define color ramp
-            color.grads <- colorRampPalette(c('blue','purple','red','orange','yellow'))
-            # match the color gradient with response variable values
-            ht.table[,rank := as.factor( as.numeric( cut(pred, 150)))]
-            ht.table[,colr := color.grads(150)[as.numeric(as.character(rank))]]
-            # plot
-            png(paste0('./Output/figures/heat_test_', cf1nm, '_', cf2nm,'_', resp.var, '.png'), width=1700, height=1050)
-            par(mfrow=c(2,4), oma=c(1,1,4,1))
-            layout(matrix(c(1:9,9,9,9), nrow=3, ncol=4, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,1,0.3))
-            mapply(function(dens, cont, varnt){
-                rows <- ht.table[,which(density == dens & contact == cont & variant == varnt)]
-    #             sub.rank <- rank[rows]
-                ht.sub <- ht.table[rows, ]
-                plot(unlist(ht.sub[,1]), unlist(ht.sub[,2]), col=ht.sub[,colr], pch=15, cex=4,ann=FALSE, pty='s')
-                mtext(paste('density:', dens,'| contact:', cont, '| variant:', varnt), 3, 1.2, cex=1.4)
-                mtext(exp.translate(cf1nm), 1, 2)
-                mtext(exp.translate(cf2nm), 2, 2)
-                tile.pts <- tiledats[variant == varnt & contact == cont & density == dens,.SD, .SDcols=c(cf1nm, cf2nm)]
-                points(tile.pts)
-            }, dens=quick.vars[,density], cont=quick.vars[,contact], var=quick.vars[,variant])
-            mtext(resp.translate(resp.var), 3, 2, outer=TRUE, cex=2)
-            # create gradient legend object
-            legendimg <- as.raster(matrix(color.grads(150), nrow=1))
-            plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(resp.var), cex.main=1.5)
-            min.val2 <- floor(log10(abs(min(ht.table[,pred]))))
-            mtext(round(seq(range(ht.table[,pred])[1], range(ht.table[,pred])[2], length.out=5), -min.val2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
-            rasterImage(legendimg, 0, 0, 1, 1)
-            dev.off()
-        } else {
-            # if there aren't two or more landscape attributes that are kept by the lasso regression, no heatmap is possible
-            print('this isn\'t going to work')
-        }
-    return(NA)
+    lambda.mins <- lambda.mins*2
+    # pull in model coefficients
+    coefs <- coef(mod[[1]], s=lambda.mins)
+    # keep only the landscape-associated values
+    coefs <- coefs[(rownames(coefs) %in% c('(Intercept)', 'contactLo', 'density5', 'variantPol')==FALSE), 1]
+    # get the name of the response variable
+    resp.var <- str_trim(unlist(tstrsplit(unlist(tstrsplit(paste(mod[[1]]$call[3]), ',', keep=2)), ']', keep=1)))
+    if (length(coefs[coefs!=0]) >=2 & resp.var != 'tm.esc'){
+        # grab the two coefficients with the greatest effect sizes for the plot axes
+        # keep the landscape variables from the tile data and average them
+        landval.avgs <- apply(oos.tile.dat[,c(3:6,12:29)], 2, mean)
+#         landval.ranges <- apply(oos.tile.dat[,c(3:6,12:29)], 2, function(x) range(x))
+#         landval.scales <- abs(apply(rep(coefs, each=2) * landval.ranges, 2, diff))
+        ## make sure these leave negative coefficients as negative
+#         coefs <- coefs[order(landval.scales, decreasing=TRUE)][1:2]
+        coefs <- coefs[order(abs(coefs), decreasing=TRUE)][1:2]
+        print(coefs)
+#             coefs <- sort(abs(unlist(coefs * landval.avgs)), decreasing=TRUE)[1:2]
+        # grab coefficient names
+        cnames <- names(coefs)
+        cf1nm <- cnames[1]
+        cf2nm <- cnames[2]
+        # get the tile data for the non-simulated landscapes
+        tiledats <- rbind(oos.tile.dat, oos.tile.dat.edge, fill=TRUE, use.names=TRUE)
+        # get ranges of coefficients for each
+        coef1.range <- range(tiledats[,..cf1nm])
+        coef2.range <- range(tiledats[,..cf2nm])
+        # create a table with all combinations of the active coefficients and the non-landscape variables
+        ht.table <- CJ(
+            cf1 = seq(coef1.range[1], coef1.range[2], length.out=25)
+            , cf2 = seq(coef2.range[1], coef2.range[2], length.out=25)
+            , density = c(1.5,5)
+            , contact = c('Hi','Lo')
+            , variant = c('DR','Pol'))
+        # filter out landscape variables that are included in the plot axes
+        landval.avgs <- landval.avgs[names(landval.avgs) %in% names(coefs) == FALSE]
+        setnames(ht.table, c('cf1','cf2'), c(cnames[1], cnames[2]))
+        # connect coefficient combination with average landscape variables
+        ht.table <- cbind(ht.table, as.data.table(t(landval.avgs)))
+        # set population/epidemiology variables as factors
+        ht.table[,names(.SD) := lapply(.SD, as.factor), .SDcols=c('density','contact','variant')]
+        # predict the response for each variable value combination
+        print(resp.var)
+#         browser()
+        ht.table[,pred := predict(mod[[1]], newx=model.matrix(~., ht.table)[,-1], s=lambda.mins, type='response')]#, allow.new.levels=TRUE)]
+        # make table of variaable combinations to feed into mapply function below (to generate 8 heatmaps)
+        quick.vars <- unique(ht.table[,.(density, contact, variant)])
+        # define color ramp
+        color.grads <- colorRampPalette(c('blue','purple','red','orange','yellow'))
+        # match the color gradient with response variable values
+        ht.table[,rank := as.factor( as.numeric( cut(pred, 150)))]
+        ht.table[,colr := color.grads(150)[as.numeric(as.character(rank))]]
+        browser()
+        # plot
+        png(paste0('./Output/figures/heat_test_', cf1nm, '_', cf2nm,'_', resp.var, '.png'), width=1700, height=1050)
+        par(mfrow=c(2,4), oma=c(1,1,4,1))
+        layout(matrix(c(1:9,9,9,9), nrow=3, ncol=4, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,1,0.3))
+        mapply(function(dens, cont, varnt){
+            rows <- ht.table[,which(density == dens & contact == cont & variant == varnt)]
+#             sub.rank <- rank[rows]
+            ht.sub <- ht.table[rows, ]
+            plot(unlist(ht.sub[,1]), unlist(ht.sub[,2]), col=ht.sub[,colr], pch=15, cex=4,ann=FALSE, pty='s')
+            mtext(paste('density:', dens,'| contact:', cont, '| variant:', varnt), 3, 1.2, cex=1.4)
+            mtext(exp.translate(cf1nm), 1, 2)
+            mtext(exp.translate(cf2nm), 2, 2)
+            tile.pts <- tiledats[variant == varnt & contact == cont & density == dens,.SD, .SDcols=c(cf1nm, cf2nm)]
+            points(tile.pts)
+        }, dens=quick.vars[,density], cont=quick.vars[,contact], var=quick.vars[,variant])
+        mtext(resp.translate(resp.var), 3, 2, outer=TRUE, cex=2)
+        # create gradient legend object
+        legendimg <- as.raster(matrix(color.grads(150), nrow=1))
+        plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(resp.var), cex.main=1.5)
+        min.val2 <- floor(log10(abs(min(ht.table[,pred]))))-3
+        mtext(round(seq(range(ht.table[,pred])[1], range(ht.table[,pred])[2], length.out=5), -min.val2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
+        rasterImage(legendimg, 0, 0, 1, 1)
+        dev.off()
+    } else {
+        # if there aren't two or more landscape attributes that are kept by the lasso regression, no heatmap is possible
+        print('this isn\'t going to work')
     }
+    return(NA)
+}
 
 
 
 resp.translate <- function(rv){
     # translates response variable codes into text for labeling figures
     print(rv)
-    if(rv == 'est') rv.out <- 'Epidemic Establishment Proportion'
-    if(rv == 'inf.spd') rv.out <- 'Epidemic Wave Max Speed (km/wk)'
+    if(rv == 'est') rv.out           <- 'Epidemic Establishment Proportion'
+    if(rv == 'inf.spd') rv.out       <- 'Epidemic Wave Max Speed (km/wk)'
     if(rv == 'sounder.weeks') rv.out <- 'Epidemic Intensity (Sounder-Weeks)'
-    if(rv == 'prop.infd') rv.out <- 'Proportion of Cells Infected'
-    if(rv == 'max.inc') rv.out <- 'Maximum Incidence'
-    if(rv == 'exc') rv.out <- 'Proportion of Epidemics Escaped by 52 Weeks'
-    if(rv == 'tm.esc') rv.out <- 'Proportion of Epidemics Escaped by 52 Weeks'
+    if(rv == 'prop.infd') rv.out     <- 'Proportion of Cells Infected'
+    if(rv == 'max.inc') rv.out       <- 'Maximum Incidence'
+    if(rv == 'exc') rv.out           <- 'Proportion of Epidemics Escaped by 52 Weeks'
+    if(rv == 'tm.esc') rv.out        <- 'Proportion of Epidemics Escaped by 52 Weeks'
     return(rv.out)
 }
 
 exp.translate <- function(exp.var){
     # translates explanatory variable codes into text for labeling figures
-    if(exp.var == 'nnd_med') ev.out <- 'Median Nearest Neighbor Distance'
+    if(exp.var == 'nnd_med') ev.out   <- 'Median Nearest Neighbor Distance'
     if(exp.var == 'nnd_range') ev.out <- 'Range Nearest Neighbor Distance'
-    if(exp.var == 'nnd_mean') ev.out <- 'Mean Nearest Neighbor Distance'
-    if(exp.var == 'nnd_cv') ev.out <- 'Nearest Neighbor Coefficient of Variation'
-    if(exp.var == 'nnd_sd') ev.out <- 'Nearest Neighbor Standard Deviation'
+    if(exp.var == 'nnd_mean') ev.out  <- 'Mean Nearest Neighbor Distance'
+    if(exp.var == 'nnd_cv') ev.out    <- 'Nearest Neighbor Coefficient of Variation'
+    if(exp.var == 'nnd_sd') ev.out    <- 'Nearest Neighbor Standard Deviation'
     if(exp.var == 'mvmt.mean') ev.out <- 'Mean Sounder Movement'
-    if(exp.var == 'mvmt.cv') ev.out <- 'Sounder Movement Coefficient of Variation'
-    if(exp.var == 'moranI') ev.out <- 'Landscape Preference Autocorrelation (Moran\'s I)'
-    if(exp.var == 'gearyC') ev.out <- 'Landscape Preference Autocorrelation (Geary\'s C)'
-    if(exp.var == 'tc') ev.out <- 'Tree Cover'
-    if(exp.var == 'mast') ev.out <- 'No. Masting Species'
-    if(exp.var == 'rgd') ev.out <- 'Landscape Ruggedness'
-    if(exp.var == 'rds') ev.out <- 'Roads Index'
-    if(exp.var == 'dayl') ev.out <- 'Daylight'
-    if(exp.var == 'prcp') ev.out <- 'Precip'
-    if(exp.var == 'tmax') ev.out <- 'Mean Annual Maximum Daily Temperature'
-    if(exp.var == 'tmin') ev.out <- 'Mean Annual Minimum Daily Temperature'
-    if(exp.var == 'simpindx') ev.out <- 'Landscape Cover Simpson Diversity Index'
-    if(exp.var == 'drt') ev.out <- 'Drought'
-    if(exp.var == 'contag') ev.out <- 'Contagion'
-    if(exp.var == 'aggindex') ev.out <- 'aggregaiton index'
-    if(exp.var == 'entropy') ev.out <- 'entropy'
+    if(exp.var == 'mvmt.cv') ev.out   <- 'Sounder Movement Coefficient of Variation'
+    if(exp.var == 'moranI') ev.out    <- 'Landscape Preference Autocorrelation (Moran\'s I)'
+    if(exp.var == 'gearyC') ev.out    <- 'Landscape Preference Autocorrelation (Geary\'s C)'
+    if(exp.var == 'tc') ev.out        <- 'Tree Cover'
+    if(exp.var == 'mast') ev.out      <- 'No. Masting Species'
+    if(exp.var == 'rgd') ev.out       <- 'Landscape Ruggedness'
+    if(exp.var == 'rds') ev.out       <- 'Roads Index'
+    if(exp.var == 'dayl') ev.out      <- 'Daylight'
+    if(exp.var == 'prcp') ev.out      <- 'Precipitation'
+    if(exp.var == 'tmax') ev.out      <- 'Mean Annual Maximum Daily Temperature'
+    if(exp.var == 'tmin') ev.out      <- 'Mean Annual Minimum Daily Temperature'
+    if(exp.var == 'simpindx') ev.out  <- 'Landscape Cover Simpson Diversity Index'
+    if(exp.var == 'drt') ev.out       <- 'Drought'
+    if(exp.var == 'contag') ev.out    <- 'Contagion'
+    if(exp.var == 'aggindex') ev.out  <- 'Aggregation index'
+    if(exp.var == 'entropy') ev.out   <- 'Entropy'
     return(ev.out)
 }

@@ -1,35 +1,49 @@
-# Spatial meta-population model   
+# African Swine Fever virus Risk Assessment (ASFRA)
 
-Based on ASF simulation model from Pepin et al. 2022, Optimizing response to an introduction of African Swine Fever in wild pigs, converted from Matlab to R/C++.    
+Based on SQUEALR: https://github.com/TuskMod/SQUEALR
 
-Readme/scripts updated periodically.    
+## Background
+African Swine Fever virus has spread globally over the past several decades, and may appear in the United States in the near future. In the interest of preparing for its arrival, modeling efforts are underway to identify strategies that might improve surveillance, response, and elimination in the event of ASFv introductions. This model is one such effort, specifically designed to estimate establishment and spread of ASFv relative to landscape attributes in the contiguoous United States among feral swine. 
 
-## Steps to run simulation
-1. Clone repo to your machine
-2. Store contact data files in Input folder (email kim.m.pepin@usda.gov and kayleigh.chalkowski@usda.gov for these files)
-3. Set home directory in RunASFSimReplicates.R to your ASF_optimal_radius path
-4. If needed, change parameters in SetParameters.R
+## Goals
+The goal of this project is to predict ASFv epidemic dynamics in feral pig populations in the contiguous United States following a hypothetical introduction under a range of feasible conditions. Specifically, we ask whether feral pig density, inter-sounder contact, and ASFv virulence interact with sounder movement patterns to affect ASFv establishment and spread rates.
 
-## Recent Updates
-**October 9, 2024:**  
-Added capability in Make_Grid to input external raster with lc values.
+## Model Overview
+The simulations use feral pig habitat preference and sounder movement models to simulate sounder movement in a subset of real-world landscapes. These simulations include introduction of ASFv at a single point in the landscape. Transmission is modeled based on inter-sounder contact and contact with infected carcasses, a major source of persistent ASFv presence on landscapes.
+Simulations include a range of feasible inter-sounder contact, ASFv virulence, and feral pig population density parameters to test sensitivity to these factors and address unknowns that might affect real-world introductions. Measured outputs are probability of establishment, maximum incidence, epidemic geographic coverage, epidemic wave speed, escape time (5+% of ASFv-affected cells outside of 10km radius from introudction point), and total disease burden.
 
-**October 9, 2024:**  
-Incorporated new movement function, Movement_Fast_RSFavail.cpp (parm setting mv_pref=3 to use), which allows for flexibility in RSF preferences according to availability. Requires matrix of RSF probabilities with different combinations, with corresponding dummy coded RSF availability matrix.
+### Habitat Preference, Sounder Movement, and Landscape Tile Selection
+We model feral pig habitat preference
+by connecting GPS collar data with habitat attributes in those
+locations and extrapolate to locations for which no feral pig movement data is
+available. 
+We similarly use GPS collar data to associate movement patterns with landscape attributes such as ruggedness, tree cover, masting species presence, roads, etc. to obtain gamma density dispersion parameters for each landscape tile, aggregated from predictions for HUC12 watersheds.
+We then join habitat preference with feral swine
+movement for 430 100x100 km landscape tiles covering historic or current feral pig ranges in the
+contiguous United States. Fifty of these tiles are selected based on a classified Latin hypercube algorithm to optimally represent the ranges of landscape attributes where feral pigs are or could be found. 
 
-**September 18, 2024:**   
-Added options to initialize (neutral landscape model) heterogeneous landscape, initialize population according to RSF probabilities assigned to landscape, and allow for RSF-driven movement preference. Made movement function more general to allow for different movement preference types (distance-only, abundance-avoidant, and rsf land class preference).    
+<img width="788" height="376" alt="landscape_diagram" src="https://github.com/user-attachments/assets/9dd64c56-175d-4d9e-9b4d-d1d66276464d" />
 
-**September 18, 2024:**    
-Added functionality for additional output/aggregation options for sounderlocs output, including some Rcpp-optimized spatial summary options (currently demonstrated in Sensitivity_Analysis/Scripts/doSensitivityAnalysis.R). Added comments to new spatial functions and finalized sensitivity analysis pipeline for comparing simulation output to observed, de-identified ASF outbreak data.    
-    
-**August 28, 2024:**    
-Optimized FOI function-- created FOI_Fast_Matrix.cpp to speed up FOI calcs via Rcpp armadillo, loop unrolling, and added distance cutoff for calculations.
+### Simulations
+We simulate feral swine movement and population
+dynamics, as well as ASFv transmission, on selected landscapes for 78 simulated weeks (1.5 years), with 100 replicates per combination of landscape tile, feral pig density, inter-sounder contact parameters, and ASFv virulence. The simulations include pig reproduction from healthy pigs; division of sounders if they reach a large size; movement between 0.5x0.5 km spatial grid cells; and ASFv transmission within sounders, between sounders, and from infected carcasses to living individuals, both within and between spatial grid cells.
 
-## Pending/Upcoming Updates
-* Transitioning model to targets pipeline
-* Add external input option to FOI_Fast_Matrix.cpp for FOI_cutoff to allow more flexiblity in determining calculation cutoffs-- currently just hardcoded to 5km in code on line 67
-* Develop and test options for sounder initialization on grid when RSF varies with availability
+Infection status is handled by an augmented SIR model (SEIRCZ -- susceptible, exposed, infected, recovered, dead-infected, and dead-uninfected) handled as counds of individual pigs in each sounder.
+<img width="778" height="787" alt="model_diagram" src="https://github.com/user-attachments/assets/2c4e371a-eb65-4c8f-b26c-314deab54f21" />
+
+### Analysis
+Model outputs are analyzed using generalized linear mixed models with appropriate forms for each measured output variable, e.g. establishment probability is modeled using a beta distribution. GLMM's are applied to the entire output dataset for inference, and for prediction we use leave-one-out cross validation with the same GLMM's applied to all but one landscape tile (with each simulation landscape tile having a round as the "left out" data subset) to determine the sensitivity of output variables to specific datasets. The predicted relationships are used to extrapolate beyond the simulated landscape tiles to locations across the range of feral pigs.
+
+
+## Potential hanging threads:
+input landscapes not transferred with git
+may have issues in landscape tile movement gamma distribution definitions
+
+## Notes
+This model is adapted from the ASF simulation model from Pepin et al. 2022, Optimizing response to an introduction of African Swine Fever in wild pigs, converted from Matlab to R/C++.    
+
+Forked from kchalkowski/ASF_optimal_radius and now detached for R package build
+Full history is available up to the beginning of this repo in ESodja/ASF_optirad fork off of kchalkowski/ASF_optimal_radius
 
 
 

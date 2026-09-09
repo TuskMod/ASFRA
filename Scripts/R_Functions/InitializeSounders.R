@@ -56,7 +56,7 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     if(pop_init_type == "init_pop"){
   
         #initialize needed objects
-        cells <- nrow(centroids)
+        cells <- nrow(centroids[complete.cases(centroids),])
 
         #Get the initializing number of sounders
         N0 <- pop_init_args[1]
@@ -72,10 +72,13 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
             if(pop_init_grid_opts=="heterogeneous"){
 
                 #use this to weight preference so that still end up with N0 size population
-                pref.wt <- sum(grid[,8])/cells
+                pref.wt <- sum(grid[,8], na.rm=TRUE)/cells
                 #assign to cells with weighted preference according to column 8 values
                 ## this means maximum of 1 sounder per cell in starting configuration
                 assigns <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
+                # if preference weight is 0, rbinom gives NA
+                assigns[is.na(assigns)] <- 0
+
             }
         }
   
