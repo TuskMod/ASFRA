@@ -530,14 +530,8 @@ ReadTileFolders <- function(tile_fp){
   fn_values <- strsplit(tile_fn,"_",fixed=TRUE)
   tile_data <- NULL
   tile_data <- read.csv(county_path)
-  # if(length(fn_values) == 2){
-#    tile_data <- read.csv(full_path)
- # } else{
-  #  tile_data <- read.csv(edge_path)
-  #}
-  
+
   if (length(fn_values[[1]]) == 3){
-    print("three")
     num <- fn_values[[1]][[2]]
   }
   if (length(fn_values[[1]]) == 4){

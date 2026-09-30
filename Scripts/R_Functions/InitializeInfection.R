@@ -1,4 +1,4 @@
-InitializeInfection <- function(pop, centroids, grid, parameters){
+InitializeInfection <- function(pop, centroids, grid, parameters, center_cell){
 	
 ######################################
 ######## Initialize Infection ######## 
@@ -15,6 +15,28 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
 	if(parameters$spawn_type == "randomhypercube_pref"){
 	  # create a lat/long matrix to do the hypercube sampling
 	  latlong_matrix <- randomLHS(500000,2)
+	  
+	}
+	
+	if(parameters$spawn_type == "center_withincounty"){
+	  navigable_land <- which(grid[,8] > 0)
+	  possible_cells <- (grid[navigable_land,1])
+	  x_vals <- grid[,6]
+	  center_cell <- grid[x_vals[nrow(grid)/2],1]
+	  
+	  if (center_cell %in% possible_cells){
+	    infect_cell <- center_cell
+	  }
+	  else{
+	    infect_cell <- center_cell
+	 
+	    while(1){
+	      if(infect_cell %in% possible_cells){
+	        break
+	      }
+	      infect_cell <- infect_cell + 1
+	    }
+	  }
 	  
 	}
 	
@@ -47,7 +69,6 @@ InitializeInfection <- function(pop, centroids, grid, parameters){
   	    break
   	  }
   	}
-  	print(correct_phrase)
 	if(correct_phrase != ""){
 	  print("normal choosing.")
 	  # determine bounding box of grid using centroids from grid matrix

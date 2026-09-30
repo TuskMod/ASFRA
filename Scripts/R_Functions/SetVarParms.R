@@ -13,8 +13,10 @@ SetVarParms <- function(parameters){
     canonical.params <- data.frame(contact = rep(parameters$contact, each = length(parameters$density)),
                                     density = rep(parameters$density, length(parameters$contact)),
                                     ss = rep(parameters$ss, length(parameters$contact)))
-  
+    print(canonical.params)
+    print("hello!")
     B1 <- unlist(lapply(parameters$contact, function(x){parameters[paste0('B1__',x)]}))
+    print(B1)
     rename.to.contact <- function(vars, in.name='contact'){
         # pulls out contact names from parameter values separated by __ and sticks them in a table
         varname <- deparse(substitute(vars))
@@ -26,8 +28,10 @@ SetVarParms <- function(parameters){
     }
 
     B1_tab <- as.data.table(rename.to.contact(B1))
+    B1_tab <- B1_tab[rep(1:nrow(B1_tab), each = 2),]
     B1_tab[, density := rep(parameters$density, length.out = nrow(B1_tab))]
     canonical.params <- merge(canonical.params, B1_tab, on=contact)
+    print(canonical.params)
     # join user defined variables with canonical parameters
     common.columns <- names(canonical.params)[names(canonical.params) %in% names(temptab)]
     result <- inner_join(temptab, canonical.params, by=common.columns)
@@ -58,9 +62,9 @@ SetVarParms <- function(parameters){
     result <- inner_join(result, variant_table, by='variant')
     
     # save the variables that were used for this run
-    
+
     write.csv(result,"saved_variables.csv")
 
-
+    print(result)
     return(result)
 }

@@ -27,6 +27,7 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
     setDT(mv.parms)
     # table of all desired simulation runs
     lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
+ 
     return(lvtable)
 }
 
@@ -37,7 +38,7 @@ check.existing <- function(lvtable, out.repl){
     
 #     summ.vals.in <- list.files('./Output/summ.vals')
 #     incidence.in <- list.files('./Output/incidence')
-    solocs.all.in <- list.files('./Output/solocs.all')
+    solocs.all.in <- list.files('./Output/Richland-SC-detections/solocs.all')
   #  detections <- list.files('./Output/detections')
     # if out.repl is not 1/TRUE, and there are things already in the output directories,
     # sort existing things into a table and find what is missing relative to lvtable
