@@ -29,6 +29,7 @@ FOI_R <- function(pop, centroids, cells, B1, B2, F1, F2_int, F2_B, F2i_int, F2i_
     Pse <- matrix(0, nrow=cells, ncol=1)
     temp <- I + C
     id <- which(temp > 0)
+    
     W <- matrix(0, nrow=cells, ncol=2)
 
     W[, 1] <- F1*I
@@ -45,15 +46,23 @@ FOI_R <- function(pop, centroids, cells, B1, B2, F1, F2_int, F2_B, F2i_int, F2i_
         dist <- as.data.frame(dist)
         colnames(dist) <- "X"
         # direct (live-live) contact with infectious pigs in one cell and susceptible pigs in another
-        prob <- F2_int + F2_B * dist
+        #prob <- F2_int + F2_B * dist
+        prob <- exp(F2_int + F2_B*dist) / (1 + exp(F2_int + F2_B * dist))
         # indirect (dead-live) contact with infectious dead pigs in one cell and susceptible pigs in another
-        probi <- F2i_int + F2i_B * dist
+        
+        #probi <- F2i_int + F2i_B * dist
+        probi <- exp(F2i_int + F2i_B*dist) / (1 + exp(F2i_int + F2i_B * dist))
+  
         ## not sure about this below... doesn't this mean sounders in the same cell cannot pass to each other??
+        ## no, because matrix W covers within cell transmission
+
         prob[dist == 0] <- 0
         probi[dist == 0] <- 0
+        
 
         B <- B1 * I[id[1]] * prob + B2 * C[id[1]] * probi
-        Pse <-  1 - exp( - W[, 1] - W[, 2] - t(B))
+  
+        Pse <-  1 - exp( -1 * (W[, 1] + W[, 2] + t(B)))
     }
 
     if(length(id)>1){

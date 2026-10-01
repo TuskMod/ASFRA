@@ -1,4 +1,4 @@
-﻿#include <RcppArmadillo.h>
+#include <RcppArmadillo.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
@@ -59,7 +59,7 @@ for(std::size_t r = 0; r < dist.n_rows; r++){
 if(dist(r,c)<5 && dist(r,c)!=0){
 double dval = dist(r,c);
 double prob = exp(F2_int + (F2_B*dval));
-double probi = exp(F2_int + (F2i_B*dval));
+double probi = exp(F2i_int + (F2i_B*dval));
 
 B(r,c) = B1*(I_cells(r,c)*prob)+B2*(C_cells(r,c)*probi);
 }
@@ -67,7 +67,7 @@ B(r,c) = B1*(I_cells(r,c)*prob)+B2*(C_cells(r,c)*probi);
 if(dist(r,c+1)<5 && dist(r,c+1)!=0){
 double dval1 = dist(r,c+1);
 double prob1 = exp(F2_int + (F2_B*dval1));
-double probi1 = exp(F2_int + (F2i_B*dval1));
+double probi1 = exp(F2i_int + (F2i_B*dval1));
 B(r,c+1) = B1*(I_cells(r,c+1)*prob1)+B2*(C_cells(r,c+1)*probi1);
 }
 
