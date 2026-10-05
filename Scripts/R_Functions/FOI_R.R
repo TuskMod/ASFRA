@@ -45,16 +45,19 @@ FOI_R <- function(pop, centroids, cells, B1, B2, F1, F2_int, F2_B, F2i_int, F2i_
         dist <- as.data.frame(dist)
         colnames(dist) <- "X"
         # direct (live-live) contact with infectious pigs in one cell and susceptible pigs in another
-        prob <- F2_int + F2_B * dist
+#         prob <- F2_int + F2_B * dist
+        prob <- 1 / (1 + exp(- F2_int - F2_B * dist))
         # indirect (dead-live) contact with infectious dead pigs in one cell and susceptible pigs in another
-        probi <- F2i_int + F2i_B * dist
-        ## not sure about this below... doesn't this mean sounders in the same cell cannot pass to each other??
+#         probi <- F2i_int + F2i_B * dist
+        probi <- 1 / (1 + exp(- F2i_int - F2i_B * dist))
+
         prob[dist == 0] <- 0
         probi[dist == 0] <- 0
 
         B <- B1 * I[id[1]] * prob + B2 * C[id[1]] * probi
         Pse <-  1 - exp( - W[, 1] - W[, 2] - t(B))
     }
+
 
     if(length(id)>1){
 

@@ -57,12 +57,13 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
 
     # add an infected individual near the center of the simulation space
     pop <- InitializeInfection(pop, centroids, grid, parameters)
+    first.inf <- pop[pop[,'I']==num_inf_0,]
 
     # pre-create outputs to catch output data
     outputs <- Initialize_Outputs(parameters)
 
     # Run simulation
-    out.list <- SimulateOneRun(outputs, pop, centroids, grid, parameters, K, v.val, l.val, r.val)
+    out.list <- SimulateOneRun(outputs, pop, centroids, grid, parameters, K, v.val, l.val, r.val, first.inf)
 
     # Handle outputs, including writing storage files (returns NULL)
     summ.vals <- rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts)

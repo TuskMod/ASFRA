@@ -1,4 +1,4 @@
-areaOfinfection <- function(pop, centroids, inc){
+areaOfinfection <- function(pop, centroids, inc, first.inf){
     #subset out infected rows
     infected <- pop[pop[, 9] > 0 | pop[, 10] > 0 | pop[, 12] > 0, , drop=FALSE]
 
@@ -19,10 +19,9 @@ areaOfinfection <- function(pop, centroids, inc){
         boundary <- xy[ch, , drop=FALSE]
         #get area within boundary
         A <- abs(pracma::polyarea(boundary[, 1, drop=FALSE], boundary[, 2, drop=FALSE]))
-        library(pdist)
-        maxdist <- max(pdist(xy))
+        maxdist <- max(as.matrix(pdist(xy, first.inf[5:6])))
         #number of unique infected cells, area of infection,  max distance between infected cells
         out <- c(length(infectcells), A, maxdist)
     } #greater than 2 infected closing bracket
     return(out)
-	} #function closing bracket
+} #function closing bracket

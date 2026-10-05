@@ -1,4 +1,5 @@
 #outputs: pop,Incidence,BB
+
 StateChanges <- function(pop, centroids, cells, parameters, Incidence, BB, i){
 
     list2env(parameters, .GlobalEnv)
@@ -54,7 +55,6 @@ StateChanges <- function(pop, centroids, cells, parameters, Incidence, BB, i){
     ######## Determine disease state change probabilities ########
     # Susceptible to Exposed
     Pse <- FOI_R(pop, centroids, cells, B1, B2, F1, F2_int, F2_B, F2i_int, F2i_B) #cpp parallel version, 22x faster than R version
-    Pse[Pse < 0] <- 0
 
     # Exposed to infected -- based on the incubation period
     Pei <- 1 - exp(-1 / (rpois(nrow(pop), incub) / 7))

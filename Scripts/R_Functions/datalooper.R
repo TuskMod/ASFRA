@@ -22,7 +22,6 @@ data.looper <- function(infile, cent, lvtable){
     vval <- as.numeric(vlr[[3]])
     lval <- as.numeric(vlr[[2]])
     rval <- as.numeric(vlr[[1]])
-browser()
     # get wavespeed metrics (also trim data to a distance equal to the closest edge to introduction point)
     eic.edge <- wave_speed(solocs.all, cent)
 
@@ -74,4 +73,3 @@ browser()
 }
 
 
-## data.looper('tm.mat_r5_l65_v5.gz', tar_read(land_grid_list)[[1]][[1]][[2]][,c(1,6,7)])

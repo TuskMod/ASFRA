@@ -1,6 +1,6 @@
 ##The purpose of this script is to run a single rep of the ASF control optimization model
 
-SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r){
+SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r, first.inf){
     require(dplyr)
 
 ######## Release parameters to function environment ########
@@ -202,7 +202,7 @@ SimulateOneRun <- function(outputs, pop, centroids, grid, parameters, K, v, l, r
 #############################
 #if any infected individuals
         if(nrow(pop[pop[, 9, drop=FALSE] > 0 | pop[, 10, drop=FALSE] > 0 | pop[, 12, drop=FALSE] > 0,, drop=FALSE]) > 0){
-            out[i,] <- areaOfinfection(pop, centroids, inc)
+            out[i,] <- areaOfinfection(pop, centroids, inc, first.inf)
         } else {
             out[i,] <- c(0,0,0)
         }
