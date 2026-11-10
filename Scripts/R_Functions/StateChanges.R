@@ -78,7 +78,12 @@ StateChanges <- function(pop, centroids, cells, parameters, Incidence, BB, i){
     Cep <- rbinom(nrow(pop), pop[, 10] - Rep, (1-Pir)*Pic)
 
     # recovered state changes
+    # recovered -> death
     Rdpd <- rbinom(nrow(pop), pop[, 11], death)
+    # recovered -> susceptible (waning immunity)
+    RtoS <- rbinom(nrow(pop), pop[,11] - Rdpd, 1/(imm_waning+1))
+    # based on geometric expected value for 26 weeks, which is pretty generous for ASFv waning immunity according to vaccine studies in domestic (i.e. naive) pigs
+    if (any(RtoS)) browser()
 
     # infected carcass state changes
     Ccd <- rbinom(nrow(pop), pop[, 12], Pcr)
@@ -90,10 +95,10 @@ StateChanges <- function(pop, centroids, cells, parameters, Incidence, BB, i){
     Incidence[i] <- Incidence[i] + sum(Eep)
 
     ######## Update pop matrix ########
-    pop[,8] <- pop[,8] - Eep + Sdpb - Sdpd #S
+    pop[,8] <- pop[,8] - Eep + Sdpb - Sdpd + RtoS #S
     pop[,9] <- pop[,9] - Iep + Eep - Edpd #E
     pop[,10] <- pop[,10] - Rep - Cep + Iep #I
-    pop[,11] <- pop[,11] + Rep - Rdpd #R
+    pop[,11] <- pop[,11] + Rep - Rdpd - RtoS #R
     pop[,12] <- pop[,12] + Cep - Ccd #C
     pop[,13] <- pop[,13] + Sdpd + Rdpd + Edpd - Zcd #Z
 
