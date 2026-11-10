@@ -325,3 +325,78 @@ exp.translate <- function(exp.var){
     if (exp.var == 'entropy')   ev.out <- 'Entropy'
     return(ev.out)
 }
+
+
+
+new.map <- function(respvar, lyr, contus.dir, variables, inside.only=FALSE ){
+    color.grads <- colorRampPalette(c('darkgreen','yellowgreen','orange', 'darkred'), bias=)
+
+    contus <- terra::project(vect(contus.dir), 'epsg:5070')
+    bounds <- terra::ext(contus)
+    if (inside.only == FALSE){
+        lyr <- terra::crop(lyr, terra::aggregate(contus, dissolve=TRUE))
+    } else {
+        lyr <- terra::crop(lyr[lyr$inside==1,], terra::aggregate(contus, dissolve=TRUE))
+    }
+
+    lapply(respvar, function(vr){
+        png(paste0('./Output/figures/', vr, lyr$var[[1]], '.png'), width=1400, height=1000)
+        if (vr == 'inf.spd') lyr <- lyr[lyr$inf.spd < 3]
+        layout(matrix(seq(1,2), nrow=2, byrow=FALSE), widths=c(1), heights=c(0.8,0.15))
+
+        pred.var.cols <- c('ID','var','inside', names(lyr)[grep(paste0('^',vr), names(lyr))])
+        pred.var.vals <- data.table(values(lyr[,pred.var.cols]))
+        if (vr == 'sounder.weeks'){
+            pred.var.vals[, names(.SD) := lapply(.SD, log), .SDcols=4:ncol(pred.var.vals)]
+            quants <- quantile(unlist(pred.var.vals[inside==1,-c(1:3)]), probs=c(0, 1))
+            bias <- 1
+        } else if (vr == 'max.inc'){
+            pred.var.vals[, names(.SD) := lapply(.SD, log10), .SDcols=4:ncol(pred.var.vals)]
+            quants <- quantile(unlist(pred.var.vals[inside==1,-c(1:3)]), probs=c(0, 1))
+            bias <- 1
+        } else {
+            quants <- quantile(unlist(pred.var.vals[inside==1,-c(1:3)]), probs=c(0, 1))
+            bias <- 1
+        }
+        max.val <- quants[2]
+        min.val <- quants[1]
+        # scaled response variables from 0 to 1
+        pixels <- pred.var.vals[, pmin(pmax(0,(.SD -min.val)/(max.val-min.val)), 1), .SDcols=patterns(paste0('^',vr)), by=ID]
+        setnames(pixels, c('ID', names(pred.var.vals[,-c(1:3)])))
+        # define color gradient
+        color.grads <- colorRampPalette(c('darkgreen','yellowgreen','orange', 'darkred'), bias=bias)
+        # match colors to response variable
+        pixrank <- as.factor(as.numeric(cut(unlist(pixels[,.SD,.SDcols=patterns(paste0('^',vr))]), 255)))
+        pixrank <- data.table(matrix(pixrank, nrow=nrow(pixels)))
+        pixrank[,names(.SD) := lapply(.SD, as.numeric)]
+        setnames(pixrank, paste0(names(pixels[,-'ID']), '_r'))
+        pixrank <- cbind(pixels[,1], pixrank)
+        setDT(variables)
+        variables[,v:=1:.N]
+
+        x <- pred.var.vals[1,var]
+        variable.line <- unlist(variables[v==x, 1:3])
+#         preds.tablei <- preds.table[,paste0(vr)]
+#         pixelsi <- pixrank[,.SD, .SDcols=paste0(vr, '_r')]
+
+
+        plot(terra::merge(lyr, pixrank, 'ID'), as.character(vr), col=color.grads(255), breaks=255, main=resp.translate(vr), box=FALSE, border=FALSE, ext = bounds, legend=FALSE, axes=FALSE)
+        polys(contus, border='black', lwd=2)
+
+        mtext(paste('contact', variable.line[1], '| variant', variable.line[2], '| density', variable.line[3]), 3, -1.5, cex=1.5)
+
+        # add a legend
+        mtext(resp.translate(vr), 3, 0, cex=2, outer=TRUE)
+        legendimg <- as.raster(matrix(color.grads(255), nrow=1))
+        plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(vr), cex.main=1.5)
+#         min.val2 <- floor(log10(abs(min.val)))
+        if (vr %in% c('max.inc','sounder.weeks')){
+            mtext(round((seq(min.val, max.val, length.out=5)), 2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
+        } else {
+            mtext(round(seq(min.val, max.val, length.out=5), 2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
+        }
+        rasterImage(legendimg, 0, 0, 1, 1)
+
+        dev.off()
+    })
+}

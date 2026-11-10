@@ -56,7 +56,8 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     if(pop_init_type == "init_pop"){
   
         #initialize needed objects
-        cells <- nrow(centroids[complete.cases(centroids),])
+        onland <- centroids[complete.cases(centroids),]
+        cells <- nrow(onland)
 
         #Get the initializing number of sounders
         N0 <- pop_init_args[1]
@@ -64,26 +65,31 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
 
         sn_i <- N0/ss
 
+        sn <- pmax(3, round(sn_i*(cells/nrow(centroids))))
+
+
         #default option, randomly assign sounders to cells
         if(pop_init_grid_opts=="homogeneous"| pop_init_grid_opts=="ras"){
-            assigns <- rbinom(cells, 1, sn_i/cells)
-        } else {
-
-            if(pop_init_grid_opts=="heterogeneous"){
-
-                #use this to weight preference so that still end up with N0 size population
-                pref.wt <- sum(grid[,8], na.rm=TRUE)/cells
-                #assign to cells with weighted preference according to column 8 values
-                ## this means maximum of 1 sounder per cell in starting configuration
-                assigns <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
-                # if preference weight is 0, rbinom gives NA
-                assigns[is.na(assigns)] <- 0
-
-            }
+#             assigns <- rbinom(cells, 1, sn_i/cells)
+            init_locs <- sample(cells, sn)
+        } else { #
+#             if(pop_init_grid_opts=="heterogeneous"){
+#
+#                 #use this to weight preference so that still end up with N0 size population
+#                 pref.wt <- sum(grid[,8], na.rm=TRUE)/cells
+#                 #assign to cells with weighted preference according to column 8 values
+#                 ## this means maximum of 1 sounder per cell in starting configuration
+#                 assigns <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
+#                 # if preference weight is 0, rbinom gives NA
+#                 assigns[is.na(assigns)] <- 0
+#
+#             }
+            init_locs <- sample(cells, sn, prob=onland[,3])
         }
-  
-        sn <- sum(assigns) #generated number of rows (sounders), size from random assignment of sounders to cells
-        init_locs <- which(assigns==1) #get the locations where sounders have been initialized
+
+#         sn <- sum(assigns) #generated number of rows (sounders), size from random assignment of sounders to cells
+#         init_locs <- which(assigns==1) #get the locations where sounders have been initialized
+
 
         #Initialize the sounder population matrix
         #each row is a sounder

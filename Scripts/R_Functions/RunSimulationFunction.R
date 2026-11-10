@@ -51,6 +51,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     centroids <- land_grid_list[[lgl.entry]]$centroids
     grid <- land_grid_list[[lgl.entry]]$grid
     lname <- land_grid_list[[lgl.entry]]$names
+    browser()
 
     # create sounders in starting locations according to N0 and ss parameters
     pop <- InitializeSounders(centroids, grid, c(N0, ss), pop_init_grid_opts)
