@@ -11,7 +11,7 @@
 FormatSetParameters <- function(parameters_txt){
 
     # read text file
-    raw <- readLines("Parameters.txt")
+    raw <- readLines(parameters_txt)
 
     # remove all but parameters set
     parms <- raw[grep("^~", raw)]

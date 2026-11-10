@@ -7,15 +7,15 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
     # if any output folders are missing, create them
     dirlist <- list.dirs()
     if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
-    if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
-    if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
+#     if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
+#     if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
 #         if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
 #         if ('./Output/allzone' %in% dirlist == FALSE){dir.create('./Output/allzone')}
     if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
 
     setDT(mv.parms)
     # table of all desired simulation runs
-    lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
+    lvtable <- CJ(rep = seq(reps), vars = seq(nrow(variables)), land = unique(mv.parms[,index]))
     return(lvtable)
 }
 

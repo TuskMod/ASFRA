@@ -219,6 +219,14 @@ mc_time = mean(c_time); %mean daily conception probability
 THE OTHER THING about using the carrying capacity in this way is it bases the birth rate on density across the entire simulation space, which would be fine right up until you start culling -- then you are reducing the total number of pigs but keeping carrying capacity the same, so even areas several kilometers away from the culling zone will have increased reproduction, magically, because pigs were killed somewhere else. This could create an artefact of having high density rebounds outside the control zone, and therefore increasing spread globally potentially pushing the infection to spread farther.
 
 
+Which density source to use
+# this uses estimates from Lewis et. al data for expected, 95% upper and lower confidence values
+# for lower interval, there is a lot of empty space, so we use a default lower value from the density parameter above (usually 1.5 pigs/km^2)
+~ dens_source = "lewis_est"
+# this would be the input values above
+dens_source = "input"
+
+
 #########################
 #### Output options #####
 #########################
@@ -261,8 +269,8 @@ B2_B1_factor is the conversion between B1 and B2 parameters, generally 0.5 (B2 =
 ~ B1__Lo = c(0.009, 0.002)
 
 ~ B2_B1_factor = 0.5
-~ density = c(1.5, 5)
-~ ss = c(2, 6)
+~ density = c(1.5, 3, 5)
+~ ss = c(2, 6, 10)
 
 
 * Strain variants (from table 2 of preprint on viral parameters)

@@ -100,6 +100,20 @@ list(
 #     ## Input raw data files -----
 #     ### Input parameters file: -----------
     tar_target(parameters_txt, file.path("Parameters.txt"), format="file"),#, cue=tar_cue(mode='always')),
+
+#     ### Add density files from Lewis et.al data
+    tar_target(ex_dens_loc, './Input/pig_density_est_lewis2017/Lewis_mainland_US_Expected_Density.tif', format='file'),
+    tar_target(dn_dens_loc, './Input/pig_density_est_lewis2017/Lewis_mainland_US_Expected_Density.lwr.95.tif', format='file'),
+    tar_target(up_dens_loc, './Input/pig_density_est_lewis2017/Lewis_mainland_US_Expected_Density.upr95.tif', format='file'),
+
+    tar_target(plands_all, list.files('./Landscape_Setup/Pipeline_SSF_Weekly/4_Output/indiv_plands', full.names=TRUE), format='file'),
+    tar_target(habimap, habitatmap(plands_all), format='file'),
+
+
+    tar_target(ex_dens, dens.prep(ex_dens_loc, habimap), format='file'),
+    tar_target(up_dens, dens.prep(up_dens_loc, habimap), format='file'),
+    tar_target(dn_dens, dens.prep(dn_dens_loc, habimap), format='file'),
+    tar_target(lyr_dens, c(terra::rast(dn_dens), terra::rast(ex_dens), terra::rast(up_dens))),
 #
 #     ### Input landscapes directory: -----------
 # #     tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "plandstest"), format="file"),
@@ -134,7 +148,7 @@ list(
     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)})#,
 
     ### Build table of all desired landscape and parameter combinations
-    ,tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)),
+    ,tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)), # in checkExisting.R
 # #
 # #     ### Check for existing outputs and make a table of only what remains to be done
     tar_target(lvtable2, {lvnew <- check.existing(lvtable, parameters$out.repl)

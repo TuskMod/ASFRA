@@ -26,6 +26,7 @@ SetVarParms <- function(parameters){
 
     B1_tab <- as.data.table(rename.to.contact(B1))
     B1_tab[, density := rep(parameters$density, length.out = nrow(B1_tab))]
+browser()
     canonical.params <- merge(canonical.params, B1_tab, on=contact)
     # join user defined variables with canonical parameters
     common.columns <- names(canonical.params)[names(canonical.params) %in% names(temptab)]
