@@ -6,7 +6,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     setDT(mv.parms)
 
     # loops over combinations of variables, lands, and reps
-    lgl.index <- unlist(lapply(land_grid_list, function(x) x$names))
+    lgl.index <- as.numeric(unlist(lapply(land_grid_list, function(x) x$names)))
 
     # funky mis-naming (fix at some point)
     names(variables)[names(variables) == "density"] <- "dens"
