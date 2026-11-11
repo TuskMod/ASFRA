@@ -21,13 +21,13 @@
 
 #load libraries for targets script
 library(targets)
-# library(tarchetypes)
-# library(crew)
-# library(crew.cluster)
+library(tarchetypes)
+library(crew)
+library(crew.cluster)
 # library(clustermq)
 # library(Rcpp)
 # library(data.table)
-library(geotargets)
+# library(geotargets)
 
 # This hardcodes the absolute path in _targets.yaml, so to make this more
 # portable, we rewrite it every time this pipeline is run (and we don't track
@@ -62,15 +62,18 @@ lapply(list.files(file.path("Scripts","R_Functions"), full.names = TRUE, recursi
 #         clustermq.worker.timeout = 7200)
 #         )
 
+
+source('crew_controllers.R')
+
 #Load packages
 tar_option_set(packages = c("Rcpp",
-#                             "pracma",
+                            "pracma",
                             "rdist",
-#                             "tidyverse",
+                            "tidyverse",
                             "RcppArmadillo",
                             "RcppParallel",
                             "stringr",
-                            "dplyr",
+#                             "dplyr",
                             "sf",
                             "raster",
                             "terra",
@@ -88,7 +91,9 @@ tar_option_set(packages = c("Rcpp",
                seed = 12345 ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
                 ,error = 'stop' # for troubleshooting
 #                ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
-#                ,deployment='worker'
+               ,deployment='worker'
+               , controller = crew_controller_group(slurmy_try, slurmy_ants, control_tall),#, control_duo, control_wide)
+               , resources = tar_resources(crew=tar_resources_crew(controller='tall_crew'))
                ,garbage_collection=TRUE
                ,workspace_on_error=TRUE
 )
@@ -100,6 +105,7 @@ list(
 #     ## Input raw data files -----
 #     ### Input parameters file: -----------
     tar_target(parameters_txt, file.path("Parameters.txt"), format="file"),#, cue=tar_cue(mode='always')),
+
 #
 #     ### Input landscapes directory: -----------
 # #     tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "plandstest"), format="file"),
@@ -125,9 +131,14 @@ list(
 #     ### Initialize grid(s): ---------------
 #     # gives a list with (1) a list of all the landscape values (very large), (2) 'inc' resolution in km, (3) 'km_len' length of landscape side in km
     tar_target(land_grid_list, InitializeGrids(lands_path, parameters0)),
+
+#    ### pull in combiled habitat preference map for feral swine range to get max/min values to rescale for initial sounder distribution
+    tar_target(plands_all, list.files('./Landscape_Setup/Pipeline_SSF_Weekly/4_Output/indiv_plands', full.names=TRUE), format='file'),
+    tar_target(habimap, habitatmap(plands_all), format='file'),
+    tar_target(minmax_habitat, terra::minmax(terra::rast(habimap))),
 #
 #     ### Get surface parameters from raster and add to parameters list: ---------------
-    tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]])),
+    tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]], minmax_habitat)),
 #
 #     ### Get landscape-specific movement parameters
 # #     tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel_test.rds')) } else { return(NA)}),
@@ -161,18 +172,21 @@ list(
         , pattern = map(lvtable2) # tells targets to branch nodes by lines in lvtable2, which is the list of land, variable, and replicate combinations
         , iteration = 'vector'
         , cue = tar_cue(mode = 'always')
+        , resources=tar_resources(crew=tar_resources_crew(controller='slurmy'))
     )
-#
-#     , tar_target(centroid.matrix, extract.centroids(land_grid_list))
-#
-#     , tar_target(tm.out.files, {print(out.list); return(list.files('./Output/tm.mat/'))})#, cue = tar_cue(mode = 'always'))
-#
-#     , tar_target(result.outputs, data.looper(tm.out.files, centroid.matrix, lvtable)
-#                , pattern = map(tm.out.files),
-#                , iteration = 'list',
-#                  cue = tar_cue(mode='always')) # faster than having it check for existing outputs (at least on scicomp)
-#
-#     , tar_target(rslt.file, fwrite(rbindlist(result.outputs), 'result.outputs.csv'))
+
+    , tar_target(centroid.matrix, extract.centroids(land_grid_list))
+
+    , tar_target(tm.out.files, {print(out.list); return(list.files('./Output/tm.mat/'))})#, cue = tar_cue(mode = 'always'))
+
+    , tar_target(result.outputs, data.looper(tm.out.files, centroid.matrix, lvtable)
+               , pattern = map(tm.out.files),
+               , iteration = 'list',
+                 cue = tar_cue(mode='always') # faster than having it check for existing outputs (at least on scicomp)
+                    , resources=tar_resources(crew=tar_resources_crew(controller='slurmy_horde'))
+    )
+
+    , tar_target(rslt.file, fwrite(rbindlist(result.outputs), 'result.outputs.csv'))
 
     ## put together result table
 #     , tar_target(rslt, make_rslt(rslt.file, variables, mv.params)) # in ridge_lasso.R
@@ -224,16 +238,16 @@ list(
 
 
     ## Plotting function(s) for outputs.
-    , tar_target(varset, seq(8))
-    , tar_terra_vect(vector_lyr, make_vector_lyr(varset, preds.compiled, grid_path),
-                     pattern=map(varset))
-    , tar_target(contus_dir, file.path('Input','contus_shp','usmapplot_best.shp'), format='file')
-#     , tar_target(map, maps.plot(vector_lyr, contus_dir, variables),
-#                  pattern=map(vector_lyr))#, cue=tar_cue(mode='always'))
-    , tar_target(map2, new.map(lasslist2, vector_lyr, contus_dir, variables, inside.only = FALSE), pattern=map(vector_lyr))
-#     , tar_target(hmap, heatmap(model.defs, oos.tile.dat, model.names),#, preds.compiled),
-#                  pattern=map(model.defs, model.names),
-#                  iteration='list')#, cue=tar_cue(mode='always'))
+#     , tar_target(varset, seq(8))
+#     , tar_terra_vect(vector_lyr, make_vector_lyr(varset, preds.compiled, grid_path),
+#                      pattern=map(varset))
+#     , tar_target(contus_dir, file.path('Input','contus_shp','usmapplot_best.shp'), format='file')
+# #     , tar_target(map, maps.plot(vector_lyr, contus_dir, variables),
+# #                  pattern=map(vector_lyr))#, cue=tar_cue(mode='always'))
+#     , tar_target(map2, new.map(lasslist2, vector_lyr, contus_dir, variables, inside.only = FALSE), pattern=map(vector_lyr))
+# #     , tar_target(hmap, heatmap(model.defs, oos.tile.dat, model.names),#, preds.compiled),
+# #                  pattern=map(model.defs, model.names),
+# #                  iteration='list')#, cue=tar_cue(mode='always'))
 
 
 ) # end targets list
