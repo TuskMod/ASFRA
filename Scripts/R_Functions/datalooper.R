@@ -5,6 +5,7 @@
 data.looper <- function(infile, cent, lvtable){
     library(data.table)
     # Grab the files with the infile name/numbers
+#     tm.mat <- fread(paste0('./Output/tm.mat/', infile), select=c('E', 'I'))
     tm.mat <- fread(paste0('./Output/tm.mat/', infile), select=c('E', 'I'))
 
     vlr_end <- unlist(tstrsplit(infile, 'tm.mat_', keep=2))
@@ -18,10 +19,12 @@ data.looper <- function(infile, cent, lvtable){
     }
 
     # get the vlr values
-    vlr <- tstrsplit(vlr_end, '[v|l|r]+|_|.gz', keep=c(2,4,6))
-    vval <- as.numeric(vlr[[3]])
-    lval <- as.numeric(vlr[[2]])
+    vlr <- tstrsplit(vlr_end, '(\\?<=\\_)[l]|[r|v|d|c]+|_|.gz', keep=c(2,3,5,7,9))
     rval <- as.numeric(vlr[[1]])
+    lval <- as.numeric(gsub('l', '', vlr[[2]]))
+    vval <- vlr[[3]]
+    dval <- as.numeric(vlr[[4]])
+    cval <- vlr[[5]]
     # get wavespeed metrics (also trim data to a distance equal to the closest edge to introduction point)
     eic.edge <- wave_speed(solocs.all, cent)
 
@@ -57,7 +60,7 @@ data.looper <- function(infile, cent, lvtable){
     max.inc <- max(tm.mat[1:max(eic.edge[,time]), E - data.table::shift(E,1)], na.rm=TRUE)
 
 
-    outs <- data.table(v = vval, l = lval, r = rval,
+    outs <- data.table(v = vval, l = lval, r = rval, d=dval, c=cval,
                 est = est,
                 edge.tm = max(eic.edge[,time]),
                 max.dist = max.dist,
@@ -72,3 +75,12 @@ data.looper <- function(infile, cent, lvtable){
 }
 
 
+
+list.out.files <- function(lvtable, outlist){
+    if(nrow(lvtable) == nrow(outlist)){
+        return(list.files('./Output/tm.mat/'))
+    } else {
+        lvtable[,fnms := paste0('tm.mat_r',rep,'_l',land,'_v',variant,'_d',density,'_c',contact,'.gz')]
+        return(lvtable[,fnms])
+    }
+}

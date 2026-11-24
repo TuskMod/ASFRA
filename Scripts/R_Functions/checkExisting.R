@@ -7,15 +7,18 @@ combo.plans <- function(parameters, variables, reps, mv.parms){
     # if any output folders are missing, create them
     dirlist <- list.dirs()
     if ('./Output/tm.mat' %in% dirlist == FALSE){dir.create('./Output/tm.mat')}
-    if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
-    if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
+#     if ('./Output/summ.vals' %in% dirlist == FALSE){dir.create('./Output/summ.vals')}
+#     if ('./Output/incidence' %in% dirlist == FALSE){dir.create('./Output/incidence')}
 #         if ('./Output/detections' %in% dirlist == FALSE){dir.create('./Output/detections')}
 #         if ('./Output/allzone' %in% dirlist == FALSE){dir.create('./Output/allzone')}
     if ('./Output/solocs.all' %in% dirlist == FALSE){dir.create('./Output/solocs.all')}
 
     setDT(mv.parms)
+    setDT(variables)
     # table of all desired simulation runs
-    lvtable <- CJ(vars = seq(nrow(variables)), land = unique(mv.parms[,index]), rep = seq(reps))
+    lvtable <- CJ(variant = unique(variables$variant), contact = unique(variables$contact), density=unique(variables$density), land = unique(mv.parms[,index]), rep = seq(reps))
+    lvtable <- lvtable[variables[,.(contact, variant, density, vars)],on=.(variant, contact, density)]
+    setorder(lvtable, rep, land)
     return(lvtable)
 }
 
@@ -32,9 +35,16 @@ check.existing <- function(lvtable, out.repl){
 
         splt.check <- function(nlst, nm){
             # slice and dice the names of existing files to get rep, var, and land id's
-            instr <- as.data.table(tstrsplit(nlst, '_', keep=2:4))
-            instr <- instr[,lapply(.SD, function(x) unlist(regmatches(x, gregexpr('(\\d+)', x))))]
-            setnames(instr, c('r','l','v'))
+            instr <- as.data.table(tstrsplit(nlst, '_', keep=2:6))
+            rep <- gsub('r','',instr[[1]])
+            lnd <- gsub('l','',instr[[2]])
+            var <- gsub('v','',instr[[3]])
+            den <- gsub('d','',instr[[4]])
+            con <- gsub('c','',instr[[5]])
+            con <- gsub('.gz','',con)
+#             instr <- instr[,lapply(.SD, function(x) unlist(regmatches(x, gregexpr('(\\d+)', x))))]
+            instr <- data.table(r=rep, l=lnd, v=var, d=den, c=con)
+#             setnames(instr, c('r','l','v'))
             # indicate thet the combination has existing output files
             instr[,tmp := 1]
             setnames(instr, 'tmp', nm)
@@ -47,17 +57,18 @@ check.existing <- function(lvtable, out.repl){
         solocs.tab <- unique(as.data.table(rbindlist(lapply(solocs.all.in, splt.check, nm = 'solocs.all'))))
         # connect all filetype lists together
 #         bndtab <- merge(tm.tab, summ.tab, by=c('v','l','r'), all=TRUE)
-        bndtab <- merge(tm.tab, solocs.tab, by=c('v','l','r'), all=TRUE)
+        bndtab <- merge(tm.tab, solocs.tab, by=c('r','l','v','d','c'), all=TRUE)
 #         bndtab <- merge(bndtab, incid.tab, by=c('v','l','r'), all=TRUE)
 #         bndtab <- merge(bndtab, solocs.tab, by=c('v','l','r'), all=TRUE)
         # anything that has a missing file goes to 0
         bndtab[is.na(bndtab)] <- 0
-        bndtab[,names(.SD) := lapply(.SD, as.numeric)]
+        bndtab[,names(.SD) := lapply(.SD, as.numeric), .SDcols=c('r','l','d','tm.mat','solocs.all')]
         # connect existing file list to goal file list, and filter out lines that have all file types accounted for
-        lvtable2 <- merge(lvtable, bndtab, by.x=c('vars', 'land', 'rep'), by.y=c('v', 'l', 'r'), all=TRUE)
+        lvtable2 <- merge(lvtable, bndtab, by.x=c('variant','contact','density', 'land', 'rep'), by.y=c('v','c','d', 'l', 'r'), all=TRUE)
         lvtable2 <- lvtable2[is.na(tm.mat) | is.na(solocs.all),]
+        setorder(lvtable2, rep, land)
 #         lvtable2 <- lvtable2[is.na(tm.mat) | is.na(summ.vals) | is.na(incidence) | is.na(solocs.all),]
-        lvtable2 <- lvtable2[,.(vars, land, rep)]
+        lvtable2 <- lvtable2[,.(vars, land, rep, variant, contact, density)]
 
     } else {
         # just use the goal file as the list of simulations to run

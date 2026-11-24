@@ -6,7 +6,7 @@
 # in a terminal (not in R)
 
 # set directories
-setwd(this.path::this.dir())
+# setwd(this.path::this.dir())
 
 # for cluster, cpp functions are compiled to these locations so it doesn't keep compiling them in parallel nodes
 # if ('./cppcache_mv' %in% list.dirs() == FALSE){
@@ -25,7 +25,12 @@ setwd(this.path::this.dir())
 source("_targets.R")
 
 #Make pipeline
-tar_make(callr_function = NULL, use_crew=FALSE, as_job=FALSE) # for troubleshooting
+tar_make(use_crew=TRUE)
+# tar_make(callr_function = NULL, use_crew=FALSE, as_job=FALSE) # for troubleshooting
 # tar_make_clustermq(workers = 8, log_worker = TRUE, reporter = 'verbose') # for parallelization/cluster implementation
 # tar_make_clustermq(workers = 40, log_worker = TRUE, reporter = 'verbose') # for parallelization/cluster implementation
+
+
+# targets::tar_make(callr_function = NULL, use_crew=FALSE, as_job=FALSE, shortcut=TRUE, names=out.list)
+
 

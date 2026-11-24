@@ -17,16 +17,17 @@
 # https://books.ropensci.org/targets/hpc.html
 
 # Targets setup --------------------
-setwd(this.path::this.dir())
+# setwd(this.path::this.dir())
 
 #load libraries for targets script
 library(targets)
 library(tarchetypes)
-# library(crew)
-# library(crew.cluster)
-library(clustermq)
-library(Rcpp)
-library(data.table)
+library(crew)
+library(crew.cluster)
+# library(clustermq)
+# library(Rcpp)
+# library(data.table)
+# library(geotargets)
 
 # This hardcodes the absolute path in _targets.yaml, so to make this more
 # portable, we rewrite it every time this pipeline is run (and we don't track
@@ -34,15 +35,13 @@ library(data.table)
 # i.e. _targets.yaml is an optional file that sets defaults for tar_make() via
 # tar_config_get(), so with cluster hpc whatever computing these change the
 # default values to those that would be helpful for that...
-tar_config_set(
-    store = file.path(this.path::this.dir(),("_targets")),
-    script = file.path(this.path::this.dir(),("_targets.R"))#,
-)
+# tar_config_set(
+#     store = file.path(this.path::this.dir(),("_targets")),
+#     script = file.path(this.path::this.dir(),("_targets.R"))#,
+# )
 
 # Source functions in pipeline (could also be handled by tar_source())
 lapply(list.files(file.path("Scripts","R_Functions"), full.names = TRUE, recursive = TRUE), source)
-
-
 
 
 source('no_share/crew_controllers.R')
@@ -56,23 +55,27 @@ tar_option_set(packages = c("Rcpp",
                             "RcppArmadillo",
                             "RcppParallel",
                             "stringr",
-                            "dplyr",
+#                             "dplyr",
                             "sf",
                             "raster",
                             "terra",
-                            "EnvStats",
-                            "deSolve",
-                            "colorspace",
+#                             "EnvStats",
+#                             "deSolve",
+#                             "colorspace",
                             "data.table",
-                            "pdist",
-                            "MuMIn",
-                            "lme4",
-                            "glmmTMB",
-                            "glmnet"),
+                            "pdist"
+# #                             "MuMIn",
+#                             "lme4",
+                            ,"glmmTMB"
+#                             "glmnet",
+#                             "glmmLasso"
+),
                seed = 12345 ## can set the seed for reproducibility, or NA for non-reproducible totally stochastic -- see targets manual section 9.2
-#                 ,error = 'stop' # for troubleshooting
-               ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
+                ,error = 'stop' # for troubleshooting
+#                ,error = 'null' # for production runs -- stops the errored cases and flags them for re-running later, but lets other things continue
                ,deployment='worker'
+               , controller = crew_controller_group(slurmy_try, slurmy_ants, control_tall),#, control_duo, control_wide)
+               , resources = tar_resources(crew=tar_resources_crew(controller='tall_crew'))
                ,garbage_collection=TRUE
                ,workspace_on_error=TRUE
 )
@@ -202,5 +205,4 @@ list(
 
 
 )
-
 
