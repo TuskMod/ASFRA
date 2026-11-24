@@ -55,6 +55,7 @@ SetVarParms <- function(parameters){
 
     result <- inner_join(result, shaperate_table, by='contact')
     result <- inner_join(result, variant_table, by='variant')
+    result$vars <- 1:nrow(result)
 
     return(result)
 }

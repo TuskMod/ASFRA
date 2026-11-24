@@ -8,22 +8,27 @@ make_rslt <- function(variables, mv.params){
 #     rslt <- as.data.table(t(fread('result.outputs.csv')))
     rslt <- fread('result.outputs.csv')
 
-    setnames(rslt, c('v','l','r','est','edge.tm','max.dist','inf.area','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'))
+#     setnames(rslt, c('v','l','r','est','edge.tm','max.dist','inf.area','inf.spd','sounder.weeks','prop.infd','max.inc','tm.esc'))
     rslt[est == 2, est := 1]
     setDT(variables)
     variables[,v := 1:.N]
     setkey(variables, v)
     setkey(mv.params, index)
     setkey(rslt, v, l, r)
-    rslt <- rslt[variables, on=.(v)]
+#     rslt <- rslt[variables, on=.(c=contact, v=variant, d=density)]
+    rslt <- rslt[variables, on=.(v=vars)]
     rslt <- rslt[mv.params, on=.(l=index)]
-    rslt[, names(.SD) := lapply(.SD, as.factor), .SDcols=c('est', 'contact', 'variant', 'density')]
+    setnames(rslt, c('contact','variant','density','v'), c('c','v','d','vars'))
+#     rslt[, names(.SD) := lapply(.SD, as.factor), .SDcols=c('est', 'contact', 'variant', 'density')]
+    rslt[, names(.SD) := lapply(.SD, as.factor), .SDcols=c('est', 'c', 'v', 'd')]
 
-    keep.names <- c("v", "l", "r", "est", "inf.area", "inf.spd", "sounder.weeks", "prop.infd", "max.inc", "tm.esc",
-                    "contact", "variant", "density", "nnd_med", "nnd_range", "nnd_mean", "nnd_sd",
+    keep.names <- c("v", "l", "r", "d", "c", "est", "inf.area", "inf.spd", "sounder.weeks", "prop.infd", "max.inc", "tm.esc",
+#                     "contact", "variant", "density",
+                    "nnd_med", "nnd_range", "nnd_mean", "nnd_sd",
                     "moranI", "gearyC", "tc", "mast", "rgd", "rd1","rd2","rd3", "prcp", "tmin", "tmax",
                     "drt", "contag", "aggindex", "entropy", "simpindx", "nnd_cv", "mvmt.mean", "mvmt.cv")
     rslt <- rslt[,.SD, .SDcols=keep.names]
+    setnames(rslt, c('v','c','d'), c('variant','contact','density'))
 
     # so that it can group by land ID for glmm
     rslt[,l := as.factor(l)]
@@ -126,7 +131,7 @@ glmm.vanilla <- function(rsp.var, dat, #land.kf,
 #     rnd2 <- list(~1)
 #     names(rnd2) <- rnd
     lassoi <- glmmTMB(formula=fix2, data=data.frame(dat), family=fam, ziformula=zi_form)#, control=glmmLassoControl(overdispersion=overdisp), final.re=TRUE)
-    browser()
+#     browser()
 #     lassoi <- glmmLasso(fix = fix2, rnd = rnd2, data=data.frame(trn.dat), lambda=lambda, family=fam, control=glmmLassoControl(overdispersion=overdisp), final.re=TRUE)
 #     if (cv == TRUE){
 #         y.pred <- predict(lassoi, newdata=tst.dat)

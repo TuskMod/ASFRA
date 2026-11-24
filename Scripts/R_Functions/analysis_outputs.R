@@ -329,7 +329,7 @@ exp.translate <- function(exp.var){
 
 
 new.map <- function(respvar, lyr, contus.dir, variables, inside.only=FALSE ){
-    color.grads <- colorRampPalette(c('darkgreen','yellowgreen','orange', 'darkred'), bias=)
+#     color.grads <- colorRampPalette(c('darkgreen','yellowgreen','orange', 'darkred'), bias=)
 
     contus <- terra::project(vect(contus.dir), 'epsg:5070')
     bounds <- terra::ext(contus)
