@@ -6,4 +6,12 @@ Landscape_Setup
 ./_targets/meta/meta
 *.zip
 ./Input/land
+<<<<<<< main
 ./Input/land_reserve
+=======
+./Input/land_reserve
+./crew_controllers.R
+./cppcache_ffoi/*
+./cppcache_mv/*
+./no_share
+>>>>>>> local

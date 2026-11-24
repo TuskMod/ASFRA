@@ -64,7 +64,6 @@ data.looper <- function(infile, cent, lvtable){
                 inf.area = inf.area,
                 inf.spd = inf.spd,
                 sounder.weeks = sounder.weeks,
-#                 infpot.cells = nrow(infpot.cells),
                 prop.infd = prop.infd,
                 max.inc = max.inc,
                 tm.esc = tm.escape)
