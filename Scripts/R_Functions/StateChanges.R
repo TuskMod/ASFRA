@@ -83,7 +83,6 @@ StateChanges <- function(pop, centroids, cells, parameters, Incidence, BB, i){
     # recovered -> susceptible (waning immunity)
     RtoS <- rbinom(nrow(pop), pop[,11] - Rdpd, 1/(imm_waning+1))
     # based on geometric expected value for 26 weeks, which is pretty generous for ASFv waning immunity according to vaccine studies in domestic (i.e. naive) pigs
-    if (any(RtoS)) browser()
 
     # infected carcass state changes
     Ccd <- rbinom(nrow(pop), pop[, 12], Pcr)

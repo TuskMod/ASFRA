@@ -66,7 +66,7 @@ RunSimulationReplicates <- function(land_grid_list, parameters, variables, mv.pa
     out.list <- SimulateOneRun(outputs, pop, centroids, grid, parameters, K, v.val, l.val, r.val, first.inf)
 
     # Handle outputs, including writing storage files (returns NULL)
-    summ.vals <- rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts)
+    summ.vals <- rep_outputs(out.list, v.val, l.val, r.val, parameters, out.opts, vars)
 
     return(lvtable2)
 }

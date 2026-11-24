@@ -254,15 +254,16 @@ B2_B1_factor is the conversion between B1 and B2 parameters, generally 0.5 (B2 =
 ~ contact = c("Hi","Lo")
 ~ shape__Hi = 0.7515
 ~ rate__Hi = 0.3550
-~ B1__Hi = c(0.9, 0.2)
+# elements in B1__Hi and B1__Lo must match number of density values and sounder size (ss) values
+~ B1__Hi = c(0.9, 0.5, 0.2)
 
 ~ shape__Lo = 0.5657
 ~ rate__Lo = 1.9082
-~ B1__Lo = c(0.009, 0.002)
+~ B1__Lo = c(0.009, 0.005, 0.002)
 
 ~ B2_B1_factor = 0.5
-~ density = c(1.5, 5)
-~ ss = c(2, 6)
+~ density = c(1.5, 3, 5)
+~ ss = c(2, 4, 6)
 
 
 * Strain variants (from table 2 of preprint on viral parameters)

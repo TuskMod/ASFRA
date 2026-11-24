@@ -7,3 +7,6 @@ Landscape_Setup
 *.zip
 ./Input/land
 ./Input/land_reserve
+./crew_controllers.R
+./cppcache_ffoi/*
+./cppcache_mv/*

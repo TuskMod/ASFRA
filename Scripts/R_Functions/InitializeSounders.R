@@ -15,7 +15,7 @@
   #for pop_init_type="init_single", need a vector with init_loc (cell number to initialize group/individual) and n (number of individuals to initialize)
 #pop_init_type: string, "init_pop" or "init_single"
 #pop_init_grid_opts: string, "homogeneous" or "ras" or "heterogeneous"
-InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opts="homogeneous", pop_init_type="init_pop", RSF0_lc=NULL){
+InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opts="ras", pop_init_type="init_pop", RSF0_lc=NULL){
 
     ## Parse input args and check input formatting ------------
 
@@ -56,7 +56,8 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
     if(pop_init_type == "init_pop"){
   
         #initialize needed objects
-        cells <- nrow(centroids[complete.cases(centroids),])
+        onland <- centroids[complete.cases(centroids),]
+        cells <- nrow(onland)
 
         #Get the initializing number of sounders
         N0 <- pop_init_args[1]
@@ -64,31 +65,41 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
 
         sn_i <- N0/ss
 
+        # just in case simulation is happening on a partial tile
+        sn <- pmax(3, round(sn_i*(cells/nrow(centroids))))
+
+
         #default option, randomly assign sounders to cells
-        if(pop_init_grid_opts=="homogeneous"| pop_init_grid_opts=="ras"){
-            assigns <- rbinom(cells, 1, sn_i/cells)
-        } else {
-
-            if(pop_init_grid_opts=="heterogeneous"){
-
-                #use this to weight preference so that still end up with N0 size population
-                pref.wt <- sum(grid[,8], na.rm=TRUE)/cells
-                #assign to cells with weighted preference according to column 8 values
-                ## this means maximum of 1 sounder per cell in starting configuration
-                assigns <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
-                # if preference weight is 0, rbinom gives NA
-                assigns[is.na(assigns)] <- 0
-
-            }
+        if(pop_init_grid_opts=="homogeneous"){#| pop_init_grid_opts=="ras"){
+#             assigns <- rbinom(cells, 1, sn_i/cells)
+            init_locs <- sample(cells, sn)
+        } else if(pop_init_grid_opts=="heterogeneous" | pop_init_grid_opts=='ras'){
+#
+#                 #use this to weight preference so that still end up with N0 size population
+#                 ## this hilaroiusly does not do what it is supposed to...
+#                 pref.wt <- sum(grid[,8], na.rm=TRUE)/cells
+#                 #assign to cells with weighted preference according to column 8 values
+#                 ## this means maximum of 1 sounder per cell in starting configuration
+#                 assigns <- rbinom(cells, 1, grid[,8] * ((sn_i / cells) / pref.wt))
+#                 # if preference weight is 0, rbinom gives NA
+#                 assigns[is.na(assigns)] <- 0
+#
+#             }
+            # normalizes raster values so they scale from 0 to 1 relative to habitat quality for entire US (or at least all calculated tiles)
+            loc.wt <- (onland[,3] - habmin)/(habmax-habmin)
+            # choose cells to spawn sounders in
+            init_locs <- sample(cells, sn, prob=loc.wt)
         }
-  
-        sn <- sum(assigns) #generated number of rows (sounders), size from random assignment of sounders to cells
-        init_locs <- which(assigns==1) #get the locations where sounders have been initialized
+        init_dens <- rpois(sn,ss)
+
+#         sn <- sum(assigns) #generated number of rows (sounders), size from random assignment of sounders to cells
+#         init_locs <- which(assigns==1) #get the locations where sounders have been initialized
+
 
         #Initialize the sounder population matrix
         #each row is a sounder
         pop <- matrix(nrow=sn,ncol=13)
-        pop[,1] <- rpois(sn,ss) #sounder size with avg as lambda in a poisson
+        pop[,1] <- init_dens #sounder size with avg as lambda in a poisson
         pop[,3] <- init_locs #this will be grid location (row number)
         pop[,4] <- 0 #this will be assigned movement distance
         pop[,5] <- centroids[pop[,3],1] #present location X
