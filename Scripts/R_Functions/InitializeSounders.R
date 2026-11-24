@@ -73,7 +73,6 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
         if(pop_init_grid_opts=="homogeneous"){#| pop_init_grid_opts=="ras"){
 #             assigns <- rbinom(cells, 1, sn_i/cells)
             init_locs <- sample(cells, sn)
-            init_dens <- rpois(sn,ss)
         } else if(pop_init_grid_opts=="heterogeneous" | pop_init_grid_opts=='ras'){
 #
 #                 #use this to weight preference so that still end up with N0 size population
@@ -90,9 +89,8 @@ InitializeSounders <- function(centroids, grid, pop_init_args, pop_init_grid_opt
             loc.wt <- (onland[,3] - habmin)/(habmax-habmin)
             # choose cells to spawn sounders in
             init_locs <- sample(cells, sn, prob=loc.wt)
-            # sounder size in these locations are also affected by the habitat quality (for now)
-            init_dens <- rpois(sn,ss*loc.wt)
         }
+        init_dens <- rpois(sn,ss)
 
 #         sn <- sum(assigns) #generated number of rows (sounders), size from random assignment of sounders to cells
 #         init_locs <- which(assigns==1) #get the locations where sounders have been initialized
