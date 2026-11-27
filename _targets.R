@@ -90,7 +90,7 @@ list(
 
 
     ### Input landscapes directory: -----------
-    tar_target(lands_path, file.path("Landscape_Setup","NND_Lands","4_Output", "sel_plands"), format="file"),
+    tar_target(lands_path, file.path("..","tile_selection","4_Output", "sel_plands"), format="file"),
 
     ### Read and format parameters file: -----------
     tar_target(parameters0, FormatSetParameters(parameters_txt)),
@@ -100,11 +100,11 @@ list(
 
     ## Input cpp scripts as files to enable tracking -----
     # this target is a dead end, just returns "TRUE" if complete; precompiles c++ scripts for later use so it only does it once
-    tar_target(cpp.compile, {
-        Rcpp::sourceCpp("./Scripts/cpp_Functions/Movement_Fast_Generalized.cpp", cacheDir = './cppcache_mv', rebuild=TRUE)
-        Rcpp::sourceCpp("./Scripts/cpp_Functions/Fast_FOI_Matrix.cpp", cacheDir = './cppcache_ffoi', rebuild=TRUE)
-        TRUE}
-    ),
+#     tar_target(cpp.compile, {
+#         Rcpp::sourceCpp("./Scripts/cpp_Functions/Movement_Fast_Generalized.cpp", cacheDir = './cppcache_mv', rebuild=TRUE)
+#         Rcpp::sourceCpp("./Scripts/cpp_Functions/Fast_FOI_Matrix.cpp", cacheDir = './cppcache_ffoi', rebuild=TRUE)
+#         TRUE}
+#     ),
 
     ## Initialize surface -----
     ### Initialize grid(s): ---------------
@@ -112,7 +112,7 @@ list(
     tar_target(land_grid_list, InitializeGrids(lands_path, parameters0)),
 
     ### pull in combiled habitat preference map for feral swine range to get max/min values to rescale for initial sounder distribution
-    tar_target(plands_all, list.files('./Landscape_Setup/Pipeline_SSF_Weekly/4_Output/indiv_plands', full.names=TRUE)),
+    tar_target(plands_all, list.files('../asfra_habpref/4_Output/indiv_plands', full.names=TRUE)),
     tar_target(habimap, habitatmap(plands_all), format='file'),
     tar_target(minmax_habitat, terra::minmax(terra::rast(habimap))),
 
@@ -120,19 +120,19 @@ list(
     tar_target(parameters, GetSurfaceParms(parameters0, land_grid_list[[2]], land_grid_list[[3]], minmax_habitat)),
 
     ### Get landscape-specific movement parameters
-    tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('Landscape_Setup', 'NND_Lands', '4_Output', 'ldsel.rds')) } else { return(NA)})
+    tar_target(mv.params, if(parameters$grid.opts=='ras'){ readRDS(file.path('..', 'tile_selection', '4_Output', 'ldsel.rds')) } else { return(NA)})
 
     ### Build table of all desired landscape and parameter combinations
-    ,tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)),
+#     ,tar_target(lvtable, combo.plans(parameters, variables, parameters$nrep, mv.params)),
 
     ### Check for existing outputs and make a table of only what remains to be done
-    tar_target(lvtable2, {lvnew <- check.existing(lvtable, parameters$out.repl)
-                          if (nrow(lvnew) == 0){
-                              return(data.table(vars=0, contact=0, density=0, land=0, rep=0))
-                          } else {
-                              return(lvnew)
-                          }}
-                          , cue = tar_cue(mode='always'))
+#     tar_target(lvtable2, {lvnew <- check.existing(lvtable, parameters$out.repl)
+#                           if (nrow(lvnew) == 0){
+#                               return(data.table(vars=0, contact=0, density=0, land=0, rep=0))
+#                           } else {
+#                               return(lvnew)
+#                           }}
+#                           , cue = tar_cue(mode='always'))
 
     ## Run Model ---------------
         # as currently configured, looks for existing output files and skips those that already exist
@@ -141,37 +141,37 @@ list(
         # so using tar_cue(mode = 'always') really just forces it to check for existing previous runs if parameter out.repl = 0
         # if out.repl = 1 (i.e. "replace outputs") it will run everything again (i.e. if something changes in the model, set out.repl to 1 to get all new results)
         # out.repl = 1 does NOT delete existing files, so shorter or incomplete re-runs will not leave only the legitimate outputs
-    ,tar_target(out.list, RunSimulationReplicates(land_grid_list = land_grid_list[[1]],
-                                                parameters = parameters,
-                                                variables = variables,
-                                                mv.parms = mv.params,
-                                                lvtable2 = lvtable2)
-        , pattern = map(lvtable2) # tells targets to branch nodes by lines in lvtable2, which is the list of land, variable, and replicate combinations
-        , iteration = 'vector'
-        , cue = tar_cue(mode = 'always')
-        , resources=tar_resources(crew=tar_resources_crew(controller='slurmy'))
-    )
+#     ,tar_target(out.list, RunSimulationReplicates(land_grid_list = land_grid_list[[1]],
+#                                                 parameters = parameters,
+#                                                 variables = variables,
+#                                                 mv.parms = mv.params,
+#                                                 lvtable2 = lvtable2)
+#         , pattern = map(lvtable2) # tells targets to branch nodes by lines in lvtable2, which is the list of land, variable, and replicate combinations
+#         , iteration = 'vector'
+#         , cue = tar_cue(mode = 'always')
+#         , resources=tar_resources(crew=tar_resources_crew(controller='slurmy'))
+#     )
 
     ## get centroids of tiles for identifying results with specific locations (just to be sure things match up)
-    , tar_target(centroid.matrix, extract.centroids(land_grid_list))
+#     , tar_target(centroid.matrix, extract.centroids(land_grid_list))
 
     ## get a list of output file names to loop over (limited to the subset defined by lvtable, in case some unwanted runs are still in the outputs)
-    , tar_target(tm.out.files, list.out.files(lvtable, out.list))
+#     , tar_target(tm.out.files, list.out.files(lvtable, out.list))
 
     ## loop over data to get output statistics such as epidemic speed, distance, etc.
-    , tar_target(result.outputs, data.looper(tm.out.files, centroid.matrix, lvtable)
-               , pattern = map(tm.out.files),
-               , iteration = 'list'
-                , resources=tar_resources(crew=tar_resources_crew(controller='slurmy_horde'))
-    )
+#     , tar_target(result.outputs, data.looper(tm.out.files, centroid.matrix, lvtable)
+#                , pattern = map(tm.out.files),
+#                , iteration = 'list'
+#                 , resources=tar_resources(crew=tar_resources_crew(controller='slurmy_horde'))
+#     )
 
     ## make an output table of summary statistics for later analysis
-    , tar_target(rslt.file, fwrite(rbindlist(result.outputs), 'result.outputs.csv'))
+#     , tar_target(rslt.file, fwrite(rbindlist(result.outputs), 'result.outputs.csv'))
 
     ## ----------- everything below here COULD be run on a laptop, even for large simulation sets. ------------------ ##
 
     ## put together result table
-    , tar_target(rslt, make_rslt(rslt.file, variables, mv.params))
+    , tar_target(rslt, make_rslt(variables, mv.params))
 
     ## analysis of outputs with just a messy glmm process
     , tar_target(lasslist2, c('inf.spd','est','sounder.weeks','max.inc','prop.infd'))
@@ -180,8 +180,8 @@ list(
                  iteration='list')
 
     ## generate out of sample predictions for the rest of the country
-    , tar_target(tiledat, './Landscape_Setup/NND_Lands/4_Output/all_tile_attribs.csv', format='file')
-    , tar_target(grid_path, './Landscape_Setup/Pipeline_SSF_Weekly/tile_grid.shp', format='file')
+    , tar_target(tiledat, '../tile_selection/4_Output/all_tile_attribs.csv', format='file')
+    , tar_target(grid_path, '../asfra_habpref/tile_grid.shp', format='file')
     , tar_target(tile_tab, data.table(values(vect(grid_path, crs='EPSG:5070'))[,c('ID','wb_inside','wb_edge')]))
     , tar_target(oos.tile.dat, oos.tiles(tiledat, tile_tab, variables))
     , tar_target(oos.tile.dat2, edge.correction(oos.tile.dat))
@@ -199,9 +199,9 @@ list(
                      pattern=map(varset))
     , tar_target(contus_dir, file.path('Input','contus_shp','usmapplot_best.shp'), format='file')
     , tar_target(map2, new.map(lasslist2, vector_lyr, contus_dir, variables, inside.only = FALSE), pattern=map(vector_lyr))
-#     , tar_target(hmap, heatmap(model.defs, oos.tile.dat, model.names),#, preds.compiled),
-#                  pattern=map(model.defs, model.names),
-#                  iteration='list')#, cue=tar_cue(mode='always'))
+    , tar_target(hmap, heatmap(mods.out, oos.tile.dat),#, model.names),#, preds.compiled),
+                 pattern=map(mods.out),#, model.names),
+                 iteration='list')#, cue=tar_cue(mode='always'))
 
 
 )

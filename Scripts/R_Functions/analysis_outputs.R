@@ -189,7 +189,7 @@ maps.plot <- function(preds.table, contus_dir, variables){
 
 
 ## heatmaps
-heatmap <- function(mod, tiledats, model.names){
+heatmap <- function(mod, tiledats){
     # looped by targets inputs on mod and lambda.mins
     # use the 2 most important landscape attributes, vary them for the axes, and for each combination of contact, variant, and density make a colored heatmap of response value predictions
     # mark points where actual landscapes were
@@ -197,20 +197,27 @@ heatmap <- function(mod, tiledats, model.names){
 
     in.mod <- mod[[1]]
 
-    lambda.mins <- model.names[[1]][,lambda]
+#     lambda.mins <- model.names[[1]][,lambda]
     # get the name of the response variable
-    rsp.var <- model.names[[1]][,rsp.var]
+#     rsp.var <- model.names[[1]][,rsp.var]
+    rsp.var <- as.character(in.mod[4]$call[2][[1]][2])
     # pull in model coefficients
-    coefs <- coef(in.mod)
+    coefs <- coef(in.mod)[[1]]$l
     # keep only the landscape-associated values
-    coefs <- coefs[(names(coefs) %in% c('(Intercept)', 'as.factor(contact)Lo', 'as.factor(density)5', 'as.factor(variant)Pol')==FALSE)]
+#     coefs <- coefs[(names(coefs) %in% c('(Intercept)', 'as.factor(contact)Lo', 'as.factor(density)5', 'as.factor(variant)Pol')==FALSE)]
+    coefs <- unique(coefs[,-c(1)])
     # keep the landscape variables from the tile data and average them to make an average for the background conditions of the top two parameters
-    landval.avgs <- apply(tiledats[,c(3:6,12:28)], 2, mean) ## should use names here, to be sure
+    landval.avgs <- apply(tiledats[,c(3:6,12:30)], 2, mean) ## should use names here, to be sure
     # grab the two coefficients with the greatest effect sizes for the plot axes
     # these leave negative coefficients as negative (just use abs for ordering)
-    coefs.sel <- coefs[order(abs(coefs), decreasing=TRUE)][1:2]
+    lnd.coefs <- c('nnd_med', 'nnd_range', 'nnd_mean', 'nnd_sd',
+      'moranI', 'gearyC', 'tc', 'mast', 'rgd', 'rd1','rd2','rd3', 'prcp', 'tmin',
+      'tmax', 'drt', 'contag', 'aggindex', 'entropy', 'simpindx', 'nnd_cv', 'mvmt.mean', 'mvmt.cv')
+    coefs.sel <- coefs[order(abs(unlist(coefs)), decreasing=TRUE)]
+    coefs.sel <- coefs.sel[names(coefs.sel) %in% lnd.coefs][1:2]
     if (all(names(coefs.sel) %in% c('moranI','gearyC'))) {
-        coefs.sel <- coefs[order(abs(coefs), decreasing=TRUE)][c(1,3)]
+#         coefs.sel <- coefs[order(abs(coefs), decreasing=TRUE)][names(coefs) %in% lnd.coefs][c(1,3)]
+        coefs.sel <- coefs.sel[names(coefs.sel) %in% lnd.coefs][c(1,3)]
     }
     print(coefs.sel)
     # grab coefficient names
@@ -224,7 +231,7 @@ heatmap <- function(mod, tiledats, model.names){
     ht.table <- CJ(
         cf1 = seq(coef1.range[1], coef1.range[2], length.out=25)
         , cf2 = seq(coef2.range[1], coef2.range[2], length.out=25)
-        , density = c(1.5,5)
+        , density = c(1.5,3,5)
         , contact = c('Hi','Lo')
         , variant = c('DR','Pol'))
     # filter out landscape variables that are included in the plot axes
@@ -242,7 +249,7 @@ heatmap <- function(mod, tiledats, model.names){
 
     ht.table[,as.character(rsp.var):=0]
     ht.table[,l := as.factor(0)]
-    ht.table[, as.character(rsp.var) := predict(in.mod, newdata=.SD)]
+    ht.table[, as.character(rsp.var) := predict(in.mod, newdata=.SD, type='response')]
     # make table of variaable combinations to feed into mapply function below (to generate 8 heatmaps)
     quick.vars <- unique(ht.table[,.(density, contact, variant)])
 
@@ -257,8 +264,9 @@ heatmap <- function(mod, tiledats, model.names){
     ht.table[,colr := color.grads(255)[as.numeric(as.character(rank))]]
     # plot
     png(paste0('./Output/figures/', rsp.var, '_heat_.png'), width=1700, height=1050)
-    par(mfrow=c(2,4), oma=c(1,1,4,1))
-    layout(matrix(c(1:9,9,9,9), nrow=3, ncol=4, byrow=TRUE), widths=c(1,1,1,1), heights=c(1,1,0.3))
+    par(mfrow=c(4,4), oma=c(1,1,4,0.2))
+    qv.rows <- nrow(quick.vars)
+    layout(matrix(c(1:(qv.rows+1),qv.rows+1,qv.rows+1,qv.rows+1), nrow=1+qv.rows/4, ncol=4, byrow=TRUE), widths=c(1,1,1,1), heights=c(rep(1, qv.rows/4), 0.3))
     mapply(function(dens, cont, varnt){
         rows <- ht.table[,which(density == dens & contact == cont & variant == varnt)]
         ht.sub <- ht.table[rows, ]
@@ -272,8 +280,9 @@ heatmap <- function(mod, tiledats, model.names){
     mtext(resp.translate(rsp.var), 3, 2, outer=TRUE, cex=2)
     # create gradient legend object
     legendimg <- as.raster(matrix(color.grads(255), nrow=1))
-    plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='', main=resp.translate(rsp.var), cex.main=1.5)
-    min.val2 <- floor(log10(abs(min(ht.table[,..rsp.var]))))-3
+    plot(c(0,1), c(0,1), type='n', axes=F, xlab = '', ylab='')#, main=resp.translate(rsp.var), cex.main=1.5)
+#     min.val2 <- floor(log10(abs(min(ht.table[,..rsp.var]))))-3
+    min.val2 <- min(ht.table[,..rsp.var])
     if (rsp.var %in% c('max.inc', 'sounder.weeks')){
         mtext(round(seq(range(log10(ht.table[,..rsp.var]))[1], range(log1p(ht.table[,..rsp.var]))[2], length.out=5), -min.val2), 1, 1, at= c(0,0.25,0.5,0.75,1), cex=1.4)
     } else {

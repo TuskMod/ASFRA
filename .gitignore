@@ -6,19 +6,8 @@ Landscape_Setup
 ./_targets/meta/meta
 *.zip
 ./Input/land
-<<<<<<< HEAD
-<<<<<<< main
-./Input/land_reserve
-=======
 ./Input/land_reserve
 ./crew_controllers.R
 ./cppcache_ffoi/*
 ./cppcache_mv/*
 ./no_share
->>>>>>> local
-=======
-./Input/land_reserve
-./crew_controllers.R
-./cppcache_ffoi/*
-./cppcache_mv/*
->>>>>>> 15ce0cdbd2c47c6b3296c6e755b2867a12fb1943
